@@ -4,7 +4,8 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "update": "node src/updateCalendars.js"
+    "update": "node src/updateCalendars.js",
+    "generate-html": "node src/generateHTML.js"
   },
   "dependencies": {
     "axios": "^1.4.0",
