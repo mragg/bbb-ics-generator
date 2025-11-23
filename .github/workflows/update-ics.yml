@@ -1,33 +1,37 @@
-name: Update ICS Calendars
+name: Update and Deploy ICS Calendars
 
 on:
   schedule:
-    - cron: '0 */6 * * *' # Alle 6 Stunden
-  workflow_dispatch: # manueller Start
+    - cron: '0 */6 * * *'  # alle 6 Stunden
+  workflow_dispatch: # manuelles Auslösen erlaubt
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Node.js installieren
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
+    - name: Node.js Setup
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
-      - name: Abhängigkeiten installieren
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      - name: Kalender aktualisieren
-        env:
-          TEAM_ID: "167881"
-        run: npm run update
+    - name: Update ICS Calendars
+      env:
+        TEAM_ID: "167881"  # besser als Secret speichern
+      run: npm run update
 
-      - name: ICS Dateien zum GitHub Repo hinzufügen
-        run: |
-          git config --global user.email "bbb-api@oliver-eder.de"
-          git config --global user.name "github-actions"
-          git add public/ics/*.ics
-          git commit -m "Update ICS Kalender-Dateien"
-          git push
+    - name: Deploy ICS to gh-pages
+      run: |
+        git config --global user.email "bbb-api@oliver-eder.de"
+        git config --global user.name "GitHub Actions"
+        git checkout --orphan gh-pages
+        git rm -rf .
+        cp -r public/ics/* .
+        git add .
+        git commit -m "Deploy ICS Kalender $(date +'%Y-%m-%d %H:%M:%S')"
+        git push -f origin gh-pages
