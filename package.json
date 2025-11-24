@@ -1,16 +1,16 @@
 {
-  "name": "bbb-ics-generator",
+  "name": "bbb-ics-server",
   "version": "1.0.0",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "update": "node src/updateCalendars.js",
+    "update": "node src/cronUpdate.js",
     "generate-html": "node src/generateHTML.js"
   },
   "dependencies": {
     "axios": "^1.4.0",
-    "ics": "^2.41.0",
-    "express": "^4.18.0",
-    "node-cron": "^3.0.0"
+    "ics": "^2.37.0",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.2"
   }
 }

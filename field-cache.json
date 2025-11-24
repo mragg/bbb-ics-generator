@@ -1,0 +1,47 @@
+[
+  {
+    "basketballBundSpielfeldId": 105061,
+    "bezeichnung": "Mittelschule West",
+    "strasse": "Woffenbacher Str. 38",
+    "plz": "92318",
+    "ort": "Neumarkt",
+    "lat": 49.2826297,
+    "lon": 11.4460743
+  },
+  {
+    "basketballBundSpielfeldId": 2210,
+    "bezeichnung": "Sporthalle Königswiesen",
+    "strasse": "Klenzestr. 31",
+    "plz": "93051",
+    "ort": "Regensburg",
+    "lat": 49.0035299,
+    "lon": 12.0726143
+  },
+  {
+    "basketballBundSpielfeldId": 2147,
+    "bezeichnung": "Oberpfalzhalle",
+    "strasse": "Schwimmbadstraße 4",
+    "plz": "92421",
+    "ort": "Schwandorf",
+    "lat": 49.3193505,
+    "lon": 12.1288166
+  },
+  {
+    "basketballBundSpielfeldId": 105062,
+    "bezeichnung": "Willibald-Gluck-Gymnasium",
+    "strasse": "Woffenbacher Str. 33",
+    "plz": "92318",
+    "ort": "Neumarkt",
+    "lat": 49.2808203,
+    "lon": 11.4488659
+  },
+  {
+    "basketballBundSpielfeldId": 100613,
+    "bezeichnung": "Gymnasium",
+    "strasse": "Bildstr. 20",
+    "plz": "92660",
+    "ort": "Neustadt a.d.Waldnaab",
+    "lat": 49.7255783,
+    "lon": 12.1780683
+  }
+]
