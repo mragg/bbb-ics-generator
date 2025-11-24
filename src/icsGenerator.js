@@ -1,55 +1,120 @@
-const { createEvent } = require('ics');
+const { createEvents } = require('ics');
 
-function dateToArray(date) {
+function dateToArr(d) {
   return [
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
+    Number(d.getFullYear()),
+    Number(d.getMonth() + 1),
+    Number(d.getDate()),
+    Number(d.getHours()),
+    Number(d.getMinutes()),
   ];
 }
 
-function buildEvent(match, matchInfo) {
-  const kickoff = new Date(matchInfo.kickoff);
+function formatKickoff(dateStr, timeStr) {
+  const dt = new Date(`${dateStr}T${timeStr}:00`);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(dt.getDate())}.${pad(dt.getMonth() + 1)}.${dt.getFullYear()}, ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+
+function getTeamNameForSummary(teamObj) {
+  return teamObj?.teamnameSmall || teamObj?.teamname || 'Unbekannt';
+}
+
+function getTeamNameForDescription(teamObj) {
+  return teamObj?.teamname || 'Unbekannt';
+}
+
+async function buildEvent(match, matchInfo, teamId) {
+  const homeTeamObj = matchInfo?.homeTeam || match.homeTeam || {};
+  const guestTeamObj = matchInfo?.guestTeam || match.guestTeam || {};
+
+  const homeTeamId = Number(homeTeamObj.teamPermanentId);
+  const guestTeamId = Number(guestTeamObj.teamPermanentId);
+  const ownTeamId = Number(teamId);
+
+  const homeNameSummary = getTeamNameForSummary(homeTeamObj);
+  const guestNameSummary = getTeamNameForSummary(guestTeamObj);
+
+  const homeNameDesc = getTeamNameForDescription(homeTeamObj);
+  const guestNameDesc = getTeamNameForDescription(guestTeamObj);
+
+  const isHome = homeTeamId === ownTeamId;
+  const isAway = guestTeamId === ownTeamId;
+
+  const summary = isHome
+    ? `HEIM: ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
+    : isAway
+    ? `AUSWÄRTS: ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
+    : `${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
+
+  const cleanSummary = (text) => (typeof text === 'string' ? text.replace(/[\r\n]+/g, ' ').trim() : 'Untitled event');
+  const summaryClean = cleanSummary(summary);
+
+  const dateStr = matchInfo?.kickoffDate || match.kickoffDate;
+  const timeStr = matchInfo?.kickoffTime || match.kickoffTime;
+  const kickoff = new Date(`${dateStr}T${timeStr}:00`);
   const dtstart = new Date(kickoff.getTime() - 60 * 60 * 1000);
-  const dtend = new Date(kickoff.getTime() + 2 * 60 * 60 * 1000);
+  const dtend = new Date(kickoff.getTime() + 2.5 * 60 * 60 * 1000);
 
-  const isHome = match.homeId === match.teamId;
-  const alarmTrigger = isHome ? '-PT30M' : '-PT60M';
+  const feld = matchInfo?.matchInfo?.spielfeld || match.spielfeld || {};
 
-  return {
+  const location = feld.strasse && feld.plz && feld.ort
+    ? `${feld.strasse}, ${feld.plz} ${feld.ort}, Deutschland`
+    : 'Ort unbekannt';
+
+  const description = [
+    `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
+    `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
+    `Spielnr: ${matchInfo?.matchNo || match.matchNo || 'Unbekannt'}`,
+    `Heimteam: ${homeNameDesc || 'Unbekannt'}`,
+    `Gastteam: ${guestNameDesc || 'Unbekannt'}`,
+    'Adresse:',
+    feld.bezeichnung || 'Unbekannt',
+    feld.strasse || '',
+    `${feld.plz || ''} ${feld.ort || ''}`.trim(),
+    `Spielbeginn: ${formatKickoff(dateStr, timeStr)}`,
+    `Summary: ${summaryClean}`,
+  ].filter(Boolean).join('\n');
+
+  // Trigger validieren, Fallback einbauen
+  const alarmTriggerMinutes = isHome ? 30 : 60;
+
+  const event = {
     uid: `${match.matchId}@basketball-bund.net`,
-    start: dateToArray(dtstart),
-    end: dateToArray(dtend),
-    summary: `${match.homeName} vs. ${match.guestName} (Spiel ${match.matchNo})`,
-    location: `${matchInfo.location.street}, ${matchInfo.location.postalCode} ${matchInfo.location.city}, Deutschland`,
-    geo: matchInfo.location.geo ? { lat: matchInfo.location.geo.lat, lon: matchInfo.location.geo.lon } : undefined,
-    alarms: [{
-      action: 'display',
-      description: 'Spiel beginnt bald',
-      trigger: alarmTrigger,
-    }],
+    title: summaryClean,
+    description,
+    start: dateToArr(dtstart),
+    end: dateToArr(dtend),
+    location,
+    alarms: [
+      {
+        action: 'display',
+        description: 'Spiel beginnt bald',
+        trigger: { minutes: alarmTriggerMinutes, before: true },
+      },
+    ],
   };
+
+  return event;
 }
 
-async function createICS(matches, matchDetails) {
+async function generateICS(matches, details, teamId) {
   const events = [];
-
   for (const match of matches) {
-    const info = matchDetails[match.matchId];
-    if (!info) continue;
-    const event = buildEvent(match, info);
-    events.push(event);
+    const matchInfo = details[match.matchId];
+    events.push(await buildEvent(match, matchInfo, teamId));
   }
+  if (!events.length) return null;
 
-  const { error, value } = await new Promise(resolve =>
-    createEvent(events, (err, val) => resolve({ error: err, value: val }))
-  );
+  // Debug vor createEvents
+  events.forEach((e, i) => console.log(`Event ${i} summary: "${e.summary}"`));
 
-  if (error) throw error;
-
-  return value;
+  return new Promise((resolve, reject) => {
+    createEvents(events, (error, value) => {
+      if (error) reject(error);
+      else resolve(value);
+    });
+  });
 }
 
-module.exports = { createICS };
+module.exports = { generateICS };
