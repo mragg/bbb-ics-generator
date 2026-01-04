@@ -63,18 +63,19 @@ async function buildEvent(match, matchInfo, teamId) {
     : 'Ort unbekannt';
 
   const description = [
-    `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
-    `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
-    `Spielnr: ${matchInfo?.matchNo || match.matchNo || 'Unbekannt'}`,
-    `Heimteam: ${homeNameDesc || 'Unbekannt'}`,
-    `Gastteam: ${guestNameDesc || 'Unbekannt'}`,
-    'Adresse:',
-    `${feld.bezeichnung || ''}`,
-    `${feld.strasse ||  ''}',
-    `${feld.plz || ''} ${feld.ort || ''}`.trim(),
-    `Spielbeginn: ${formatKickoff(dateStr, timeStr)}`,
-    `letztes Update: ${new Date().toLocaleString('de-DE')}`,
-  ].filter(Boolean).join('\r\n');
+  `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
+  `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
+  `Spielnr: ${matchInfo?.matchNo || match.matchNo || 'Unbekannt'}`,
+  `Heimteam: ${homeNameDesc || 'Unbekannt'}`,
+  `Gastteam: ${guestNameDesc || 'Unbekannt'}`,
+  'Adresse:',
+  feld.bezeichnung || 'Unbekannt',
+  feld.strasse || '',
+  `${feld.plz || ''} ${feld.ort || ''}`.trim(),
+  `Spielbeginn: ${formatKickoff(dateStr, timeStr)}`,
+  `letztes Update: ${new Date().toLocaleString('de-DE')}`,
+].filter(Boolean).join('\r\n');
+
 
   // Trigger validieren, Fallback einbauen
   const alarmTriggerMinutes = isHome ? 30 : 60;
