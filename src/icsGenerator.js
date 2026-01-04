@@ -42,9 +42,9 @@ async function buildEvent(match, matchInfo, teamId) {
   const isAway = guestTeamId === ownTeamId;
 
   const summary = isHome
-    ? `HEIM: ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
+    ? `🏠 ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
     : isAway
-    ? `AUSWÄRTS: ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
+    ? `✈️ ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
     : `${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
 
   const cleanSummary = (text) => (typeof text === 'string' ? text.replace(/[\r\n]+/g, ' ').trim() : 'Untitled event');
@@ -74,7 +74,7 @@ async function buildEvent(match, matchInfo, teamId) {
     `${feld.plz || ''} ${feld.ort || ''}`.trim(),
     `Spielbeginn: ${formatKickoff(dateStr, timeStr)}`,
     `letztes Update: ${new Date().toLocaleString('de-DE')}`,
-  ].filter(Boolean).join('\n');
+  ].filter(Boolean).join('\r\n');
 
   // Trigger validieren, Fallback einbauen
   const alarmTriggerMinutes = isHome ? 30 : 60;
