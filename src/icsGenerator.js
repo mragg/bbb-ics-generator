@@ -1,5 +1,18 @@
 const { createEvents } = require('ics');
 
+// Umlaute und Sonderzeichen ersetzen für bessere Kompatibilität
+function sanitize(text) {
+  if (!text) return '';
+  return text
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/Ä/g, 'Ae')
+    .replace(/Ö/g, 'Oe')
+    .replace(/Ü/g, 'Ue')
+    .replace(/ß/g, 'ss');
+}
+
 function dateToArr(d) {
   return [
     Number(d.getFullYear()),
@@ -24,7 +37,7 @@ function getTeamNameForDescription(teamObj) {
   return teamObj?.teamname || 'Unbekannt';
 }
 
-async function buildEvent(match, matchInfo, teamId) {
+async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const homeTeamObj = matchInfo?.homeTeam || match.homeTeam || {};
   const guestTeamObj = matchInfo?.guestTeam || match.guestTeam || {};
 
@@ -41,19 +54,25 @@ async function buildEvent(match, matchInfo, teamId) {
   const isHome = homeTeamId === ownTeamId;
   const isAway = guestTeamId === ownTeamId;
 
-  const summary = isHome
-    ? `🏠 ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
-    : isAway
-    ? `✈️ ${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`
-    : `${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
+  // Prefix nur bei "all" Kalender
+  let prefix = '';
+  if (calendarType === 'all') {
+    prefix = isHome ? 'HEIM: ' : isAway ? 'AUSWAERTS: ' : '';
+  }
+
+  const summary = `${prefix}${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
 
   const cleanSummary = (text) => (typeof text === 'string' ? text.replace(/[\r\n]+/g, ' ').trim() : 'Untitled event');
-  const summaryClean = cleanSummary(summary);
+  const summaryClean = sanitize(cleanSummary(summary));
 
+  // Kickoff-Zeit korrekt parsen (deutsche Zeit)
   const dateStr = matchInfo?.kickoffDate || match.kickoffDate;
   const timeStr = matchInfo?.kickoffTime || match.kickoffTime;
   const kickoff = new Date(`${dateStr}T${timeStr}:00`);
+  
+  // Start: 1 Stunde VOR Spielbeginn
   const dtstart = new Date(kickoff.getTime() - 60 * 60 * 1000);
+  // Ende: 2.5 Stunden NACH Spielbeginn
   const dtend = new Date(kickoff.getTime() + 2.5 * 60 * 60 * 1000);
 
   const feld = matchInfo?.matchInfo?.spielfeld || match.spielfeld || {};
@@ -62,20 +81,17 @@ async function buildEvent(match, matchInfo, teamId) {
     ? `${feld.strasse}, ${feld.plz} ${feld.ort}, Deutschland`
     : 'Ort unbekannt';
 
-  const description = [
-  `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
-  `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
-  `Spielnr: ${matchInfo?.matchNo || match.matchNo || 'Unbekannt'}`,
-  `Heimteam: ${homeNameDesc || 'Unbekannt'}`,
-  `Gastteam: ${guestNameDesc || 'Unbekannt'}`,
-  'Adresse:',
-  feld.bezeichnung || 'Unbekannt',
-  feld.strasse || '',
-  `${feld.plz || ''} ${feld.ort || ''}`.trim(),
-  `Spielbeginn: ${formatKickoff(dateStr, timeStr)}`,
-  `letztes Update: ${new Date().toLocaleString('de-DE')}`,
-].filter(Boolean).join('\r\n');
-
+  const description = sanitize([
+    `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
+    `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
+    `Spiel ${matchInfo?.matchNo || match.matchNo || '?'}`,
+    `Heim: ${homeNameDesc || 'Unbekannt'}`,
+    `Gast: ${guestNameDesc || 'Unbekannt'}`,
+    feld.bezeichnung ? `Halle: ${feld.bezeichnung}` : '',
+    feld.strasse && feld.ort ? `${feld.strasse}, ${feld.plz} ${feld.ort}` : '',
+    `Anpfiff: ${formatKickoff(dateStr, timeStr)}`,
+    `Update: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`,
+  ].filter(Boolean).join(' | \r\n '));
 
   // Trigger validieren, Fallback einbauen
   const alarmTriggerMinutes = isHome ? 30 : 60;
@@ -85,8 +101,13 @@ async function buildEvent(match, matchInfo, teamId) {
     title: summaryClean,
     description,
     start: dateToArr(dtstart),
+    startInputType: 'local',
+    startOutputType: 'local',
     end: dateToArr(dtend),
+    endInputType: 'local',
+    endOutputType: 'local',
     location,
+    busyStatus: 'BUSY',
     alarms: [
       {
         action: 'display',
@@ -99,21 +120,37 @@ async function buildEvent(match, matchInfo, teamId) {
   return event;
 }
 
-async function generateICS(matches, details, teamId) {
+async function generateICS(matches, details, teamId, type = 'all') {
   const events = [];
   for (const match of matches) {
     const matchInfo = details[match.matchId];
-    events.push(await buildEvent(match, matchInfo, teamId));
+    events.push(await buildEvent(match, matchInfo, teamId, type));
   }
   if (!events.length) return null;
 
   // Debug vor createEvents
   events.forEach((e, i) => console.log(`Event ${i} summary: "${e.title}"`));
 
+  // Teaminfo aus teams.json holen
+  const teams = require('../teams.json');
+  const team = teams.find(t => Number(t.id) === Number(teamId));
+  
+  const teamName = team?.name || 'Basketball Team';
+  
+  const typeLabel = type === 'home' ? ' - Heimspiele' : 
+                    type === 'away' ? ' - Auswaertsspiele' : '';
+  
+  const calendarName = sanitize(`${teamName}${typeLabel}`);
+
   return new Promise((resolve, reject) => {
     createEvents(events, (error, value) => {
-      if (error) reject(error);
-      else resolve(value);
+      if (error) {
+        reject(error);
+      } else {
+        // Kalendername und Timezone manuell hinzufügen
+        const withCalName = `X-WR-CALNAME:${calendarName}\r\nX-WR-TIMEZONE:Europe/Berlin\r\nX-WR-CALDESC:Basketball-Spielplan generiert von bbb-ics-generator\r\n${value}`;
+        resolve(withCalName);
+      }
     });
   });
 }
