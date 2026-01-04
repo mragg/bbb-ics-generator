@@ -12,9 +12,16 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,8 +40,15 @@ jobs:
       - name: Generate HTML
         run: npm run generate-html
 
-      - name: List output (debug)
-        run: ls -l generated/
+      - name: List generated files (debug)
+        run: |
+          echo "=== Contents of generated/ ==="
+          ls -la generated/
+          echo "=== ICS files ==="
+          find generated/ -name "*.ics" -ls
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -42,4 +56,5 @@ jobs:
           path: ./generated
           
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
