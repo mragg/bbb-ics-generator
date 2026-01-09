@@ -24,6 +24,34 @@ function getTeamNameForDescription(teamObj) {
   return teamObj?.teamname || 'Unbekannt';
 }
 
+// ICS-Escape für manuell eingefügte Felder (nach RFC 5545)
+function icsEscape(text) {
+  if (!text) return '';
+  return text
+    .replace(/\\/g, '\\\\')  // Backslash → \\
+    .replace(/;/g, '\\;')    // Semikolon → \;
+    .replace(/,/g, '\\,')    // Komma → \,
+    .replace(/\n/g, '\\n')   // Newline → \n
+    .replace(/\r/g, '');     // Carriage Return entfernen
+}
+
+// HTML-Version für X-ALT-DESC erstellen
+function createHtmlDescription(descriptionLines, feld) {
+  const html = `<!DOCTYPE HTML><HTML><HEAD><META CHARSET="UTF-8"></HEAD><BODY>
+<p><strong>${descriptionLines[0]}</strong></p>
+<p>${descriptionLines[1]}</p>
+<p><strong>Spiel ${descriptionLines[2].split(' ')[1]}</strong></p>
+<p>${descriptionLines[3]}<br>${descriptionLines[4]}</p>
+${feld.bezeichnung ? `<p><strong>Halle:</strong> ${feld.bezeichnung}</p>` : ''}
+${feld.strasse && feld.ort ? `<p><strong>Adresse:</strong> ${feld.strasse}, ${feld.plz} ${feld.ort}</p>` : ''}
+<p><strong>${descriptionLines[descriptionLines.length - 2]}</strong></p>
+<p><em>${descriptionLines[descriptionLines.length - 1]}</em></p>
+</BODY></HTML>`;
+  
+  // Für ICS: Zeilenumbrüche entfernen und escapen
+  return icsEscape(html.replace(/\r?\n/g, ''));
+}
+
 async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const homeTeamObj = matchInfo?.homeTeam || match.homeTeam || {};
   const guestTeamObj = matchInfo?.guestTeam || match.guestTeam || {};
@@ -41,10 +69,10 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const isHome = homeTeamId === ownTeamId;
   const isAway = guestTeamId === ownTeamId;
 
-  // Prefix nur bei "all" Kalender
+  // Prefix mit Emojis
   let prefix = '';
   if (calendarType === 'all') {
-    prefix = isHome ? '🏠 ' : isAway ? '🚗 ' : '🏀 ';
+    prefix = isHome ? '🏠 ' : isAway ? '✈️ ' : '';
   }
 
   const summary = `${prefix}${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
@@ -68,7 +96,8 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     ? `${feld.strasse}, ${feld.plz} ${feld.ort}, Deutschland`
     : 'Ort unbekannt';
 
-  const description = [
+  // Description als Array mit echten Zeilenumbrüchen
+  const descriptionLines = [
     `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
     `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
     `Spiel ${matchInfo?.matchNo || match.matchNo || '?'}`,
@@ -78,15 +107,22 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     feld.strasse && feld.ort ? `${feld.strasse}, ${feld.plz} ${feld.ort}` : '',
     `Anpfiff: ${formatKickoff(dateStr, timeStr)}`,
     `Update: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`,
-  ].filter(Boolean).join('\n');
+  ].filter(Boolean);
 
-  // Trigger validieren, Fallback einbauen
+  // Plain Text mit echten Zeilenumbrüchen (ics library macht das escaping)
+  const description = descriptionLines.join('\n');
+  
+  // HTML-Version für Outlook/Thunderbird (mit Escaping!)
+  const htmlDescription = createHtmlDescription(descriptionLines, feld);
+
+  // Trigger validieren
   const alarmTriggerMinutes = isHome ? 30 : 60;
 
   const event = {
     uid: `${match.matchId}@basketball-bund.net`,
     title: summaryClean,
     description,
+    htmlDescription, // Temporär für später
     start: dateToArr(dtstart),
     startInputType: 'local',
     startOutputType: 'local',
@@ -129,32 +165,71 @@ async function generateICS(matches, details, teamId, type = 'all') {
   
   const calendarName = `${teamName}${typeLabel}`;
 
+  // HTML-Descriptions extrahieren
+  const htmlDescriptions = events.map(e => e.htmlDescription);
+  
+  // htmlDescription aus Events entfernen
+  events.forEach(e => delete e.htmlDescription);
+
   return new Promise((resolve, reject) => {
     createEvents(events, (error, value) => {
       if (error) {
         reject(error);
       } else {
-        // Header korrekt einfügen
-        const lines = value.split('\n');
-        const vcalendarIndex = lines.findIndex(line => line.trim() === 'BEGIN:VCALENDAR');
+        // ICS-Inhalt Zeile für Zeile bearbeiten
+        const lines = value.split('\r\n');
+        const modifiedLines = [];
+        let eventIndex = -1;
+        let inEvent = false;
         
-        if (vcalendarIndex !== -1) {
-          // Füge Header nach BEGIN:VCALENDAR ein
-          const header = [
-            ...lines.slice(0, vcalendarIndex + 1),
-            'PRODID:-//bbb-ics-generator//DE',
-            'METHOD:PUBLISH',
-            'X-WR-CALNAME:' + calendarName,
-            'X-WR-TIMEZONE:Europe/Berlin',
-            'X-WR-CALDESC:Basketball-Spielplan',
-            ...lines.slice(vcalendarIndex + 1)
-          ];
-          resolve(header.join('\r\n'));
-        } else {
-          // Fallback: Füge vor dem Content ein
-          const withHeaders = `X-WR-CALNAME:${calendarName}\r\nX-WR-TIMEZONE:Europe/Berlin\r\nX-WR-CALDESC:Basketball-Spielplan\r\n${value}`;
-          resolve(withHeaders);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          
+          // Calendar Header einfügen
+          if (line === 'BEGIN:VCALENDAR') {
+            modifiedLines.push(line);
+            modifiedLines.push('VERSION:2.0');
+            modifiedLines.push('PRODID:-//bbb-ics-generator//DE');
+            modifiedLines.push('CALSCALE:GREGORIAN');
+            modifiedLines.push('METHOD:PUBLISH');
+            modifiedLines.push('X-WR-CALNAME:' + icsEscape(calendarName));
+            modifiedLines.push('X-WR-TIMEZONE:Europe/Berlin');
+            modifiedLines.push('X-WR-CALDESC:Basketball-Spielplan');
+            continue;
+          }
+          
+          // Überspringe automatisch generierte Header
+          if (line.startsWith('VERSION:') || 
+              line.startsWith('PRODID:') || 
+              line.startsWith('CALSCALE:') || 
+              line.startsWith('METHOD:')) {
+            continue; // Wir haben sie schon manuell eingefügt
+          }
+          
+          // Event-Zähler
+          if (line === 'BEGIN:VEVENT') {
+            inEvent = true;
+            eventIndex++;
+          }
+          
+          // X-ALT-DESC nach DESCRIPTION einfügen
+          if (inEvent && line.startsWith('DESCRIPTION:')) {
+            modifiedLines.push(line);
+            // HTML-Version hinzufügen (bereits escaped!)
+            if (htmlDescriptions[eventIndex]) {
+              modifiedLines.push('X-ALT-DESC;FMTTYPE=text/html:' + htmlDescriptions[eventIndex]);
+            }
+            continue;
+          }
+          
+          if (line === 'END:VEVENT') {
+            inEvent = false;
+          }
+          
+          modifiedLines.push(line);
         }
+        
+        resolve(modifiedLines.join('\r\n'));
       }
     });
   });
