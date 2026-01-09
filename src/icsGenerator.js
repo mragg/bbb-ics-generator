@@ -176,11 +176,11 @@ async function generateICS(matches, details, teamId, type = 'all') {
       if (error) {
         reject(error);
       } else {
-        // ICS-Inhalt Zeile für Zeile bearbeiten
         const lines = value.split('\r\n');
         const modifiedLines = [];
         let eventIndex = -1;
         let inEvent = false;
+        let inAlarm = false;
         
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
@@ -203,7 +203,7 @@ async function generateICS(matches, details, teamId, type = 'all') {
               line.startsWith('PRODID:') || 
               line.startsWith('CALSCALE:') || 
               line.startsWith('METHOD:')) {
-            continue; // Wir haben sie schon manuell eingefügt
+            continue;
           }
           
           // Event-Zähler
@@ -212,18 +212,39 @@ async function generateICS(matches, details, teamId, type = 'all') {
             eventIndex++;
           }
           
-          // X-ALT-DESC nach DESCRIPTION einfügen
-          if (inEvent && line.startsWith('DESCRIPTION:')) {
-            modifiedLines.push(line);
-            // HTML-Version hinzufügen (bereits escaped!)
+          if (line === 'END:VEVENT') {
+            inEvent = false;
+          }
+          
+          // Alarm-Tracking
+          if (line === 'BEGIN:VALARM') {
+            inAlarm = true;
+          }
+          
+          if (line === 'END:VALARM') {
+            inAlarm = false;
+          }
+          
+          // X-ALT-DESC nach DESCRIPTION einfügen (nur im EVENT, nicht im ALARM)
+          // Wichtig: Line Folding beachten - fortgesetzte Zeilen beginnen mit Whitespace
+          if (inEvent && !inAlarm && line.startsWith('DESCRIPTION:')) {
+            // Sammle alle DESCRIPTION-Zeilen (inkl. fortgesetzte Zeilen)
+            const descriptionLines = [line];
+            
+            // Line Folding: Zeilen die mit Space oder Tab beginnen gehören zur vorherigen Property
+            while (i + 1 < lines.length && (lines[i + 1].startsWith(' ') || lines[i + 1].startsWith('\t'))) {
+              i++;
+              descriptionLines.push(lines[i]);
+            }
+            
+            // Alle DESCRIPTION-Zeilen ausgeben
+            descriptionLines.forEach(l => modifiedLines.push(l));
+            
+            // Jetzt X-ALT-DESC hinzufügen (nach der kompletten DESCRIPTION)
             if (htmlDescriptions[eventIndex]) {
               modifiedLines.push('X-ALT-DESC;FMTTYPE=text/html:' + htmlDescriptions[eventIndex]);
             }
             continue;
-          }
-          
-          if (line === 'END:VEVENT') {
-            inEvent = false;
           }
           
           modifiedLines.push(line);
