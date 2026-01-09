@@ -78,7 +78,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     feld.strasse && feld.ort ? `${feld.strasse}, ${feld.plz} ${feld.ort}` : '',
     `Anpfiff: ${formatKickoff(dateStr, timeStr)}`,
     `Update: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}`,
-  ].filter(Boolean).join(' | ');
+  ].filter(Boolean).join('\\n');
 
   // Trigger validieren, Fallback einbauen
   const alarmTriggerMinutes = isHome ? 30 : 60;
