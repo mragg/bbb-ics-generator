@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ICS_DIR = path.resolve(__dirname, '../generated');
+const outputDir = path.join(process.cwd(), 'generated');
 if (!fs.existsSync(ICS_DIR)) fs.mkdirSync(ICS_DIR, { recursive: true });
 
 function saveICS(teamId, type, data) {
