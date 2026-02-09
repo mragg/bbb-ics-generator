@@ -42,13 +42,15 @@ jobs:
 
       - name: Collect and Move ICS files
         run: |
-          echo "Sammle generierte Dateien ein..."
-          # Suche im gesamten Projekt nach .ics Dateien und kopiere sie nach ./generated
-          # Wir nutzen -exec cp, um alles in den flachen Ordner zu schieben
-          find . -name "*.ics" -type f -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \;
+          echo "Suche ICS-Dateien im gesamten Runner-Verzeichnis..."
+          # Wir suchen ab dem Root-Verzeichnis des Runners, um die 'verschollenen' Dateien zu finden
+          # und kopieren sie aktiv in unseren Workspace-Ordner 'generated'
+          mkdir -p generated
+          find .. -name "*.ics" -type f -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \; || true
           
-          # Sicherheitscheck für Pfade, die oft bei 'path.resolve' entstehen
-          if [ -d "src/generated" ]; then cp -v src/generated/*.ics ./generated/ 2>/dev/null || true; fi
+          # Falls sie im aktuellen Verzeichnis liegen:
+          find . -name "*.ics" -type f -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \; || true
+
 
       - name: Generate HTML Page
         run: npm run generate-html
