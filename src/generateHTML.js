@@ -3,8 +3,7 @@ const path = require('path');
 function makeWebcalLink(filename) {
   const baseUrl = 'https://mragg.github.io/bbb-ics-generator/';
   const icsUrl = baseUrl + filename;
-  # return icsUrl.replace(/^https:/, 'webcal:');
-  return icsUrl.replace(/^webcal:/, 'https:');
+  return icsUrl.replace(/^https:/, 'webcal:');
 }
 
 function genHTML() {
