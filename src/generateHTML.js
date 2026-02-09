@@ -1,9 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 function makeWebcalLink(filename) {
-  const baseUrl = 'https://olieder.github.io/bbb-ics-generator/';
+  const baseUrl = 'https://mragg.github.io/bbb-ics-generator/';
   const icsUrl = baseUrl + filename;
-  return icsUrl.replace(/^https:/, 'webcal:');
+  # return icsUrl.replace(/^https:/, 'webcal:');
+  return icsUrl.replace(/^webcal:/, 'https:');
 }
 
 function genHTML() {
