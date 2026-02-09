@@ -4,8 +4,8 @@ on:
   push:
     branches: [ main ]
   schedule:
-    - cron: '0 */6 * * *'  # Läuft alle 6 Stunden automatisch
-  workflow_dispatch:      # Ermöglicht manuelles Starten unter "Actions"
+    - cron: '0 */6 * * *'  # Alle 6 Stunden automatisch
+  workflow_dispatch:      # Ermöglicht manuelles Starten
 
 permissions:
   contents: read
@@ -40,19 +40,25 @@ jobs:
       - name: Generate ICS files
         run: npm run update
 
+      - name: Collect and Move ICS files
+        run: |
+          echo "Sammle generierte Dateien ein..."
+          # Suche im gesamten Projekt nach .ics Dateien und kopiere sie nach ./generated
+          # Wir nutzen -exec cp, um alles in den flachen Ordner zu schieben
+          find . -name "*.ics" -type f -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \;
+          
+          # Sicherheitscheck für Pfade, die oft bei 'path.resolve' entstehen
+          if [ -d "src/generated" ]; then cp -v src/generated/*.ics ./generated/ 2>/dev/null || true; fi
+
       - name: Generate HTML Page
         run: npm run generate-html
 
-      - name: Move ICS files to generated
+      - name: Debug - Final Check
         run: |
-          echo "Suche generierte ICS Dateien..."
-          # Findet alle ICS Dateien (außer in node_modules) und kopiert sie nach ./generated
-          find . -name "*.ics" -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \;
-          
-      - name: Debug - List Files
-        run: |
-          echo "Finale Dateiliste im Deployment-Ordner (generated):"
-          ls -R generated/
+          echo "=== Finale Dateiliste im Deployment-Ordner (generated) ==="
+          ls -la generated/
+          echo "=== Suche nach ics-Inhalt in der index.html ==="
+          grep "ics" generated/index.html || echo "Keine ICS-Links in index.html gefunden"
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
