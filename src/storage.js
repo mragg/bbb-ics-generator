@@ -1,17 +1,24 @@
 const fs = require('fs');
 const path = require('path');
 
-const outputDir = path.join(process.cwd(), 'generated');
-if (!fs.existsSync(ICS_DIR)) fs.mkdirSync(ICS_DIR, { recursive: true });
+// Wir nutzen process.cwd(), damit 'generated' immer im Hauptordner landet
+const ICS_DIR = path.join(process.cwd(), 'generated');
 
-function saveICS(teamId, type, data) {
-  const filepath = path.join(ICS_DIR, `${teamId}_${type}.ics`);
-  return filepath;
+// Falls der Ordner nicht existiert, erstellen wir ihn
+if (!fs.existsSync(ICS_DIR)) {
+    fs.mkdirSync(ICS_DIR, { recursive: true });
 }
 
-function readICS(teamId, type) {
-  const file = path.join(ICS_DIR, `${teamId}_${type}.ics`);
-  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+/**
+ * Speichert den ICS String in eine Datei
+ */
+function saveICS(teamId, type, content) {
+    const filename = `${teamId}_${type}.ics`;
+    const filePath = path.join(ICS_DIR, filename);
+    
+    fs.writeFileSync(filePath, content);
+    console.log(`[DEBUG] ICS gespeichert: ${filename} in ${filePath}`);
+    return filename;
 }
 
-module.exports = { ICS_DIR, saveICS, readICS };
+module.exports = { saveICS, ICS_DIR };
