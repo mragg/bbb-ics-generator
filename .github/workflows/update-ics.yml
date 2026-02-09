@@ -43,9 +43,15 @@ jobs:
       - name: Generate HTML Page
         run: npm run generate-html
 
+      - name: Move ICS files to generated
+        run: |
+          echo "Suche generierte ICS Dateien..."
+          # Findet alle ICS Dateien (außer in node_modules) und kopiert sie nach ./generated
+          find . -name "*.ics" -not -path "*/node_modules/*" -exec cp -v {} ./generated/ \;
+          
       - name: Debug - List Files
         run: |
-          echo "Dateiliste im Ordner generated:"
+          echo "Finale Dateiliste im Deployment-Ordner (generated):"
           ls -R generated/
 
       - name: Setup GitHub Pages
