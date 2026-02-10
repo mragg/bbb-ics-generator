@@ -23,6 +23,7 @@ function genHTML() {
 <body>
   <h1>Neunkirchen Baskets Kalender – Übersicht</h1>
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
+  <p>Um einen Kalender per ICS-Link zu abonnieren, kopieren Sie zunächst die URL der gewünschten Kalenderdatei (Endung „.ics“). Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von „Link kopieren“. Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls „Link kopieren“. Öffnen Sie anschließend Ihre Kalender-Anwendung, wählen Sie die Option „Kalender hinzufügen“ und danach „Aus dem Internet“ bzw. „Per URL“. Fügen Sie den kopierten Link in das vorgesehene Feld ein und bestätigen Sie das Abonnement. Der Kalender wird anschließend automatisch synchronisiert und aktualisiert sich selbst, sobald Änderungen vorgenommen werden.</p>
   ${teams.map(t => `
     <div class="team">
       <strong>${t.teamName}</strong> (${t.ageGroup})<br/>
