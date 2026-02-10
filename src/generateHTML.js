@@ -25,34 +25,29 @@ function genHTML() {
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
 <div class="step-box">
   <strong>Schritt 1:</strong>
-  <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+  <p>
+    Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“). Auf Smartphones oder Tablets
+    geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.
+    Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls
+    <strong>„Link kopieren“</strong>.
+  </p>
 </div>
 
 <div class="step-box">
   <strong>Schritt 2:</strong>
   <p>
-    Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von
-    <strong>„Link kopieren“</strong>. Am Computer klicken Sie mit der rechten Maustaste auf den Link und
-    wählen ebenfalls <strong>„Link kopieren“</strong>.
-  </p>
-</div>
-
-<div class="step-box">
-  <strong>Schritt 3:</strong>
-  <p>
-    Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>, wählen Sie die Option
+    Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong> und wählen Sie die Option
     <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw.
     <strong>„Per URL“</strong>.
   </p>
 </div>
 
 <div class="step-box">
-  <strong>Schritt 4:</strong>
-  <p>
-    Fügen Sie den kopierten Link in das vorgesehene Feld ein und bestätigen Sie das Abonnement.
-    Der Kalender wird danach automatisch synchronisiert und aktualisiert sich selbst, sobald Änderungen
-    vorgenommen werden.
-  </p>
+  <strong>Schritt 3:</strong>
+  <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+  <p>Bestätigen Sie anschließend das Abonnement.</p>
+  <p>Der Kalender wird danach automatisch synchronisiert.</p>
+  <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
 </div>
 
 <style>
@@ -75,10 +70,13 @@ function genHTML() {
   font-size: 1.1em;
 }
 .step-box p {
-  margin: 0;
+  margin: 0.3em 0;
   line-height: 1.5em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 </style>
+
 
   ${teams.map(t => `
     <div class="team">
