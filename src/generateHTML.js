@@ -27,9 +27,9 @@ function genHTML() {
   <strong>Schritt 1:</strong>
   <p>
     Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“). Auf Smartphones oder Tablets
-    geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.
-    Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls
-    <strong>„Link kopieren“</strong>.
+    geschieht dies durch langes Drücken auf den gewünschten Button und Auswahl von <strong>„Link kopieren“</strong>
+    Am Computer klicken Sie mit der rechten Maustaste auf den gewünschten Button und wählen ebenfalls
+    <strong>„Link kopieren“</strong>
   </p>
 </div>
 
@@ -38,7 +38,7 @@ function genHTML() {
   <p>
     Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong> und wählen Sie die Option
     <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw.
-    <strong>„Per URL“</strong>.
+    <strong>„Per URL“</strong>
   </p>
 </div>
 
