@@ -23,59 +23,77 @@ function genHTML() {
 <body>
   <h1>Neunkirchen Baskets Kalender – Übersicht</h1>
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
-<div class="step-box">
-  <strong>Schritt 1:</strong>
-  <p>
-    Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“). Auf Smartphones oder Tablets
-    geschieht dies durch langes Drücken auf den gewünschten Button und Auswahl von <strong>„Link kopieren“</strong>
-    Am Computer klicken Sie mit der rechten Maustaste auf den gewünschten Button und wählen ebenfalls
-    <strong>„Link kopieren“</strong>
-  </p>
-</div>
-
-<div class="step-box">
-  <strong>Schritt 2:</strong>
-  <p>
-    Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong> und wählen Sie die Option
-    <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw.
-    <strong>„Per URL“</strong>
-  </p>
-</div>
-
-<div class="step-box">
-  <strong>Schritt 3:</strong>
-  <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
-  <p>Bestätigen Sie anschließend das Abonnement.</p>
-  <p>Der Kalender wird danach automatisch synchronisiert.</p>
-  <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
-</div>
-
 <style>
 .step-box {
   border-left: 4px solid #007acc;
-  padding: 1em 1em;
   margin-bottom: 1em;
-  background: #f7f9fb;
   border-radius: 4px;
+  background: #f7f9fb;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
 }
-.step-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-}
-.step-box strong {
-  display: block;
-  margin-bottom: 0.5em;
+
+.step-header {
+  padding: 1em;
+  cursor: pointer;
+  font-weight: bold;
   font-size: 1.1em;
+  background: #e1f0ff;
+  transition: background 0.2s;
 }
-.step-box p {
-  margin: 0.3em 0;
+
+.step-header:hover {
+  background: #cce4ff;
+}
+
+.step-content {
+  padding: 0 1em 1em 1em;
+  display: none; /* standardmäßig eingeklappt */
   line-height: 1.5em;
+}
+
+.step-content p {
+  margin: 0.3em 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 </style>
+
+<div class="step-box">
+  <div class="step-header">Schritt 1: URL kopieren</div>
+  <div class="step-content">
+    <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+    <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
+    <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
+  </div>
+</div>
+
+<div class="step-box">
+  <div class="step-header">Schritt 2: Kalender hinzufügen</div>
+  <div class="step-content">
+    <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
+    <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
+  </div>
+</div>
+
+<div class="step-box">
+  <div class="step-header">Schritt 3: Link einfügen & Abonnement bestätigen</div>
+  <div class="step-content">
+    <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+    <p>Bestätigen Sie anschließend das Abonnement.</p>
+    <p>Der Kalender wird danach automatisch synchronisiert.</p>
+    <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.step-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const content = header.nextElementSibling;
+    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+  });
+});
+</script>
 
 
   ${teams.map(t => `
