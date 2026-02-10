@@ -32,6 +32,36 @@
   {
     "id": "161690",
     "name": "TV Neunkirchen",
+    "ageGroup": "U10"
+  },
+  {
+    "id": "276298",
+    "name": "TV Neunkirchen",
     "ageGroup": "U18"
+  },
+  {
+    "id": "161387",
+    "name": "TV Neunkirchen 2",
+    "ageGroup": "U14"
+  },
+  {
+    "id": "161199",
+    "name": "TV Neunkirchen 2",
+    "ageGroup": "U12"
+  },
+  {
+    "id": "276318",
+    "name": "TV Neunkirchen 2",
+    "ageGroup": "U10"
+  },
+  {
+    "id": "276319",
+    "name": "TV Neunkirchen 2",
+    "ageGroup": "Herren"
+  },
+  {
+    "id": "319432",
+    "name": "TV Neunkirchen e. V. 2",
+    "ageGroup": "U16"
   }
 ]
