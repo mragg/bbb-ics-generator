@@ -21,7 +21,7 @@ function genHTML() {
   </style>
 </head>
 <body>
-  <h1>Basketball ICS Kalender – Übersicht</h1>
+  <h1>Neunkirchen Baskets Kalender – Übersicht</h1>
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
   ${teams.map(t => `
     <div class="team">
