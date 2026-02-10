@@ -23,31 +23,62 @@ function genHTML() {
 <body>
   <h1>Neunkirchen Baskets Kalender – Übersicht</h1>
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
-<ul>
-  <li>
-    <strong>Schritt 1:</strong>
-    Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).
-  </li>
-  <li>
-    <strong>Schritt 2:</strong>
-    Auf Smartphones oder Tablets durch langes Drücken auf den Link und Auswahl von
-    <strong>„Link kopieren“</strong>.
-    Am Computer per Rechtsklick auf den Link und Auswahl von
-    <strong>„Link kopieren“</strong>.
-  </li>
-  <li>
-    <strong>Schritt 3:</strong>
-    Öffnen Sie anschließend Ihre Kalender-Anwendung, wählen Sie die Option
-    <strong>„Kalender hinzufügen“</strong> und dann
-    <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.
-  </li>
-  <li>
-    <strong>Schritt 4:</strong>
+<div class="step-box">
+  <strong>Schritt 1:</strong>
+  <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+</div>
+
+<div class="step-box">
+  <strong>Schritt 2:</strong>
+  <p>
+    Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von
+    <strong>„Link kopieren“</strong>. Am Computer klicken Sie mit der rechten Maustaste auf den Link und
+    wählen ebenfalls <strong>„Link kopieren“</strong>.
+  </p>
+</div>
+
+<div class="step-box">
+  <strong>Schritt 3:</strong>
+  <p>
+    Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>, wählen Sie die Option
+    <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw.
+    <strong>„Per URL“</strong>.
+  </p>
+</div>
+
+<div class="step-box">
+  <strong>Schritt 4:</strong>
+  <p>
     Fügen Sie den kopierten Link in das vorgesehene Feld ein und bestätigen Sie das Abonnement.
-    Der Kalender wird danach automatisch synchronisiert und aktualisiert sich selbst,
-    sobald Änderungen vorgenommen werden.
-  </li>
-</ul>
+    Der Kalender wird danach automatisch synchronisiert und aktualisiert sich selbst, sobald Änderungen
+    vorgenommen werden.
+  </p>
+</div>
+
+<style>
+.step-box {
+  border-left: 4px solid #007acc;
+  padding: 1em 1em;
+  margin-bottom: 1em;
+  background: #f7f9fb;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.step-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+.step-box strong {
+  display: block;
+  margin-bottom: 0.5em;
+  font-size: 1.1em;
+}
+.step-box p {
+  margin: 0;
+  line-height: 1.5em;
+}
+</style>
 
   ${teams.map(t => `
     <div class="team">
