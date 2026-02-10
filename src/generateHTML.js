@@ -23,37 +23,32 @@ function genHTML() {
 <body>
   <h1>Neunkirchen Baskets Kalender – Übersicht</h1>
   <p>Kalender werden automatisch alle 2-6h aktualisiert. Stand: ${new Date().toLocaleString('de-DE')}</p>
- <p>
-<strong>Kalender per ICS-Link abonnieren</strong>
-</p>
+<ul>
+  <li>
+    <strong>Schritt 1:</strong>
+    Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).
+  </li>
+  <li>
+    <strong>Schritt 2:</strong>
+    Auf Smartphones oder Tablets durch langes Drücken auf den Link und Auswahl von
+    <strong>„Link kopieren“</strong>.
+    Am Computer per Rechtsklick auf den Link und Auswahl von
+    <strong>„Link kopieren“</strong>.
+  </li>
+  <li>
+    <strong>Schritt 3:</strong>
+    Öffnen Sie anschließend Ihre Kalender-Anwendung, wählen Sie die Option
+    <strong>„Kalender hinzufügen“</strong> und dann
+    <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.
+  </li>
+  <li>
+    <strong>Schritt 4:</strong>
+    Fügen Sie den kopierten Link in das vorgesehene Feld ein und bestätigen Sie das Abonnement.
+    Der Kalender wird danach automatisch synchronisiert und aktualisiert sich selbst,
+    sobald Änderungen vorgenommen werden.
+  </li>
+</ul>
 
-<p>
-Um einen Kalender per ICS-Link zu abonnieren, kopieren Sie zunächst die URL der gewünschten Kalenderdatei
-(Endung „.ics“).
-</p>
-
-<p>
-<strong>URL kopieren:</strong>
-Auf Smartphones oder Tablets durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.
-Am Computer per Rechtsklick auf den Link und Auswahl von <strong>„Link kopieren“</strong>.
-</p>
-
-<p>
-<strong>Kalender hinzufügen:</strong>
-Öffnen Sie Ihre <strong>Kalender-Anwendung</strong> und wählen Sie <strong>„Kalender hinzufügen“</strong>.
-</p>
-
-<p>
-<strong>Abonnement erstellen:</strong>
-Wählen Sie <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>,
-fügen Sie den kopierten Link ein und bestätigen Sie das Abonnement.
-</p>
-
-<p>
-<strong>Automatische Aktualisierung:</strong>
-Der Kalender wird anschließend automatisch synchronisiert und aktualisiert sich selbst,
-sobald Änderungen vorgenommen werden.
-</p>
   ${teams.map(t => `
     <div class="team">
       <strong>${t.teamName}</strong> (${t.ageGroup})<br/>
