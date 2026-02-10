@@ -13,7 +13,7 @@ function genHTML() {
   const content = `<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8"><title>Basketball Kalender Übersicht</title>
+  <meta charset="UTF-8"><title>Neunkirchen Baskets Kalender Übersicht</title>
   <style>
     body{max-width:700px;margin:30px auto;font-family:sans-serif}
     .team{background:#fff;padding:20px;margin:15px 0;border-radius:6px;box-shadow:0 2px 10px #ddd}
