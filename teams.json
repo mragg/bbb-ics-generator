@@ -12,6 +12,11 @@
   {
     "id": "161395",
     "name": "TV Neunkirchen",
+    "ageGroup": "U12"
+  },
+  {
+    "id": "159756",
+    "name": "TV Neunkirchen",
     "ageGroup": "U18"
   }
 ]
