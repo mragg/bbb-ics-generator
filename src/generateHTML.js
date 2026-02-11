@@ -246,14 +246,13 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
         ${t.teamName}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
       </div>
 
-      <div class="team-content" aria-hidden="true">
-  <button class="overlay-close" aria-label="Schließen">&times;</button>
-  <div class="team-content-preview">
-    <p><strong>${t.name}</strong></p>
-    <p>Liga: <strong>${t.league}</strong></p>
-    <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-  </div>
-</div>
+     <div class="team-content" aria-hidden="true">
+        <button class="overlay-close" aria-label="Schließen">&times;</button>
+        <div class="team-content-preview">
+          <p><strong>${t.teamName}, ${t.league}</strong></p>
+          <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
+        </div>
+
 
 
         <div class="info-block">
