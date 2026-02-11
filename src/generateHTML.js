@@ -94,6 +94,15 @@ header {
   margin-top: 20px;
   position: relative;
 }
+.team-content {
+  position: absolute;               /* absolut positioniert */
+  background: var(--tvn-white);     /* Hintergrundfarbe */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15); /* Schatten für Overlay */
+  z-index: 9999;                    /* immer ganz vorne */
+  display: none;                    /* standardmäßig versteckt */
+  padding: 15px 20px;               /* Innenabstand */
+  border-radius: 8px;               /* optional: abgerundete Ecken */
+}
 
 .team-card {
   background: var(--tvn-white);
@@ -122,18 +131,6 @@ header {
   z-index: 2;
 }
 
-.team-content {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background: var(--tvn-white);
-  padding: 15px 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  z-index: 9999;          /* immer über allem */
-  pointer-events: auto;   /* wichtig für Klicks */
-}
 
 
 .team-content .buttons a {
@@ -276,40 +273,39 @@ document.querySelectorAll('.step-header').forEach(header => {
   });
 });
 const teamHeaders = document.querySelectorAll('.team-header');
-let activeContent = null;
+const teamsContainer = document.querySelector('.teams-container');
 
 teamHeaders.forEach(header => {
   header.addEventListener('click', (e) => {
     e.stopPropagation();
-    const content = header.nextElementSibling;
 
-    if(activeContent === content){
-      content.style.display = 'none';
-      content.style.zIndex = 999; // wieder zurücksetzen
-      activeContent = null;
-      return;
+    let content = header.dataset.panel
+      ? document.querySelector(`#${header.dataset.panel}`)
+      : document.createElement('div');
+
+    if (!header.dataset.panel) {
+      content.classList.add('team-content');
+      content.id = `panel-${header.dataset.index}`;
+      content.innerHTML = header.nextElementSibling.innerHTML; // kopiert Inhalt
+      header.dataset.panel = content.id;
+      teamsContainer.appendChild(content);
     }
 
-    // Alle anderen schließen und z-index zurücksetzen
-    document.querySelectorAll('.team-content').forEach(c => {
-      c.style.display = 'none';
-      c.style.zIndex = 999;
-    });
+    const rect = header.getBoundingClientRect();
+    const containerRect = teamsContainer.getBoundingClientRect();
+    content.style.top = `${rect.bottom - containerRect.top}px`;
+    content.style.left = `${rect.left - containerRect.left}px`;
+    content.style.width = `${rect.width}px`;
 
-    // Dieses Panel öffnen und nach vorne bringen
-    content.style.display = 'block';
-    content.style.zIndex = 9999; // ganz nach vorne
-    activeContent = content;
+    // Toggle
+    const isOpen = content.style.display === 'block';
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    content.style.display = isOpen ? 'none' : 'block';
   });
 });
 
-// Klick irgendwo außerhalb → alles schließen
 document.addEventListener('click', () => {
-  document.querySelectorAll('.team-content').forEach(c => {
-    c.style.display = 'none';
-    c.style.zIndex = 999;
-  });
-  activeContent = null;
+  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 });
 
 
