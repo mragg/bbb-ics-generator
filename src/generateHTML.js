@@ -36,7 +36,11 @@ body {
   font-family: 'Inter', sans-serif;
   background: var(--tvn-gray);
   color: #222;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
 }
+*, *:before, *:after { box-sizing: inherit; }
 
 /* HEADER */
 header {
@@ -94,17 +98,22 @@ header {
   margin-top: 20px;
   position: relative;
 }
+
+/* Overlay (Team-Content) — standard: fixed so it doesn't affect layout */
 .team-content {
-  position: absolute;
+  position: fixed;
   background: #fff;
   padding: 15px 20px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   border-radius: 8px;
   z-index: 9999;
   display: none;
+  box-sizing: border-box;
+  max-height: 80vh;
+  overflow: auto;
 }
 
-
+/* Team card */
 .team-card {
   background: var(--tvn-white);
   border-radius: 8px;
@@ -115,6 +124,7 @@ header {
   display: flex;
   flex-direction: column;
   z-index: 1;
+  min-width: 200px;
 }
 
 .team-card:hover {
@@ -132,7 +142,13 @@ header {
   z-index: 2;
 }
 
-
+.team-content .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: flex-start;
+}
 
 .team-content .buttons a {
   display: inline-block;
@@ -151,36 +167,38 @@ header {
   background: var(--tvn-red);
   transform: translateY(-2px);
 }
+
+/* Info button & popup */
 .info-btn {
   background: var(--tvn-gray);
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   font-weight: bold;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   z-index: 10001;
+  flex: 0 0 auto;
 }
 
 .info-popup {
   display: none;
   position: absolute;
-  top: 30px;
+  top: 36px;
   left: 0;
   background: #fff;
   padding: 10px;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  width: 250px;
+  width: 280px;
   font-size: 0.85rem;
   z-index: 10000;
+  box-sizing: border-box;
 }
-
-
 
 /* STEP BOXEN */
 .step-box {
@@ -220,6 +238,36 @@ footer {
   padding: 30px 10px;
   font-size: 0.8rem;
   color: #777;
+}
+
+/* MOBILE / SMALL SCREENS: make overlay full-width-ish and buttons stacked */
+@media (max-width: 600px) {
+  .team-content {
+    left: 5% !important;
+    width: 90% !important;
+    top: 12% !important;
+    bottom: auto !important;
+    max-height: 76vh;
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .team-content .buttons {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .team-content .buttons a {
+    width: 100%;
+    text-align: center;
+    margin: 6px 0;
+  }
+
+  .info-popup {
+    width: calc(90vw - 40px);
+    left: 0;
+    top: 44px;
+  }
 }
 </style>
 
@@ -278,7 +326,7 @@ footer {
       </div>
       <div class="team-content">
         <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-        <div class="buttons" style="display:flex; align-items:flex-start; gap:5px; position:relative;">
+        <div class="buttons" style="display:flex; align-items:flex-start; gap:5px;">
           <!-- Info Button links neben dem ersten Kalender-Link -->
           <button class="info-btn">?</button>
           <div class="info-popup">
@@ -312,85 +360,95 @@ TVN Baskets – Offizielle Kalenderübersicht
   });
 
   // Teams Overlay Accordion
-const teamHeaders = document.querySelectorAll('.team-header');
-let activeContent = null;
+  const teamHeaders = document.querySelectorAll('.team-header');
+  let activeContent = null;
 
-teamHeaders.forEach(header => {
-  const content = header.nextElementSibling;
+  teamHeaders.forEach(header => {
+    const content = header.nextElementSibling;
 
-  // Overlay selbst klickbar machen ohne zu schließen
-  content.addEventListener('click', e => e.stopPropagation());
+    // Overlay selbst klickbar machen ohne zu schließen
+    content.addEventListener('click', e => e.stopPropagation());
 
-  header.addEventListener('click', e => {
-    e.stopPropagation();
+    header.addEventListener('click', e => {
+      e.stopPropagation();
 
-    if(activeContent === content){
-      content.style.display = 'none';
-      activeContent = null;
-      return;
-    }
+      if(activeContent === content){
+        content.style.display = 'none';
+        activeContent = null;
+        return;
+      }
 
-    // Alle anderen Panels schließen
-    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+      // Alle anderen Panels schließen
+      document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Overlay ans body anhängen
-    document.body.appendChild(content);
+      // Overlay ans body anhängen (damit kein Parent-Overflow die Box abschneidet)
+      document.body.appendChild(content);
 
-   // Position relativ zum Viewport + Scroll
-const rect = header.getBoundingClientRect();
+      // Position relativ zum Viewport
+      const rect = header.getBoundingClientRect();
 
-// Wunschbreite (2.2x Header)
-let newWidth = Math.max(rect.width * 2.2, 300);
+      // Wunschbreite (2.2x Header)
+      let newWidth = Math.max(rect.width * 2.2, 300);
 
-// Maximal 95% der Bildschirmbreite erlauben
-const maxWidth = window.innerWidth * 0.95;
-if (newWidth > maxWidth) {
-  newWidth = maxWidth;
-}
+      // Maximal 95% der Bildschirmbreite erlauben (Handy-sicher)
+      const maxWidth = window.innerWidth * 0.95;
+      if (newWidth > maxWidth) {
+        newWidth = maxWidth;
+      }
 
-// Wenn rechts rausgeht → nach links schieben
-let leftPos = rect.left;
-if (leftPos + newWidth > window.innerWidth - 35) {
-  leftPos = window.innerWidth - newWidth - 35;
-}
+      // Abstand (margin) vom rechten Rand — hier einfach einstellbar
+      const margin = 35; // <- Abstand zum Bildschirmrand in px, bei Bedarf ändern
 
-content.style.position = 'fixed';
-content.style.top = rect.bottom + 'px';
-content.style.left = leftPos + 'px';
-content.style.width = newWidth + 'px';
-content.style.display = 'block';
-content.style.zIndex = 9999;
+      // Wenn rechts rausgeht → nach links schieben
+      let leftPos = rect.left;
+      if (leftPos + newWidth > window.innerWidth - margin) {
+        leftPos = window.innerWidth - newWidth - margin;
+      }
+      if (leftPos < margin) leftPos = margin; // nicht bis ganz links drücken
 
+      // Positionieren und anzeigen (fixed so es das Layout nicht verschiebt)
+      content.style.position = 'fixed';
+      content.style.top = rect.bottom + 'px';
+      content.style.left = leftPos + 'px';
+      content.style.width = newWidth + 'px';
+      content.style.display = 'block';
+      content.style.zIndex = 9999;
 
-    activeContent = content;
-  });
-});
-
-// Klick irgendwo außerhalb → alle Panels schließen
-document.addEventListener('click', () => {
-  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
-  activeContent = null;
-});
-
-document.querySelectorAll('.info-btn').forEach(btn => {
-  const popup = btn.nextElementSibling;
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    // Alle anderen Popups schließen
-    document.querySelectorAll('.info-popup').forEach(p => {
-      if(p !== popup) p.style.display = 'none';
+      activeContent = content;
     });
-    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
   });
-});
 
-// Klick außerhalb → alle Popups schließen
-document.addEventListener('click', () => {
-  document.querySelectorAll('.info-popup').forEach(p => p.style.display = 'none');
-});
+  // Klick irgendwo außerhalb → alle Panels schließen
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    activeContent = null;
+  });
 
+  // Info-popup Buttons
+  document.querySelectorAll('.info-btn').forEach(btn => {
+    const popup = btn.nextElementSibling;
+    // Stop propagation on popup so clicks inside it don't close overlays
+    if (popup) popup.addEventListener('click', e => e.stopPropagation());
 
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      // Alle anderen Popups schließen
+      document.querySelectorAll('.info-popup').forEach(p => {
+        if(p !== popup) p.style.display = 'none';
+      });
+      if (popup) popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+    });
+  });
 
+  // Klick außerhalb → Popups schließen
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.info-popup').forEach(p => p.style.display = 'none');
+  });
+
+  // Optional: schließe Popups beim Scrollen (mobile UX)
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('.info-popup').forEach(p => p.style.display = 'none');
+  }, { passive: true });
 </script>
 
 
