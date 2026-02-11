@@ -277,10 +277,11 @@ const teamHeaders = document.querySelectorAll('.team-header');
 let activeContent = null;
 
 teamHeaders.forEach(header => {
-  header.addEventListener('click', () => {
+  header.addEventListener('click', (e) => {
+    e.preventDefault(); // verhindert Focus/Selektions-Probleme
     const content = header.nextElementSibling;
 
-    // Schließen, wenn dasselbe Team erneut geklickt
+    // Klick auf dieselbe Karte → schließen
     if(activeContent === content){
       content.style.display = 'none';
       activeContent = null;
@@ -290,10 +291,18 @@ teamHeaders.forEach(header => {
     // Alle anderen schließen
     document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Dieses öffnen
+    // Dieses Panel öffnen
     content.style.display = 'block';
     activeContent = content;
   });
+});
+
+// Optional: Klick irgendwo anders auf der Seite → Panels schließen
+document.addEventListener('click', (e) => {
+  if(!e.target.classList.contains('team-header') && !e.target.closest('.team-card')){
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    activeContent = null;
+  }
 });
 
 
