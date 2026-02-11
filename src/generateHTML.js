@@ -267,13 +267,7 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-document.querySelectorAll('.step-header').forEach(header => {
-  header.addEventListener('click', () => {
-    const content = header.nextElementSibling;
-    content.style.display = content.style.display === 'block' ? 'none' : 'block';
-  });
-});
- // Step-Boxen Toggle
+  // Step-Boxen Toggle
   document.querySelectorAll('.step-header').forEach(header => {
     header.addEventListener('click', () => {
       const content = header.nextElementSibling;
@@ -319,11 +313,8 @@ document.querySelectorAll('.step-header').forEach(header => {
     document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
     activeContent = null;
   });
-
-
-
-
 </script>
+
 
 </body>
 </html>`;
