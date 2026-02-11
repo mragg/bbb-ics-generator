@@ -273,39 +273,44 @@ document.querySelectorAll('.step-header').forEach(header => {
     content.style.display = content.style.display === 'block' ? 'none' : 'block';
   });
 });
-const teamHeaders = document.querySelectorAll('.team-header');
-let activeContent = null;
+>
+  const teamHeaders = document.querySelectorAll('.team-header');
+  let activeContent = null;
 
-teamHeaders.forEach(header => {
-  header.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const content = header.nextElementSibling; // dein Panel
+  teamHeaders.forEach(header => {
+    header.addEventListener('click', e => {
+      e.stopPropagation();
+      const content = header.nextElementSibling;
 
-    if (activeContent === content) {
-      content.style.display = 'none';
-      activeContent = null;
-      return;
-    }
+      // Panel schließen, wenn es schon offen ist
+      if(activeContent === content){
+        content.style.display = 'none';
+        activeContent = null;
+        return;
+      }
 
-    // alle anderen schließen
-    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+      // Alle anderen Panels schließen
+      document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Panel öffnen
-    const rect = header.getBoundingClientRect();
-    const containerRect = document.querySelector('.teams-container').getBoundingClientRect();
-    content.style.top = `${rect.bottom - containerRect.top}px`;
-    content.style.left = `${rect.left - containerRect.left}px`;
-    content.style.width = `${rect.width}px`;
-    content.style.display = 'block';
+      // Panel nach vorne positionieren
+      const rect = header.getBoundingClientRect();
+      const containerRect = document.querySelector('.teams-container').getBoundingClientRect();
+      content.style.position = 'absolute';
+      content.style.top = (rect.bottom - containerRect.top) + 'px';
+      content.style.left = (rect.left - containerRect.left) + 'px';
+      content.style.width = rect.width + 'px';
+      content.style.display = 'block';
+      content.style.zIndex = 9999;
 
-    activeContent = content;
+      activeContent = content;
+    });
   });
-});
 
-document.addEventListener('click', () => {
-  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
-  activeContent = null;
-});
+  // Klick irgendwo außerhalb → alle Panels schließen
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    activeContent = null;
+  });
 
 
 
