@@ -273,7 +273,15 @@ document.querySelectorAll('.step-header').forEach(header => {
     content.style.display = content.style.display === 'block' ? 'none' : 'block';
   });
 });
->
+ // Step-Boxen Toggle
+  document.querySelectorAll('.step-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const content = header.nextElementSibling;
+      content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    });
+  });
+
+  // Teams Overlay Accordion
   const teamHeaders = document.querySelectorAll('.team-header');
   let activeContent = null;
 
