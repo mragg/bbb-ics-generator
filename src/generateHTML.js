@@ -341,9 +341,12 @@ teamHeaders.forEach(header => {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
     content.style.position = 'absolute';
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
     content.style.top = rect.bottom + scrollTop + 'px';
     content.style.left = rect.left + scrollLeft + 'px';
-    content.style.width = rect.width + 'px';
+    const newWidth = Math.max(rect.width * 1.5, 300);
+    content.style.width = newWidth + 'px';
     content.style.display = 'block';
     content.style.zIndex = 9999;
 
