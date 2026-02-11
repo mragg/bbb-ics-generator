@@ -23,14 +23,21 @@ function genHTML() {
 <style>
 .header-inner{
   display:flex;
-  align-items:center;
-  justify-content:center;
+  align-items:flex-start;  /* Logo oben ausrichten */
+  justify-content:flex-start; /* alles links ausrichten */
   gap:20px;
 }
 
 .logo{
-  height:70px;
+  height:140px; /* doppelt so groß wie vorher */
   width:auto;
+}
+
+.header-text{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
 }
 :root{
   --tvn-blue:#003b75;
@@ -169,14 +176,15 @@ footer{
 
 <header>
   <div class="header-inner">
-    <img src="Logo.png" alt="TVN Logo" class="logo">
-    <div>
+    <img src="Logo.png" class="logo" alt="TVN Logo">
+    <div class="header-text">
       <h1>TV Neunkirchen Baskets</h1>
       <p>Kalender Übersicht – automatisch aktualisiert<br>
       Stand: ${new Date().toLocaleString('de-DE')}</p>
     </div>
   </div>
 </header>
+
 
 
 
