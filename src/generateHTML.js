@@ -157,10 +157,28 @@ footer{
 <body>
 
 <header>
-  <h1>TV Neunkirchen Baskets</h1>
-  <p>Kalender Übersicht – automatisch aktualisiert<br>
-  Stand: ${new Date().toLocaleString('de-DE')}</p>
+  <div class="header-inner">
+    <img src="Logo.png" alt="TVN Logo" class="Logo">
+    <div>
+      <h1>TV Neunkirchen Baskets</h1>
+      <p>Kalender Übersicht – automatisch aktualisiert<br>
+      Stand: ${new Date().toLocaleString('de-DE')}</p>
+    </div>
+  </div>
 </header>
+
+.header-inner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+}
+
+.Logo{
+  height:70px;
+  width:auto;
+}
+
 
 <div class="container">
 
