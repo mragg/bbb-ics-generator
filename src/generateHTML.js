@@ -21,22 +21,45 @@ function genHTML() {
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-.header-inner{
-  display:flex;
-  align-items:flex-start;  /* Logo oben ausrichten */
-  justify-content:flex-start; /* alles links ausrichten */
-  gap:20px;
+{
+  background: linear-gradient(135deg, var(--tvn-blue), var(--tvn-light-blue));
+  color: white;
+  padding: 20px 30px;
 }
 
-.logo{
-  height:100px; /* doppelt so groß wie vorher */
-  width:auto;
+.header-inner {
+  display: flex;
+  align-items: flex-start;      /* Logo oben */
+  justify-content: flex-start;  /* links ausrichten */
+  gap: 20px;
+  flex-wrap: wrap;              /* falls Text zu lang wird, darunter umbrechen */
 }
 
-.header-text{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+.logo {
+  height: 140px;  /* doppelt so groß wie vorher */
+  width: auto;
+  flex-shrink: 0; /* Logo wird nicht kleiner, wenn Platz knapp */
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1; /* Text nimmt verbleibenden Platz ein */
+}
+
+.header-text h1 {
+  font-family: 'Oswald', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.header-text p {
+  margin-top: 8px;
+  font-weight: 300;
+  opacity: 0.9;
 }
 }
 :root{
@@ -184,7 +207,6 @@ footer{
     </div>
   </div>
 </header>
-
 
 
 
