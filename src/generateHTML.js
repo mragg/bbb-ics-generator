@@ -20,32 +20,50 @@ function genHTML() {
 
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
+
 <style>
-{
+:root {
+  --tvn-blue: #003b75;
+  --tvn-light-blue: #0057a3;
+  --tvn-red: #d72638;
+  --tvn-white: #ffffff;
+  --tvn-gray: #f2f4f8;
+}
+
+/* BODY & GLOBAL */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--tvn-gray);
+  color: #222;
+}
+
+/* HEADER */
+header {
   background: linear-gradient(135deg, var(--tvn-blue), var(--tvn-light-blue));
-  color: white;
+  color: var(--tvn-white);
   padding: 20px 30px;
 }
 
 .header-inner {
   display: flex;
-  align-items: flex-start;      /* Logo oben */
-  justify-content: flex-start;  /* links ausrichten */
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 20px;
-  flex-wrap: wrap;              /* falls Text zu lang wird, darunter umbrechen */
+  flex-wrap: wrap;
 }
 
 .logo {
-  height: 140px;  /* doppelt so groß wie vorher */
+  height: 140px;
   width: auto;
-  flex-shrink: 0; /* Logo wird nicht kleiner, wenn Platz knapp */
+  flex-shrink: 0;
 }
 
 .header-text {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  flex: 1; /* Text nimmt verbleibenden Platz ein */
+  flex: 1;
 }
 
 .header-text h1 {
@@ -61,138 +79,104 @@ function genHTML() {
   font-weight: 300;
   opacity: 0.9;
 }
-}
-:root{
-  --tvn-blue:#003b75;
-  --tvn-light-blue:#0057a3;
-  --tvn-red:#d72638;
-  --tvn-white:#ffffff;
-  --tvn-gray:#f2f4f8;
-}
 
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Inter',sans-serif;
-  background:var(--tvn-gray);
-  color:#222;
+/* CONTAINER & BOXEN */
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
 }
 
-header{
-  background:linear-gradient(135deg,var(--tvn-blue),var(--tvn-light-blue));
-  color:white;
-  padding:40px 20px;
-  text-align:center;
+.team {
+  background: var(--tvn-white);
+  padding: 25px;
+  margin-bottom: 25px;
+  border-left: 6px solid var(--tvn-blue);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-header h1{
-  font-family:'Oswald',sans-serif;
-  font-size:2.2rem;
-  letter-spacing:1px;
-  margin:0;
-  text-transform:uppercase;
+.team:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
-header p{
-  margin-top:10px;
-  font-weight:300;
-  opacity:0.9;
+.team strong {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.2rem;
+  text-transform: uppercase;
 }
 
-.container{
-  max-width:900px;
-  margin:40px auto;
-  padding:0 20px;
+.team-stats {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #555;
 }
 
-.team{
-  background:white;
-  padding:25px;
-  margin-bottom:25px;
-  border-left:6px solid var(--tvn-blue);
-  border-radius:8px;
-  box-shadow:0 6px 18px rgba(0,0,0,0.08);
-  transition:transform 0.2s ease, box-shadow 0.2s ease;
+.buttons {
+  margin-top: 15px;
 }
 
-.team:hover{
-  transform:translateY(-4px);
-  box-shadow:0 10px 24px rgba(0,0,0,0.12);
+.buttons a {
+  display: inline-block;
+  padding: 10px 18px;
+  margin: 5px 6px 0 0;
+  background: var(--tvn-blue);
+  color: var(--tvn-white);
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.15s ease;
 }
 
-.team strong{
-  font-family:'Oswald',sans-serif;
-  font-size:1.2rem;
-  text-transform:uppercase;
+.buttons a:hover {
+  background: var(--tvn-red);
+  transform: translateY(-2px);
 }
 
-.team-stats{
-  margin-top:8px;
-  font-size:0.9rem;
-  color:#555;
+/* STEP BOXEN */
+.step-box {
+  background: var(--tvn-white);
+  margin-bottom: 15px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
 }
 
-.buttons{
-  margin-top:15px;
+.step-header {
+  padding: 15px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--tvn-blue);
+  color: var(--tvn-white);
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
 }
 
-.buttons a{
-  display:inline-block;
-  padding:10px 18px;
-  margin:5px 6px 0 0;
-  background:var(--tvn-blue);
-  color:white;
-  text-decoration:none;
-  border-radius:4px;
-  font-size:0.85rem;
-  font-weight:600;
-  transition:background 0.2s ease, transform 0.15s ease;
+.step-header:hover {
+  background: var(--tvn-red);
 }
 
-.buttons a:hover{
-  background:var(--tvn-red);
-  transform:translateY(-2px);
+.step-content {
+  padding: 15px 20px;
+  display: none;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: #fafafa;
 }
 
-.step-box{
-  background:white;
-  margin-bottom:15px;
-  border-radius:6px;
-  overflow:hidden;
-  box-shadow:0 3px 8px rgba(0,0,0,0.06);
-}
-
-.step-header{
-  padding:15px 20px;
-  cursor:pointer;
-  font-weight:600;
-  background:var(--tvn-blue);
-  color:white;
-  font-family:'Oswald',sans-serif;
-  letter-spacing:0.5px;
-  transition:background 0.2s;
-}
-
-.step-header:hover{
-  background:var(--tvn-red);
-}
-
-.step-content{
-  padding:15px 20px;
-  display:none;
-  font-size:0.9rem;
-  line-height:1.5;
-  background:#fafafa;
-}
-
-footer{
-  text-align:center;
-  padding:30px 10px;
-  font-size:0.8rem;
-  color:#777;
+/* FOOTER */
+footer {
+  text-align: center;
+  padding: 30px 10px;
+  font-size: 0.8rem;
+  color: #777;
 }
 </style>
+
 </head>
 
 <body>
@@ -207,6 +191,7 @@ footer{
     </div>
   </div>
 </header>
+
 
 
 
