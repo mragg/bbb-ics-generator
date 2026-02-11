@@ -167,21 +167,27 @@ footer{
 <div class="step-box">
   <div class="step-header">Schritt 1 – URL kopieren</div>
   <div class="step-content">
-    Link der gewünschten .ics Datei kopieren.
+     <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+    <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
+    <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
   </div>
 </div>
 
 <div class="step-box">
   <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
   <div class="step-content">
-    In der Kalender-App „Kalender hinzufügen“ → „Per URL“ auswählen.
+     <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
+    <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
   </div>
 </div>
 
 <div class="step-box">
   <div class="step-header">Schritt 3 – Link einfügen</div>
   <div class="step-content">
-    Link einfügen und Abonnement bestätigen. Synchronisierung erfolgt automatisch.
+     <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+    <p>Bestätigen Sie anschließend das Abonnement.</p>
+    <p>Der Kalender wird danach automatisch synchronisiert.</p>
+    <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
   </div>
 </div>
 
