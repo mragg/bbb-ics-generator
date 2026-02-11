@@ -169,7 +169,7 @@ footer{
 
 <header>
   <div class="header-inner">
-    <img src="Logo.png" alt="TVN Logo" class="logo">
+    <img src="../Logo.png" alt="TVN Logo" class="logo">
     <div>
       <h1>TV Neunkirchen Baskets</h1>
       <p>Kalender Übersicht – automatisch aktualisiert<br>
