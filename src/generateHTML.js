@@ -1,4 +1,18 @@
-const content = `<!DOCTYPE html>
+const fs = require('fs');
+const path = require('path');
+
+function makeWebcalLink(filename) {
+  const baseUrl = 'https://mragg.github.io/bbb-ics-generator/';
+  return baseUrl + filename;
+}
+
+function genHTML() {
+  const metaPath = path.resolve(__dirname, '../generated/metadata.json');
+  const teams = fs.existsSync(metaPath)
+    ? JSON.parse(fs.readFileSync(metaPath))
+    : [];
+
+  const content = `<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -204,3 +218,8 @@ document.querySelectorAll('.step-header').forEach(header => {
 
 </body>
 </html>`;
+
+  fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content);
+}
+
+genHTML();
