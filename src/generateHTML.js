@@ -96,12 +96,12 @@ header {
 }
 
 .team-card {
+  position: relative; /* wichtig, damit content absolut innerhalb bleibt */
   background: var(--tvn-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   flex: 1 1 200px;
   cursor: pointer;
-  position: relative; /* wichtig für absolute Position des Contents */
 }
 
 .team-card:hover {
@@ -115,24 +115,22 @@ header {
   background: var(--tvn-blue);
   color: var(--tvn-white);
   border-radius: 8px;
+  position: relative;
   z-index: 2;
 }
 
 .team-content {
-  display: none;               /* standardmäßig unsichtbar */
-  position: absolute;          /* über anderen Karten */
-  top: 100%;                   /* direkt unter Header */
+  display: none;
+  position: absolute;
+  top: 100%;
   left: 0;
   width: 100%;
   background: var(--tvn-white);
   padding: 15px 20px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-  z-index: 10;
+  z-index: 1000; /* immer über allen anderen Elementen */
 }
-.team-content.open {
-  max-height: 300px;      /* oder genug, dass alles sichtbar ist */
-  padding: 15px 20px;     /* Padding wenn geöffnet */
-}
+
 
 .team-content .buttons a {
   display: inline-block;
