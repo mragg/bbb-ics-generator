@@ -350,8 +350,8 @@ if (newWidth > maxWidth) {
 
 // Wenn rechts rausgeht → nach links schieben
 let leftPos = rect.left;
-if (leftPos + newWidth > window.innerWidth - 20) {
-  leftPos = window.innerWidth - newWidth - 20;
+if (leftPos + newWidth > window.innerWidth - 35) {
+  leftPos = window.innerWidth - newWidth - 35;
 }
 
 content.style.position = 'fixed';
