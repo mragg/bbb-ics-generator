@@ -95,14 +95,15 @@ header {
   position: relative;
 }
 .team-content {
-  position: absolute;               /* absolut positioniert */
-  background: var(--tvn-white);     /* Hintergrundfarbe */
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15); /* Schatten für Overlay */
-  z-index: 9999;                    /* immer ganz vorne */
-  display: none;                    /* standardmäßig versteckt */
-  padding: 15px 20px;               /* Innenabstand */
-  border-radius: 8px;               /* optional: abgerundete Ecken */
+  position: absolute;        /* über allem positioniert */
+  background: #fff;
+  padding: 15px 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  z-index: 9999;             /* ganz vorne */
+  display: none;
 }
+
 
 .team-card {
   background: var(--tvn-white);
@@ -277,25 +278,30 @@ let activeContent = null;
 
 teamHeaders.forEach(header => {
   header.addEventListener('click', (e) => {
-    e.stopPropagation(); // verhindert, dass der document-click es sofort wieder schließt
-    const content = header.nextElementSibling;
+    e.stopPropagation();
+    const content = header.nextElementSibling; // dein Panel
 
-    if(activeContent === content){
+    if (activeContent === content) {
       content.style.display = 'none';
       activeContent = null;
       return;
     }
 
-    // Alle anderen schließen
+    // alle anderen schließen
     document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Dieses öffnen
+    // Panel öffnen
+    const rect = header.getBoundingClientRect();
+    const containerRect = document.querySelector('.teams-container').getBoundingClientRect();
+    content.style.top = `${rect.bottom - containerRect.top}px`;
+    content.style.left = `${rect.left - containerRect.left}px`;
+    content.style.width = `${rect.width}px`;
     content.style.display = 'block';
+
     activeContent = content;
   });
 });
 
-// Klick irgendwo außerhalb → alles schließen
 document.addEventListener('click', () => {
   document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
   activeContent = null;
