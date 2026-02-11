@@ -280,27 +280,35 @@ let activeContent = null;
 
 teamHeaders.forEach(header => {
   header.addEventListener('click', (e) => {
-    e.stopPropagation(); // verhindert, dass der document-click es sofort wieder schließt
+    e.stopPropagation();
     const content = header.nextElementSibling;
 
     if(activeContent === content){
       content.style.display = 'none';
+      content.style.zIndex = 999; // wieder zurücksetzen
       activeContent = null;
       return;
     }
 
-    // Alle anderen schließen
-    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    // Alle anderen schließen und z-index zurücksetzen
+    document.querySelectorAll('.team-content').forEach(c => {
+      c.style.display = 'none';
+      c.style.zIndex = 999;
+    });
 
-    // Dieses öffnen
+    // Dieses Panel öffnen und nach vorne bringen
     content.style.display = 'block';
+    content.style.zIndex = 9999; // ganz nach vorne
     activeContent = content;
   });
 });
 
 // Klick irgendwo außerhalb → alles schließen
 document.addEventListener('click', () => {
-  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+  document.querySelectorAll('.team-content').forEach(c => {
+    c.style.display = 'none';
+    c.style.zIndex = 999;
+  });
   activeContent = null;
 });
 
