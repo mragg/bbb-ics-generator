@@ -296,13 +296,13 @@ TVN Baskets – Offizielle Kalenderübersicht
 
       // Panel nach vorne positionieren
       const rect = header.getBoundingClientRect();
-      const containerRect = document.querySelector('.teams-container').getBoundingClientRect();
-      content.style.position = 'absolute';
-      content.style.top = (rect.bottom - containerRect.top) + 'px';
-      content.style.left = (rect.left - containerRect.left) + 'px';
-      content.style.width = rect.width + 'px';
-      content.style.display = 'block';
-      content.style.zIndex = 9999;
+content.style.position = 'fixed';       // fixed statt absolute
+content.style.top = rect.bottom + 'px';
+content.style.left = rect.left + 'px';
+content.style.width = rect.width + 'px';
+content.style.display = 'block';
+content.style.zIndex = 9999;
+
 
       activeContent = content;
     });
