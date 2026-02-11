@@ -92,6 +92,7 @@ header {
   flex-wrap: wrap;
   gap: 15px;
   margin-top: 20px;
+  position: relative;
 }
 
 .team-card {
@@ -100,9 +101,7 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   flex: 1 1 200px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  display: flex;
-  flex-direction: column; /* wichtig: Header oben, Content unten */
+  position: relative; /* wichtig für absolute Position des Contents */
 }
 
 .team-card:hover {
@@ -115,16 +114,20 @@ header {
   font-family: 'Oswald', sans-serif;
   background: var(--tvn-blue);
   color: var(--tvn-white);
-  border-radius: 8px 8px 0 0;
+  border-radius: 8px;
+  z-index: 2;
 }
 
 .team-content {
-  max-height: 0;          /* standardmäßig versteckt */
-  overflow: hidden;
-  padding: 0 20px;        /* horizontales Padding */
-  font-size: 0.9rem;
-  line-height: 1.5;
-  transition: max-height 0.3s ease, padding 0.3s ease;
+  display: none;               /* standardmäßig unsichtbar */
+  position: absolute;          /* über anderen Karten */
+  top: 100%;                   /* direkt unter Header */
+  left: 0;
+  width: 100%;
+  background: var(--tvn-white);
+  padding: 15px 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  z-index: 10;
 }
 .team-content.open {
   max-height: 300px;      /* oder genug, dass alles sichtbar ist */
@@ -271,26 +274,25 @@ document.querySelectorAll('.step-header').forEach(header => {
   });
 });
 const teamHeaders = document.querySelectorAll('.team-header');
-let activeIndex = null;
+let activeContent = null;
 
 teamHeaders.forEach(header => {
   header.addEventListener('click', () => {
-    const index = header.dataset.index;
     const content = header.nextElementSibling;
 
-    // Klick auf dieselbe Karte → schließen
-    if(activeIndex === index){
-      content.classList.remove('open');
-      activeIndex = null;
+    // Schließen, wenn dasselbe Team erneut geklickt
+    if(activeContent === content){
+      content.style.display = 'none';
+      activeContent = null;
       return;
     }
 
     // Alle anderen schließen
-    document.querySelectorAll('.team-content').forEach(c => c.classList.remove('open'));
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Diese Karte öffnen
-    content.classList.add('open');
-    activeIndex = index;
+    // Dieses öffnen
+    content.style.display = 'block';
+    activeContent = content;
   });
 });
 
