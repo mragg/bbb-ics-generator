@@ -96,14 +96,15 @@ header {
 }
 
 .team-card {
-  position: relative; /* wichtig für absolute Position des Panels */
   background: var(--tvn-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   flex: 1 1 200px;
   cursor: pointer;
+  position: relative; /* für absolute Team-Content */
   display: flex;
   flex-direction: column;
+  z-index: 1; /* Grundzustand */
 }
 
 .team-card:hover {
@@ -129,8 +130,9 @@ header {
   width: 100%;
   background: var(--tvn-white);
   padding: 15px 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-  z-index: 1000; /* immer über allen anderen Elementen */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  z-index: 9999;          /* immer über allem */
+  pointer-events: auto;   /* wichtig für Klicks */
 }
 
 
@@ -278,10 +280,9 @@ let activeContent = null;
 
 teamHeaders.forEach(header => {
   header.addEventListener('click', (e) => {
-    e.preventDefault(); // verhindert Focus/Selektions-Probleme
+    e.stopPropagation(); // verhindert, dass der document-click es sofort wieder schließt
     const content = header.nextElementSibling;
 
-    // Klick auf dieselbe Karte → schließen
     if(activeContent === content){
       content.style.display = 'none';
       activeContent = null;
@@ -291,19 +292,18 @@ teamHeaders.forEach(header => {
     // Alle anderen schließen
     document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-    // Dieses Panel öffnen
+    // Dieses öffnen
     content.style.display = 'block';
     activeContent = content;
   });
 });
 
-// Optional: Klick irgendwo anders auf der Seite → Panels schließen
-document.addEventListener('click', (e) => {
-  if(!e.target.classList.contains('team-header') && !e.target.closest('.team-card')){
-    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
-    activeContent = null;
-  }
+// Klick irgendwo außerhalb → alles schließen
+document.addEventListener('click', () => {
+  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+  activeContent = null;
 });
+
 
 
 </script>
