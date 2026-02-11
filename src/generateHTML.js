@@ -87,40 +87,45 @@ header {
   padding: 0 20px;
 }
 
-.team {
+.teams-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.team-card {
   background: var(--tvn-white);
-  padding: 25px;
-  margin-bottom: 25px;
-  border-left: 6px solid var(--tvn-blue);
   border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  flex: 1 1 200px; /* wächst und schrumpft, min 200px */
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.team:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+.team-card:hover {
+  transform: translateY(-2px);
 }
 
-.team strong {
+.team-header {
+  padding: 15px 20px;
+  font-weight: 600;
   font-family: 'Oswald', sans-serif;
-  font-size: 1.2rem;
-  text-transform: uppercase;
+  background: var(--tvn-blue);
+  color: var(--tvn-white);
+  border-radius: 8px 8px 0 0;
 }
 
-.team-stats {
-  margin-top: 8px;
+.team-content {
+  display: none;
+  padding: 15px 20px;
   font-size: 0.9rem;
-  color: #555;
+  line-height: 1.5;
 }
 
-.buttons {
-  margin-top: 15px;
-}
-
-.buttons a {
+.team-content .buttons a {
   display: inline-block;
-  padding: 10px 18px;
+  padding: 8px 16px;
   margin: 5px 6px 0 0;
   background: var(--tvn-blue);
   color: var(--tvn-white);
@@ -131,10 +136,11 @@ header {
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
-.buttons a:hover {
+.team-content .buttons a:hover {
   background: var(--tvn-red);
   transform: translateY(-2px);
 }
+
 
 /* STEP BOXEN */
 .step-box {
@@ -224,21 +230,24 @@ footer {
   </div>
 </div>
 
-${teams.map(t => `
-<div class="team">
-  <strong>${t.teamName}</strong> ${t.ageGroup ? `(${t.ageGroup})` : ''}
-
-  <div class="team-stats">
-    ${t.matchCount} Spiele | Heim: ${t.homeMatchCount} | Auswärts: ${t.awayMatchCount}
-  </div>
-
-  <div class="buttons">
-    <a href="${makeWebcalLink(t.teamId+"_all.ics")}">Alle Spiele</a>
-    <a href="${makeWebcalLink(t.teamId+"_home.ics")}">Nur Heimspiele</a>
-    <a href="${makeWebcalLink(t.teamId+"_away.ics")}">Nur Auswärts</a>
-  </div>
+<div class="teams-container">
+  ${teams.map((t, index) => `
+    <div class="team-card">
+      <div class="team-header" data-index="${index}">
+        ${t.teamName}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
+      </div>
+      <div class="team-content">
+        <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
+        <div class="buttons">
+          <a href="${makeWebcalLink(t.teamId+"_all.ics")}">Alle Spiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId+"_home.ics")}">Nur Heimspiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId+"_away.ics")}">Nur Auswärts abonnieren</a>
+        </div>
+      </div>
+    </div>
+  `).join('')}
 </div>
-`).join('')}
+
 
 </div>
 
@@ -253,6 +262,30 @@ document.querySelectorAll('.step-header').forEach(header => {
     content.style.display = content.style.display === 'block' ? 'none' : 'block';
   });
 });
+const teamHeaders = document.querySelectorAll('.team-header');
+let activeIndex = null;
+
+teamHeaders.forEach(header => {
+  header.addEventListener('click', () => {
+    const index = header.dataset.index;
+    const content = header.nextElementSibling;
+
+    // Wenn dasselbe Team angeklickt → schließen
+    if(activeIndex === index){
+      content.style.display = 'none';
+      activeIndex = null;
+      return;
+    }
+
+    // Alle anderen schließen
+    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+
+    // Dieses öffnen
+    content.style.display = 'block';
+    activeIndex = index;
+  });
+});
+
 </script>
 
 </body>
