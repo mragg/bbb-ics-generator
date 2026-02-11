@@ -276,47 +276,51 @@ TVN Baskets – Offizielle Kalenderübersicht
   });
 
   // Teams Overlay Accordion
-  const teamHeaders = document.querySelectorAll('.team-header');
-  let activeContent = null;
+const teamHeaders = document.querySelectorAll('.team-header');
+let activeContent = null;
 
-  teamHeaders.forEach(header => {
-    const content = header.nextElementSibling;
-    
-    // Overlay selbst klickbar machen ohne zu schließen
-    content.addEventListener('click', e => e.stopPropagation());
+teamHeaders.forEach(header => {
+  const content = header.nextElementSibling;
 
-    header.addEventListener('click', e => {
-      e.stopPropagation();
+  // Overlay selbst klickbar machen ohne zu schließen
+  content.addEventListener('click', e => e.stopPropagation());
 
-      if(activeContent === content){
-        content.style.display = 'none';
-        activeContent = null;
-        return;
-      }
+  header.addEventListener('click', e => {
+    e.stopPropagation();
 
-      // Alle anderen Panels schließen
-      document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    if(activeContent === content){
+      content.style.display = 'none';
+      activeContent = null;
+      return;
+    }
 
-      // Position anpassen
-      const rect = header.getBoundingClientRect();
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-      content.style.position = 'absolute';
-      content.style.top = rect.bottom + scrollTop + 'px';
-      content.style.left = rect.left + scrollLeft + 'px';
-      content.style.width = rect.width + 'px';
-      content.style.display = 'block';
-      content.style.zIndex = 9999;
-
-      activeContent = content;
-    });
-  });
-
-  // Klick irgendwo außerhalb → alle Panels schließen
-  document.addEventListener('click', () => {
+    // Alle anderen Panels schließen
     document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
-    activeContent = null;
+
+    // Overlay ans body anhängen
+    document.body.appendChild(content);
+
+    // Position relativ zum Viewport + Scroll
+    const rect = header.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    content.style.position = 'absolute';
+    content.style.top = rect.bottom + scrollTop + 'px';
+    content.style.left = rect.left + scrollLeft + 'px';
+    content.style.width = rect.width + 'px';
+    content.style.display = 'block';
+    content.style.zIndex = 9999;
+
+    activeContent = content;
   });
+});
+
+// Klick irgendwo außerhalb → alle Panels schließen
+document.addEventListener('click', () => {
+  document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+  activeContent = null;
+});
+
 </script>
 
 
