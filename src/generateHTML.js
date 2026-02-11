@@ -338,22 +338,24 @@ teamHeaders.forEach(header => {
 
    // Position relativ zum Viewport + Scroll
 const rect = header.getBoundingClientRect();
-const scrollTop = window.scrollY || document.documentElement.scrollTop;
-const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-// Dynamische Breite
-const newWidth = Math.max(rect.width * 2.2, 300);
+// Wunschbreite (2.2x Header)
+let newWidth = Math.max(rect.width * 2.2, 300);
 
-// Overlay horizontal anpassen, wenn es rechts rausgeht
-let leftPos = rect.left;
-const screenWidth = window.innerWidth;
-if (leftPos + newWidth > screenWidth - 10) { // 10px Abstand zum rechten Rand
-  leftPos = screenWidth - newWidth - 10;
+// Maximal 95% der Bildschirmbreite erlauben
+const maxWidth = window.innerWidth * 0.95;
+if (newWidth > maxWidth) {
+  newWidth = maxWidth;
 }
 
-// Positionieren und anzeigen
-content.style.position = 'absolute'; // fixed → absolute
-content.style.top = rect.bottom + scrollTop + 'px';
+// Wenn rechts rausgeht → nach links schieben
+let leftPos = rect.left;
+if (leftPos + newWidth > window.innerWidth - 10) {
+  leftPos = window.innerWidth - newWidth - 10;
+}
+
+content.style.position = 'fixed';
+content.style.top = rect.bottom + 'px';
 content.style.left = leftPos + 'px';
 content.style.width = newWidth + 'px';
 content.style.display = 'block';
