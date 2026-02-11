@@ -96,12 +96,14 @@ header {
 }
 
 .team-card {
-  position: relative; /* wichtig, damit content absolut innerhalb bleibt */
+  position: relative; /* wichtig für absolute Position des Panels */
   background: var(--tvn-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   flex: 1 1 200px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
 
 .team-card:hover {
