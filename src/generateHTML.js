@@ -6,11 +6,52 @@ function makeWebcalLink(filename) {
   return baseUrl + filename;
 }
 
+function safeReadJson(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error(`Fehler beim Einlesen/Parsen von ${filePath}:`, err.message);
+    return null;
+  }
+}
+
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
-  const teams = fs.existsSync(metaPath)
-    ? JSON.parse(fs.readFileSync(metaPath))
-    : [];
+  const teamsPath = path.resolve(__dirname, '../generated/teams.json');
+
+  const rawMeta = safeReadJson(metaPath) || [];
+  const rawTeams = safeReadJson(teamsPath) || [];
+
+  // Normalisiere falls die JSONs als Objekt mit "teams" oder "data" kommen
+  const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
+  const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
+
+  // Erstelle eine Map von team id -> league (verschiedene mögliche id-felder unterstützen)
+  const leagueMap = {};
+  teamsArray.forEach(t => {
+    if (!t) return;
+    if (t.id !== undefined) leagueMap[String(t.id)] = t.league;
+    if (t.teamId !== undefined) leagueMap[String(t.teamId)] = t.league;
+    if (t.team_id !== undefined) leagueMap[String(t.team_id)] = t.league;
+  });
+
+  // Finales Team-Array für das Template: sichere Feldnamen, Fallbacks
+  const teams = metadataArray.map(m => {
+    const id = m.teamId || m.id || m.idStr || '';
+    const leagueFromMeta = m.league || m.leagueName || null;
+    const leagueFromMap = leagueMap[String(id)] || leagueMap[id] || null;
+    return {
+      teamId: id,
+      name: m.teamName || m.name || m.title || 'Unbenannt',
+      ageGroup: m.ageGroup || '',
+      league: leagueFromMeta || leagueFromMap || 'unbekannt',
+      matchCount: m.matchCount != null ? m.matchCount : (m.matches != null ? m.matches : 0),
+      homeMatchCount: m.homeMatchCount != null ? m.homeMatchCount : (m.homeMatches != null ? m.homeMatches : 0),
+      awayMatchCount: m.awayMatchCount != null ? m.awayMatchCount : (m.awayMatches != null ? m.awayMatches : 0),
+    };
+  });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -243,13 +284,14 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
   ${teams.map((t, index) => `
     <div class="team-card">
       <div class="team-header" data-index="${index}">
-        ${t.teamName}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
+        ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
       </div>
 
      <div class="team-content" aria-hidden="true">
         <button class="overlay-close" aria-label="Schließen">&times;</button>
         <div class="team-content-preview">
-          <p><strong>${t.teamName}, ${t.league}</strong></p>
+          <p><strong>${t.name}</strong></p>
+          <p>Liga: <strong>${t.league}</strong></p>
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
         </div>
 
@@ -450,3 +492,4 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
+
