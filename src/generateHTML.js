@@ -151,6 +151,35 @@ header {
   background: var(--tvn-red);
   transform: translateY(-2px);
 }
+.info-btn {
+  background: var(--tvn-gray);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  z-index: 10001;
+}
+
+.info-popup {
+  display: none;
+  position: absolute;
+  top: 30px;
+  left: 0;
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  width: 250px;
+  font-size: 0.85rem;
+  z-index: 10000;
+}
+
 
 
 /* STEP BOXEN */
@@ -249,7 +278,14 @@ footer {
       </div>
       <div class="team-content">
         <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-        <div class="buttons">
+        <div class="buttons" style="display:flex; align-items:flex-start; gap:5px; position:relative;">
+          <!-- Info Button links neben dem ersten Kalender-Link -->
+          <button class="info-btn">?</button>
+          <div class="info-popup">
+            <p>📱 <strong>Smartphone/Tablet:</strong> Link lang drücken → <em>„Link kopieren“</em> → Kalender-App öffnen → <em>„Aus URL hinzufügen“</em></p>
+            <p>💻 <strong>Computer:</strong> Rechtsklick auf Link → <em>„Link kopieren“</em> → Kalender-App öffnen → <em>„Aus Internet hinzufügen“</em></p>
+          </div>
+
           <a href="${makeWebcalLink(t.teamId+"_all.ics")}">Alle Spiele abonnieren</a>
           <a href="${makeWebcalLink(t.teamId+"_home.ics")}">Nur Heimspiele abonnieren</a>
           <a href="${makeWebcalLink(t.teamId+"_away.ics")}">Nur Auswärts abonnieren</a>
@@ -320,6 +356,25 @@ document.addEventListener('click', () => {
   document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
   activeContent = null;
 });
+
+document.querySelectorAll('.info-btn').forEach(btn => {
+  const popup = btn.nextElementSibling;
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    // Alle anderen Popups schließen
+    document.querySelectorAll('.info-popup').forEach(p => {
+      if(p !== popup) p.style.display = 'none';
+    });
+    popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+  });
+});
+
+// Klick außerhalb → alle Popups schließen
+document.addEventListener('click', () => {
+  document.querySelectorAll('.info-popup').forEach(p => p.style.display = 'none');
+});
+
+
 
 </script>
 
