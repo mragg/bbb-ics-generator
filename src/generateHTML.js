@@ -29,7 +29,7 @@ function genHTML() {
 }
 
 .logo{
-  height:140px; /* doppelt so groß wie vorher */
+  height:100px; /* doppelt so groß wie vorher */
   width:auto;
 }
 
