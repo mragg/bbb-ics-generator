@@ -98,9 +98,11 @@ header {
   background: var(--tvn-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  flex: 1 1 200px; /* wächst und schrumpft, min 200px */
+  flex: 1 1 200px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column; /* wichtig: Header oben, Content unten */
 }
 
 .team-card:hover {
@@ -117,10 +119,16 @@ header {
 }
 
 .team-content {
-  display: none;
-  padding: 15px 20px;
+  max-height: 0;          /* standardmäßig versteckt */
+  overflow: hidden;
+  padding: 0 20px;        /* horizontales Padding */
   font-size: 0.9rem;
   line-height: 1.5;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+.team-content.open {
+  max-height: 300px;      /* oder genug, dass alles sichtbar ist */
+  padding: 15px 20px;     /* Padding wenn geöffnet */
 }
 
 .team-content .buttons a {
@@ -270,21 +278,22 @@ teamHeaders.forEach(header => {
     const index = header.dataset.index;
     const content = header.nextElementSibling;
 
-    // Wenn dasselbe Team angeklickt → schließen
+    // Klick auf dieselbe Karte → schließen
     if(activeIndex === index){
-      content.style.display = 'none';
+      content.classList.remove('open');
       activeIndex = null;
       return;
     }
 
     // Alle anderen schließen
-    document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.team-content').forEach(c => c.classList.remove('open'));
 
-    // Dieses öffnen
-    content.style.display = 'block';
+    // Diese Karte öffnen
+    content.classList.add('open');
     activeIndex = index;
   });
 });
+
 
 </script>
 
