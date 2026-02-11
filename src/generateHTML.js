@@ -336,17 +336,29 @@ teamHeaders.forEach(header => {
     // Overlay ans body anhängen
     document.body.appendChild(content);
 
-    // Position relativ zum Viewport + Scroll
-    const rect = header.getBoundingClientRect();
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-    content.style.position = 'fixed';
-    content.style.top = rect.bottom + 'px';
-    content.style.left = rect.left + 'px';
-    const newWidth = Math.max(rect.width * 2.2, 300);
-    content.style.width = newWidth + 'px';
-    content.style.display = 'block';
-    content.style.zIndex = 9999;
+   // Position relativ zum Viewport + Scroll
+const rect = header.getBoundingClientRect();
+const scrollTop = window.scrollY || document.documentElement.scrollTop;
+const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+// Dynamische Breite
+const newWidth = Math.max(rect.width * 2.2, 300);
+
+// Overlay horizontal anpassen, wenn es rechts rausgeht
+let leftPos = rect.left;
+const screenWidth = window.innerWidth;
+if (leftPos + newWidth > screenWidth - 10) { // 10px Abstand zum rechten Rand
+  leftPos = screenWidth - newWidth - 10;
+}
+
+// Positionieren und anzeigen
+content.style.position = 'absolute'; // fixed → absolute
+content.style.top = rect.bottom + scrollTop + 'px';
+content.style.left = leftPos + 'px';
+content.style.width = newWidth + 'px';
+content.style.display = 'block';
+content.style.zIndex = 9999;
+
 
     activeContent = content;
   });
