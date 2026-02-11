@@ -99,7 +99,7 @@ document.querySelectorAll('.step-header').forEach(header => {
   ${teams.map(t => `
     <div class="team">
      <strong>${t.teamName}</strong>${t.ageGroup ? ` (${t.ageGroup})` : ''}<br/>
-      <small>Letztes Update: ${new Date(t.lastUpdate).toLocaleString('de-DE')}</small><br/>
+    <br/>
       ${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}<br/>
       <div class="buttons">
         <a href="${makeWebcalLink(t.teamId+"_all.ics")}">Alle Spiele abonnieren</a>
