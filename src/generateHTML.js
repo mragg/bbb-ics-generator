@@ -95,12 +95,12 @@ header {
   position: relative;
 }
 .team-content {
-  position: absolute;        /* über allem positioniert */
+  position: absolute;
   background: #fff;
   padding: 15px 20px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   border-radius: 8px;
-  z-index: 9999;             /* ganz vorne */
+  z-index: 9999;
   display: none;
 }
 
@@ -111,10 +111,10 @@ header {
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   flex: 1 1 200px;
   cursor: pointer;
-  position: relative; /* für absolute Team-Content */
+  position: relative;
   display: flex;
   flex-direction: column;
-  z-index: 1; /* Grundzustand */
+  z-index: 1;
 }
 
 .team-card:hover {
@@ -280,11 +280,14 @@ TVN Baskets – Offizielle Kalenderübersicht
   let activeContent = null;
 
   teamHeaders.forEach(header => {
+    const content = header.nextElementSibling;
+    
+    // Overlay selbst klickbar machen ohne zu schließen
+    content.addEventListener('click', e => e.stopPropagation());
+
     header.addEventListener('click', e => {
       e.stopPropagation();
-      const content = header.nextElementSibling;
 
-      // Panel schließen, wenn es schon offen ist
       if(activeContent === content){
         content.style.display = 'none';
         activeContent = null;
@@ -294,15 +297,16 @@ TVN Baskets – Offizielle Kalenderübersicht
       // Alle anderen Panels schließen
       document.querySelectorAll('.team-content').forEach(c => c.style.display = 'none');
 
-      // Panel nach vorne positionieren
+      // Position anpassen
       const rect = header.getBoundingClientRect();
-content.style.position = 'fixed';       // fixed statt absolute
-content.style.top = rect.bottom + 'px';
-content.style.left = rect.left + 'px';
-content.style.width = rect.width + 'px';
-content.style.display = 'block';
-content.style.zIndex = 9999;
-
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+      content.style.position = 'absolute';
+      content.style.top = rect.bottom + scrollTop + 'px';
+      content.style.left = rect.left + scrollLeft + 'px';
+      content.style.width = rect.width + 'px';
+      content.style.display = 'block';
+      content.style.zIndex = 9999;
 
       activeContent = content;
     });
@@ -323,4 +327,3 @@ content.style.zIndex = 9999;
 }
 
 genHTML();
-
