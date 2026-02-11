@@ -21,6 +21,17 @@ function genHTML() {
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
+.header-inner{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+}
+
+.logo{
+  height:70px;
+  width:auto;
+}
 :root{
   --tvn-blue:#003b75;
   --tvn-light-blue:#0057a3;
@@ -158,7 +169,7 @@ footer{
 
 <header>
   <div class="header-inner">
-    <img src="Logo.png" alt="TVN Logo" class="Logo">
+    <img src="Logo.png" alt="TVN Logo" class="logo">
     <div>
       <h1>TV Neunkirchen Baskets</h1>
       <p>Kalender Übersicht – automatisch aktualisiert<br>
@@ -167,17 +178,6 @@ footer{
   </div>
 </header>
 
-.header-inner{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:20px;
-}
-
-.Logo{
-  height:70px;
-  width:auto;
-}
 
 
 <div class="container">
