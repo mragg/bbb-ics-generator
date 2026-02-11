@@ -249,7 +249,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
       <div class="team-content" aria-hidden="true">
         <button class="overlay-close" aria-label="Schließen">&times;</button>
         <div class="team-content-preview">
-          <p>${t.teamName}</p>
+          <p><strong>${t.teamName}</strong></p>
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
         </div>
 
