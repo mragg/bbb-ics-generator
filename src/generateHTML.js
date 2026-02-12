@@ -97,7 +97,19 @@ header{
 
 /* Layout */
 .container{max-width:960px;margin:28px auto;padding:0 16px}
-.teams-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;align-items:flex-start}
+.teams-container{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:14px;
+  align-items:flex-start;
+  transition: transform 280ms ease, opacity 280ms ease;
+}
+
+/* shifted states (durch Anleitung / Popups) */
+.teams-container.shifted-down { transform: translateY(18px); } /* minimal visual nudge while measuring */
+.teams-container.shifted-by-guide { transition: transform 320ms ease, opacity 320ms ease; opacity:0.9; }
+.teams-container.shifted-by-popup { transform: translateX(18%) scale(0.98); opacity:0.35; pointer-events:none; }
 
 /* Team card */
 .team-card{
@@ -109,6 +121,7 @@ header{
   display:flex;
   flex-direction:column;
   position:relative;
+  transition: transform 220ms ease, opacity 220ms ease;
 }
 .team-header{
   padding:12px 14px;
@@ -122,6 +135,9 @@ header{
 .team-card .team-content-preview{
   padding:12px 14px;
 }
+
+/* Focused card when popup opens */
+.team-card.focused { transform: translateX(-6%) scale(1.02); z-index:11000; }
 
 /* Overlay (team-content) - default fixed, doesn't affect layout */
 .team-content{
@@ -309,7 +325,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
 <div class="teams-container">
   ${teams.map((t, index) => `
-    <div class="team-card">
+    <div class="team-card" data-team-index="${index}">
       <div class="team-header" data-index="${index}">
         ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
       </div>
@@ -345,203 +361,372 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/* Populate steps-wrapper and all info popups from the hidden template */
+/*
+  Verhalten:
+  - Accordion: Wenn ein Schritt geöffnet ist und ein anderer Schritt angeklickt wird, wird der vorherige geschlossen.
+    Gilt für die Haupt-Anleitung (steps-wrapper) und für alle ?-Popups (info-popup).
+  - Wenn die Anleitung (Haupt-Guide) angezeigt wird, verschiebt sie die restlichen Inhalte (teams/downloads) sichtbar aus dem Blickfeld
+    durch eine dynamische translateY auf .teams-container (weiche Animation).
+  - Wenn ein ?-Popup geöffnet wird, dimmen/verschieben wir die übrigen Inhalte und heben die dazugehörige Karte leicht hervor.
+*/
+
 document.addEventListener('DOMContentLoaded', () => {
   const template = document.getElementById('steps-template');
   const stepsWrapper = document.getElementById('steps-wrapper');
+  const guideBtn = document.getElementById('show-steps-btn');
+  const teamsContainer = document.querySelector('.teams-container');
+
+  /* Hilfsfunktion: setze Accordion-Verhalten innerhalb eines Containers */
+  function enableAccordion(container) {
+    if (!container) return;
+    const headers = container.querySelectorAll('.step-header');
+    headers.forEach(h => {
+      h.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const targetContent = h.nextElementSibling;
+        if (!targetContent) return;
+
+        // Close other open step-content within same container
+        container.querySelectorAll('.step-content').forEach(c => {
+          if (c !== targetContent && c.style.display === 'block') {
+            c.style.display = 'none';
+          }
+        });
+
+        // Toggle clicked one
+        targetContent.style.display = targetContent.style.display === 'block' ? 'none' : 'block';
+
+        // After toggling, if this container is the main stepsWrapper, re-evaluate teamsContainer shift
+        if (container === stepsWrapper) {
+          applyGuideShiftIfOpen();
+        }
+      });
+    });
+  }
+
+  /* Populate steps-wrapper and all info-popups from the hidden template */
   if (template && stepsWrapper) {
     stepsWrapper.innerHTML = template.innerHTML;
-    // ensure step headers work for the copied content in steps-wrapper
-    stepsWrapper.querySelectorAll('.step-header').forEach(h => {
-      h.addEventListener('click', () => {
-        const c = h.nextElementSibling;
-        c.style.display = c.style.display === 'block' ? 'none' : 'block';
-      });
-    });
+    enableAccordion(stepsWrapper);
   }
 
-  // Fill each info-popup with the same content
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.innerHTML = template.innerHTML;
-    // Also enable the toggle behavior for the step headers inside the popup
-    p.querySelectorAll('.step-header').forEach(h => {
-      h.addEventListener('click', (e) => {
-        e.stopPropagation(); // don't close the popup when clicking a step
-        const c = h.nextElementSibling;
-        c.style.display = c.style.display === 'block' ? 'none' : 'block';
-      });
-    });
+  // Fill each info-popup with the same content and enable accordion inside each popup
+  document.querySelectorAll('.info-popup').forEach(popup => {
+    popup.innerHTML = template.innerHTML;
+    enableAccordion(popup);
   });
-});
 
-/* Anleitung-Button: zeigt/versteckt den steps-wrapper */
-const guideBtn = document.getElementById('show-steps-btn');
-const stepsWrapper = document.getElementById('steps-wrapper');
+  /* Funktion: wenn die Haupt-Anleitung offen ist → verschiebe teams-container um Höhe der Anleitung (mit etwas Padding) */
+  function applyGuideShiftIfOpen() {
+    const isOpen = stepsWrapper.style.display === 'block';
+    if (!teamsContainer) return;
 
-guideBtn.addEventListener('click', (e) => {
-  const isOpen = stepsWrapper.style.display === 'block';
-  if (isOpen) {
-    stepsWrapper.style.display = 'none';
-    guideBtn.setAttribute('aria-expanded', 'false');
-    guideBtn.textContent = 'Anleitung anzeigen';
-  } else {
-    stepsWrapper.style.display = 'block';
-    guideBtn.setAttribute('aria-expanded', 'true');
-    guideBtn.textContent = 'Anleitung verbergen';
-    if (window.innerWidth <= 600) {
-      stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (isOpen) {
+      // berechne Höhe der sichtbaren Anleitung (inkl. geöffneter Schritt-Contents)
+      const rect = stepsWrapper.getBoundingClientRect();
+      const height = Math.ceil(rect.height);
+      // ein wenig Abstand addieren
+      const shift = height + 24;
+      teamsContainer.classList.add('shifted-by-guide');
+      teamsContainer.style.transform = 'translateY(' + shift + 'px)';
+      teamsContainer.style.opacity = '0.95';
+    } else {
+      teamsContainer.classList.remove('shifted-by-guide');
+      teamsContainer.style.transform = '';
+      teamsContainer.style.opacity = '';
     }
   }
-});
 
-/* Overlay logic */
-const teamHeaders = document.querySelectorAll('.team-header');
-let activeContent = null;
+  /* Anleitung-Button: zeigt/versteckt den steps-wrapper */
+  guideBtn.addEventListener('click', (e) => {
+    const isOpen = stepsWrapper.style.display === 'block';
+    if (isOpen) {
+      stepsWrapper.style.display = 'none';
+      guideBtn.setAttribute('aria-expanded', 'false');
+      guideBtn.textContent = 'Anleitung anzeigen';
+      // clean shift
+      applyGuideShiftIfOpen();
+    } else {
+      stepsWrapper.style.display = 'block';
+      guideBtn.setAttribute('aria-expanded', 'true');
+      guideBtn.textContent = 'Anleitung verbergen';
+      // wait for layout to stabilize then shift
+      requestAnimationFrame(() => {
+        // open none of the internal steps by default, but keep their event handlers active
+        stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
+        enableAccordion(stepsWrapper); // ensure accordion bound
+        applyGuideShiftIfOpen();
 
-function closeAllOverlays() {
-  document.querySelectorAll('.team-content').forEach(c => {
-    c.style.display = 'none';
-    c.setAttribute('aria-hidden', 'true');
+        // On small screens scroll the steps into view
+        if (window.innerWidth <= 600) {
+          stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    }
   });
-  activeContent = null;
-}
 
-teamHeaders.forEach((header) => {
-  const card = header.closest('.team-card');
-  const content = card.querySelector('.team-content');
+  /* Overlay / team popups logic with shifting of other content */
+  const teamHeaders = document.querySelectorAll('.team-header');
+  let activeContent = null;
+  let activeFocusedCard = null;
 
-  if (content) content.addEventListener('click', e => e.stopPropagation());
+  function closeAllOverlays() {
+    document.querySelectorAll('.team-content').forEach(c => {
+      c.style.display = 'none';
+      c.setAttribute('aria-hidden', 'true');
+    });
+    // remove any focused card highlight
+    document.querySelectorAll('.team-card.focused').forEach(card => card.classList.remove('focused'));
+    // clear teams container shifting caused by popup
+    if (teamsContainer) {
+      teamsContainer.classList.remove('shifted-by-popup');
+      teamsContainer.style.transform = teamsContainer.style.transform || '';
+      teamsContainer.style.opacity = '';
+      teamsContainer.style.pointerEvents = '';
+    }
+    activeContent = null;
+    activeFocusedCard = null;
+  }
 
-  if (content) {
-    const closeBtn = content.querySelector('.overlay-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', e => {
-        e.stopPropagation();
+  teamHeaders.forEach((header) => {
+    const card = header.closest('.team-card');
+    const content = card.querySelector('.team-content');
+
+    // prevent clicks inside overlay from bubbling up (so document click doesn't close)
+    if (content) content.addEventListener('click', e => e.stopPropagation());
+
+    // close button (mobile)
+    if (content) {
+      const closeBtn = content.querySelector('.overlay-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          content.style.display = 'none';
+          content.setAttribute('aria-hidden', 'true');
+          closeAllOverlays();
+        });
+      }
+    }
+
+    header.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!content) return;
+
+      // toggle
+      if (activeContent === content) {
         content.style.display = 'none';
         content.setAttribute('aria-hidden', 'true');
-        activeContent = null;
-      });
-    }
-  }
+        closeAllOverlays();
+        return;
+      }
 
-  header.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!content) return;
+      // close others
+      closeAllOverlays();
 
-    if (activeContent === content) {
-      content.style.display = 'none';
-      content.setAttribute('aria-hidden', 'true');
-      activeContent = null;
-      return;
-    }
+      // ensure content is appended to body to avoid clipping by parents
+      if (!document.body.contains(content)) document.body.appendChild(content);
 
-    closeAllOverlays();
+      const isMobile = window.innerWidth <= 600;
 
-    if (!document.body.contains(content)) document.body.appendChild(content);
+      // visual: highlight the clicked card
+      if (card) {
+        card.classList.add('focused');
+        activeFocusedCard = card;
+      }
 
-    const isMobile = window.innerWidth <= 600;
+      if (isMobile) {
+        // Mobile: full-screen modal
+        content.style.position = 'fixed';
+        content.style.left = '0px';
+        content.style.top = '0px';
+        content.style.width = '100vw';
+        content.style.height = '100vh';
+        content.style.maxHeight = 'none';
+        content.style.display = 'block';
+        content.style.zIndex = 12000;
+        content.setAttribute('aria-hidden', 'false');
+        content.scrollTop = 0;
 
-    if (isMobile) {
+        // hide/shift teams container so the overlay is the focus (mobile)
+        if (teamsContainer) {
+          teamsContainer.style.transition = 'transform 280ms ease, opacity 280ms ease';
+          teamsContainer.style.transform = 'translateY(110vh)';
+          teamsContainer.style.opacity = '0.15';
+          teamsContainer.style.pointerEvents = 'none';
+        }
+
+        activeContent = content;
+        return;
+      }
+
+      // Desktop / larger screens: position near header with width handling
+      const rect = header.getBoundingClientRect();
+
+      // Desired width factor
+      let desiredWidth = Math.max(rect.width * 2.2, 360);
+      // cap to 95% of viewport width
+      const maxWidth = window.innerWidth * 0.95;
+      if (desiredWidth > maxWidth) desiredWidth = maxWidth;
+
+      // margin from screen edges
+      const margin = 28; // px
+
+      // compute left position
+      let leftPos = rect.left;
+      if (leftPos + desiredWidth > window.innerWidth - margin) {
+        leftPos = window.innerWidth - desiredWidth - margin;
+      }
+      if (leftPos < margin) leftPos = margin;
+
+      // set styles
       content.style.position = 'fixed';
-      content.style.left = '0px';
-      content.style.top = '0px';
-      content.style.width = '100vw';
-      content.style.height = '100vh';
-      content.style.maxHeight = 'none';
       content.style.display = 'block';
       content.style.zIndex = 12000;
+      content.style.width = desiredWidth + 'px';
+      content.style.maxHeight = '80vh';
       content.setAttribute('aria-hidden', 'false');
-      content.scrollTop = 0;
-      activeContent = content;
-      return;
-    }
 
-    const rect = header.getBoundingClientRect();
-    let desiredWidth = Math.max(rect.width * 2.2, 360);
-    const maxWidth = window.innerWidth * 0.95;
-    if (desiredWidth > maxWidth) desiredWidth = maxWidth;
-    const margin = 28;
+      // Erst unten platzieren
+      let topPos = rect.bottom;
 
-    let leftPos = rect.left;
-    if (leftPos + desiredWidth > window.innerWidth - margin) {
-      leftPos = window.innerWidth - desiredWidth - margin;
-    }
-    if (leftPos < margin) leftPos = margin;
+      // Prüfen ob es unten rausläuft
+      const contentHeight = content.offsetHeight;
+      const viewportHeight = window.innerHeight;
 
-    content.style.position = 'fixed';
-    content.style.display = 'block';
-    content.style.zIndex = 12000;
-    content.style.width = desiredWidth + 'px';
-    content.style.maxHeight = '80vh';
-    content.setAttribute('aria-hidden', 'false');
-
-    let topPos = rect.bottom;
-    const contentHeight = content.offsetHeight;
-    const viewportHeight = window.innerHeight;
-
-    if (topPos + contentHeight > viewportHeight - 20) {
-      topPos = rect.top - contentHeight;
-    }
-    if (topPos < 20) {
-      topPos = 20;
-    }
-    content.style.top = topPos + 'px';
-    content.style.left = leftPos + 'px';
-
-    activeContent = content;
-  });
-});
-
-// close overlays when clicking outside
-document.addEventListener('click', () => {
-  closeAllOverlays();
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-});
-
-// Info popup toggles
-document.querySelectorAll('.info-btn').forEach((btn) => {
-  const card = btn.closest('.team-card');
-  const popup = card ? card.querySelector('.info-popup') : null;
-
-  if (popup) {
-    popup.addEventListener('click', e => e.stopPropagation());
-  }
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    document.querySelectorAll('.info-popup').forEach(p => {
-      if (p !== popup) {
-        p.style.display = 'none';
-        p.setAttribute('aria-hidden','true');
+      if (topPos + contentHeight > viewportHeight - 20) {
+        // dann über dem Header anzeigen
+        topPos = rect.top - contentHeight;
       }
+
+      // Falls es oben rausläuft → minimaler Abstand
+      if (topPos < 20) {
+        topPos = 20;
+      }
+
+      content.style.top = topPos + 'px';
+      content.style.left = leftPos + 'px';
+
+      // Shift other content a bit to the side and dim
+      if (teamsContainer) {
+        teamsContainer.classList.add('shifted-by-popup');
+        teamsContainer.style.transform = 'translateX(18%) scale(0.98)';
+        teamsContainer.style.opacity = '0.28';
+        teamsContainer.style.pointerEvents = 'none'; // avoid accidental clicks while popup is open
+      }
+
+      activeContent = content;
     });
-    if (!popup) return;
-    const isOpen = popup.style.display === 'block';
-    popup.style.display = isOpen ? 'none' : 'block';
-    popup.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
   });
+
+  // close overlays when clicking outside
+  document.addEventListener('click', () => {
+    // if main steps are open, keep them unless click outside was intended to close them as well
+    // We'll close overlays and info popups, but not the main guide unless click target was outside guide button and steps
+    closeAllOverlays();
+
+    // also close info popups
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+  });
+
+  // Info popup toggles: clicking ? opens the same full guide content; also cause the shift
+  document.querySelectorAll('.info-btn').forEach((btn) => {
+    const card = btn.closest('.team-card');
+    const popup = card ? card.querySelector('.info-popup') : null;
+
+    if (popup) {
+      // prevent clicks inside popup from closing overlays
+      popup.addEventListener('click', e => e.stopPropagation());
+    }
+
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+
+      // close any other info popups
+      document.querySelectorAll('.info-popup').forEach(p => {
+        if (p !== popup) {
+          p.style.display = 'none';
+          p.setAttribute('aria-hidden','true');
+        }
+      });
+
+      if (!popup) return;
+      const isOpen = popup.style.display === 'block';
+
+      if (isOpen) {
+        popup.style.display = 'none';
+        popup.setAttribute('aria-hidden', 'true');
+        // reset teams container
+        if (teamsContainer) {
+          teamsContainer.classList.remove('shifted-by-popup');
+          teamsContainer.style.transform = '';
+          teamsContainer.style.opacity = '';
+          teamsContainer.style.pointerEvents = '';
+        }
+        if (card) card.classList.remove('focused');
+        return;
+      }
+
+      // show popup (desktop: small relative popup inside card; mobile: collapsible full width)
+      if (window.innerWidth <= 600) {
+        // on mobile, show full-screen style by adding a class to the card's popup element
+        popup.style.display = 'block';
+        popup.style.position = 'relative';
+        popup.style.maxHeight = 'none';
+        popup.setAttribute('aria-hidden', 'false');
+
+        // shift teams container off viewport
+        if (teamsContainer) {
+          teamsContainer.style.transform = 'translateY(110vh)';
+          teamsContainer.style.opacity = '0.12';
+          teamsContainer.style.pointerEvents = 'none';
+        }
+        if (card) card.classList.add('focused');
+        return;
+      }
+
+      // Desktop: inject the template content into popup (already done at DOMContentLoaded)
+      popup.style.display = 'block';
+      popup.setAttribute('aria-hidden', 'false');
+
+      // ensure only one step open inside popup at a time (accordion behavior)
+      enableAccordion(popup);
+
+      // shift/dim other content and highlight the card
+      if (teamsContainer) {
+        teamsContainer.classList.add('shifted-by-popup');
+        teamsContainer.style.transform = 'translateX(18%) scale(0.98)';
+        teamsContainer.style.opacity = '0.28';
+        teamsContainer.style.pointerEvents = 'none';
+      }
+      if (card) card.classList.add('focused');
+    });
+  });
+
+  // Close popups on scroll for better UX on mobile/desktop
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+    // reset styles applied by popups
+    closeAllOverlays();
+  }, { passive: true });
+
+  // ensure overlays close on resize to avoid misplacement and reset shifts
+  window.addEventListener('resize', () => {
+    closeAllOverlays();
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+    // also update guide shift if its open (recompute)
+    applyGuideShiftIfOpen();
+  }, { passive: true });
+
 });
-
-// Close popups on scroll for better UX on mobile/desktop
-window.addEventListener('scroll', () => {
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-}, { passive: true });
-
-// ensure overlays close on resize to avoid misplacement
-window.addEventListener('resize', () => {
-  closeAllOverlays();
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-}, { passive: true });
-
 </script>
 </body>
 </html>`;
@@ -550,4 +735,3 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
-
