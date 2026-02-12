@@ -202,8 +202,30 @@ header{
   margin-bottom:12px;
 }
 
-/* Footer */
-footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
+/* Modal for the steps (fixed, above content) */
+#steps-backdrop{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:14000;
+}
+#steps-wrapper{
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:90%;
+  max-width:720px;
+  max-height:80vh;
+  overflow-y:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 25px 60px rgba(0,0,0,0.35);
+  z-index:15000;
+}
 
 /* MOBILE specific: full-screen overlay, stacked buttons, 2-column grid for teams */
 @media (max-width: 600px) {
@@ -252,6 +274,18 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
   /* guide button full width on small screens */
   .guide-btn{width:100%}
+
+  /* Steps modal becomes full screen on mobile */
+  #steps-wrapper{
+    top:0;
+    left:0;
+    transform:none;
+    width:100vw;
+    height:100vh;
+    max-height:none;
+    border-radius:0;
+    padding:18px;
+  }
 }
 </style>
 
@@ -273,6 +307,9 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
 <!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
 <button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
+
+<!-- Backdrop for modal -->
+<div id="steps-backdrop" tabindex="-1" aria-hidden="true"></div>
 
 <!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung und für alle ?-Popups wiederverwendet -->
 <div id="steps-template" style="display:none;">
@@ -304,8 +341,8 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
   </div>
 </div>
 
-<!-- Steps wrapper: wird per JS mit dem Inhalt der Vorlage gefüllt -->
-<div id="steps-wrapper" style="display:none;"></div>
+<!-- Steps wrapper (Modal) -->
+<div id="steps-wrapper" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;"></div>
 
 <div class="teams-container">
   ${teams.map((t, index) => `
@@ -365,192 +402,242 @@ function bindStepHeadersInContainer(container) {
   });
 }
 
-/* Populate steps-wrapper and all info popups from the hidden template */
 document.addEventListener('DOMContentLoaded', () => {
   const template = document.getElementById('steps-template');
   const stepsWrapper = document.getElementById('steps-wrapper');
+  const backdrop = document.getElementById('steps-backdrop');
+  const guideBtn = document.getElementById('show-steps-btn');
+
+  // populate the modal from template
   if (template && stepsWrapper) {
     stepsWrapper.innerHTML = template.innerHTML;
-    // ensure step headers work for the copied content in steps-wrapper
     bindStepHeadersInContainer(stepsWrapper);
   }
 
-  // Fill each info-popup with the same content
+  // Fill each info-popup with the same content and bind their step headers
   document.querySelectorAll('.info-popup').forEach(p => {
     p.innerHTML = template.innerHTML;
-    // Also enable the toggle behavior for the step headers inside the popup
     bindStepHeadersInContainer(p);
+
+    // Prevent clicks inside the popup from closing the modal/backdrop handlers
+    p.addEventListener('click', e => e.stopPropagation());
   });
-});
 
-/* Anleitung-Button: zeigt/versteckt den steps-wrapper */
-const guideBtn = document.getElementById('show-steps-btn');
-const stepsWrapper = document.getElementById('steps-wrapper');
+  // Guide button: open/close modal with backdrop
+  function openStepsModal() {
+    // close any open info-popups or team overlays (avoid stacking)
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+    closeAllOverlays();
 
-guideBtn.addEventListener('click', (e) => {
-  const isOpen = stepsWrapper.style.display === 'block';
-  if (isOpen) {
-    stepsWrapper.style.display = 'none';
-    guideBtn.setAttribute('aria-expanded', 'false');
-    guideBtn.textContent = 'Anleitung anzeigen';
-  } else {
     stepsWrapper.style.display = 'block';
+    stepsWrapper.setAttribute('aria-hidden', 'false');
+    backdrop.style.display = 'block';
+    backdrop.setAttribute('aria-hidden', 'false');
     guideBtn.setAttribute('aria-expanded', 'true');
-    guideBtn.textContent = 'Anleitung verbergen';
-    if (window.innerWidth <= 600) {
-      stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+
+    // focus first step header for accessibility
+    const firstHeader = stepsWrapper.querySelector('.step-header');
+    if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
   }
-});
 
-/* Overlay logic */
-const teamHeaders = document.querySelectorAll('.team-header');
-let activeContent = null;
+  function closeStepsModal() {
+    stepsWrapper.style.display = 'none';
+    stepsWrapper.setAttribute('aria-hidden', 'true');
+    backdrop.style.display = 'none';
+    backdrop.setAttribute('aria-hidden', 'true');
+    guideBtn.setAttribute('aria-expanded', 'false');
 
-function closeAllOverlays() {
-  document.querySelectorAll('.team-content').forEach(c => {
-    c.style.display = 'none';
-    c.setAttribute('aria-hidden', 'true');
+    // also close any open step-content inside modal for a clean state
+    stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
+  }
+
+  guideBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isOpen = stepsWrapper.style.display === 'block';
+    if (isOpen) closeStepsModal();
+    else openStepsModal();
   });
-  activeContent = null;
-}
 
-teamHeaders.forEach((header) => {
-  const card = header.closest('.team-card');
-  const content = card.querySelector('.team-content');
+  // clicking backdrop closes modal
+  backdrop.addEventListener('click', () => {
+    closeStepsModal();
+  });
 
-  if (content) content.addEventListener('click', e => e.stopPropagation());
+  // close modal on ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (stepsWrapper.style.display === 'block') {
+        closeStepsModal();
+      } else {
+        // also close other popups/overlays on ESC
+        document.querySelectorAll('.info-popup').forEach(p => {
+          p.style.display = 'none';
+          p.setAttribute('aria-hidden','true');
+        });
+        closeAllOverlays();
+      }
+    }
+  });
 
-  if (content) {
-    const closeBtn = content.querySelector('.overlay-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', e => {
-        e.stopPropagation();
+  /* Overlay logic (team content popups) */
+  const teamHeaders = document.querySelectorAll('.team-header');
+  let activeContent = null;
+
+  function closeAllOverlays() {
+    document.querySelectorAll('.team-content').forEach(c => {
+      c.style.display = 'none';
+      c.setAttribute('aria-hidden', 'true');
+    });
+    activeContent = null;
+  }
+
+  teamHeaders.forEach((header) => {
+    const card = header.closest('.team-card');
+    const content = card.querySelector('.team-content');
+
+    if (content) content.addEventListener('click', e => e.stopPropagation());
+
+    if (content) {
+      const closeBtn = content.querySelector('.overlay-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          content.style.display = 'none';
+          content.setAttribute('aria-hidden', 'true');
+          activeContent = null;
+        });
+      }
+    }
+
+    header.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!content) return;
+
+      // if steps modal is open, close it first (avoid stacking)
+      if (stepsWrapper.style.display === 'block') {
+        closeStepsModal();
+      }
+
+      if (activeContent === content) {
         content.style.display = 'none';
         content.setAttribute('aria-hidden', 'true');
         activeContent = null;
-      });
-    }
-  }
+        return;
+      }
 
-  header.addEventListener('click', e => {
-    e.stopPropagation();
-    if (!content) return;
+      closeAllOverlays();
 
-    if (activeContent === content) {
-      content.style.display = 'none';
-      content.setAttribute('aria-hidden', 'true');
-      activeContent = null;
-      return;
-    }
+      if (!document.body.contains(content)) document.body.appendChild(content);
 
-    closeAllOverlays();
+      const isMobile = window.innerWidth <= 600;
 
-    if (!document.body.contains(content)) document.body.appendChild(content);
+      if (isMobile) {
+        content.style.position = 'fixed';
+        content.style.left = '0px';
+        content.style.top = '0px';
+        content.style.width = '100vw';
+        content.style.height = '100vh';
+        content.style.maxHeight = 'none';
+        content.style.display = 'block';
+        content.style.zIndex = 12000;
+        content.setAttribute('aria-hidden', 'false');
+        content.scrollTop = 0;
+        activeContent = content;
+        return;
+      }
 
-    const isMobile = window.innerWidth <= 600;
+      const rect = header.getBoundingClientRect();
+      let desiredWidth = Math.max(rect.width * 2.2, 360);
+      const maxWidth = window.innerWidth * 0.95;
+      if (desiredWidth > maxWidth) desiredWidth = maxWidth;
+      const margin = 28;
 
-    if (isMobile) {
+      let leftPos = rect.left;
+      if (leftPos + desiredWidth > window.innerWidth - margin) {
+        leftPos = window.innerWidth - desiredWidth - margin;
+      }
+      if (leftPos < margin) leftPos = margin;
+
       content.style.position = 'fixed';
-      content.style.left = '0px';
-      content.style.top = '0px';
-      content.style.width = '100vw';
-      content.style.height = '100vh';
-      content.style.maxHeight = 'none';
       content.style.display = 'block';
       content.style.zIndex = 12000;
+      content.style.width = desiredWidth + 'px';
+      content.style.maxHeight = '80vh';
       content.setAttribute('aria-hidden', 'false');
-      content.scrollTop = 0;
-      activeContent = content;
-      return;
-    }
 
-    const rect = header.getBoundingClientRect();
-    let desiredWidth = Math.max(rect.width * 2.2, 360);
-    const maxWidth = window.innerWidth * 0.95;
-    if (desiredWidth > maxWidth) desiredWidth = maxWidth;
-    const margin = 28;
+      let topPos = rect.bottom;
+      const contentHeight = content.offsetHeight;
+      const viewportHeight = window.innerHeight;
 
-    let leftPos = rect.left;
-    if (leftPos + desiredWidth > window.innerWidth - margin) {
-      leftPos = window.innerWidth - desiredWidth - margin;
-    }
-    if (leftPos < margin) leftPos = margin;
-
-    content.style.position = 'fixed';
-    content.style.display = 'block';
-    content.style.zIndex = 12000;
-    content.style.width = desiredWidth + 'px';
-    content.style.maxHeight = '80vh';
-    content.setAttribute('aria-hidden', 'false');
-
-    let topPos = rect.bottom;
-    const contentHeight = content.offsetHeight;
-    const viewportHeight = window.innerHeight;
-
-    if (topPos + contentHeight > viewportHeight - 20) {
-      topPos = rect.top - contentHeight;
-    }
-    if (topPos < 20) {
-      topPos = 20;
-    }
-    content.style.top = topPos + 'px';
-    content.style.left = leftPos + 'px';
-
-    activeContent = content;
-  });
-});
-
-// close overlays when clicking outside
-document.addEventListener('click', () => {
-  closeAllOverlays();
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-});
-
-// Info popup toggles
-document.querySelectorAll('.info-btn').forEach((btn) => {
-  const card = btn.closest('.team-card');
-  const popup = card ? card.querySelector('.info-popup') : null;
-
-  if (popup) {
-    popup.addEventListener('click', e => e.stopPropagation());
-  }
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    document.querySelectorAll('.info-popup').forEach(p => {
-      if (p !== popup) {
-        p.style.display = 'none';
-        p.setAttribute('aria-hidden','true');
+      if (topPos + contentHeight > viewportHeight - 20) {
+        topPos = rect.top - contentHeight;
       }
+      if (topPos < 20) {
+        topPos = 20;
+      }
+      content.style.top = topPos + 'px';
+      content.style.left = leftPos + 'px';
+
+      activeContent = content;
     });
-    if (!popup) return;
-    const isOpen = popup.style.display === 'block';
-    popup.style.display = isOpen ? 'none' : 'block';
-    popup.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
   });
+
+  // close overlays when clicking outside
+  document.addEventListener('click', () => {
+    closeAllOverlays();
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+  });
+
+  // Info popup toggles
+  document.querySelectorAll('.info-btn').forEach((btn) => {
+    const card = btn.closest('.team-card');
+    const popup = card ? card.querySelector('.info-popup') : null;
+
+    if (popup) {
+      popup.addEventListener('click', e => e.stopPropagation());
+    }
+
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      // close other info popups
+      document.querySelectorAll('.info-popup').forEach(p => {
+        if (p !== popup) {
+          p.style.display = 'none';
+          p.setAttribute('aria-hidden','true');
+        }
+      });
+      if (!popup) return;
+      const isOpen = popup.style.display === 'block';
+      popup.style.display = isOpen ? 'none' : 'block';
+      popup.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+    });
+  });
+
+  // Close popups on scroll for better UX on mobile/desktop
+  window.addEventListener('scroll', () => {
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+  }, { passive: true });
+
+  // ensure overlays close on resize to avoid misplacement
+  window.addEventListener('resize', () => {
+    closeAllOverlays();
+    document.querySelectorAll('.info-popup').forEach(p => {
+      p.style.display = 'none';
+      p.setAttribute('aria-hidden','true');
+    });
+    // also close steps modal on resize to avoid visual issues
+    closeStepsModal();
+  }, { passive: true });
 });
-
-// Close popups on scroll for better UX on mobile/desktop
-window.addEventListener('scroll', () => {
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-}, { passive: true });
-
-// ensure overlays close on resize to avoid misplacement
-window.addEventListener('resize', () => {
-  closeAllOverlays();
-  document.querySelectorAll('.info-popup').forEach(p => {
-    p.style.display = 'none';
-    p.setAttribute('aria-hidden','true');
-  });
-}, { passive: true });
-
 </script>
 </body>
 </html>`;
@@ -559,4 +646,3 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
-
