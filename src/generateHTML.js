@@ -23,18 +23,6 @@ function normalizeId(value) {
   return String(value).trim();
 }
 
-function detectLeagueFromObject(obj) {
-  if (!obj) return '';
-  return (
-    obj.league ??
-    obj.leagueName ??
-    obj.liga ??
-    obj.competition ??
-    obj.division ??
-    ''
-  );
-}
-
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
@@ -46,37 +34,19 @@ function genHTML() {
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
   console.log("TEAMS.JSON:");
-console.log(JSON.stringify(teamsArray[0], null, 2));
+  console.log(JSON.stringify(teamsArray[0], null, 2));
 
-console.log("METADATA.JSON:");
-console.log(JSON.stringify(metadataArray[0], null, 2));
+  console.log("METADATA.JSON:");
+  console.log(JSON.stringify(metadataArray[0], null, 2));
 
-
-  // Erstelle Map: verschiedene id-Felder werden unterstützt, alle normalisiert
-  const leagueMap = {};
-  teamsArray.forEach(t => {
-    if (!t) return;
-    const leagueValue = detectLeagueFromObject(t);
-    const candidateIds = [t.id, t.teamId, t.team_id, t.identifier];
-    candidateIds.forEach(rawId => {
-      const id = normalizeId(rawId);
-      if (id) leagueMap[id] = leagueValue;
-    });
-  });
-
-  // Finales, sauberes Team-Array für das Template
+  // Finales, sauberes Team-Array für das Template (ohne Liga)
   const teams = metadataArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
-    const leagueFromMeta = detectLeagueFromObject(m);
-    const leagueFromMap = leagueMap[id] ?? '';
-
-    const finalLeague = leagueFromMeta !== '' ? leagueFromMeta : (leagueFromMap !== '' ? leagueFromMap : 'unbekannt');
 
     return {
       teamId: id,
       name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
       ageGroup: m.ageGroup ?? '',
-      league: finalLeague,
       matchCount: m.matchCount ?? m.matches ?? 0,
       homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
       awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0,
@@ -322,7 +292,6 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
         <div class="team-content-preview">
           ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-          <div><strong>Liga:</strong> ${t.league}</div>
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
         </div>
 
@@ -449,31 +418,31 @@ teamHeaders.forEach((header) => {
 
     // set styles
     content.style.position = 'fixed';
-content.style.display = 'block';
-content.style.zIndex = 12000;
-content.style.width = desiredWidth + 'px';
-content.style.maxHeight = '80vh';
-content.setAttribute('aria-hidden', 'false');
+    content.style.display = 'block';
+    content.style.zIndex = 12000;
+    content.style.width = desiredWidth + 'px';
+    content.style.maxHeight = '80vh';
+    content.setAttribute('aria-hidden', 'false');
 
-// Erst unten platzieren
-let topPos = rect.bottom;
+    // Erst unten platzieren
+    let topPos = rect.bottom;
 
-// Prüfen ob es unten rausläuft
-const contentHeight = content.offsetHeight;
-const viewportHeight = window.innerHeight;
+    // Prüfen ob es unten rausläuft
+    const contentHeight = content.offsetHeight;
+    const viewportHeight = window.innerHeight;
 
-if (topPos + contentHeight > viewportHeight - 20) {
-  // dann über dem Header anzeigen
-  topPos = rect.top - contentHeight;
-}
+    if (topPos + contentHeight > viewportHeight - 20) {
+      // dann über dem Header anzeigen
+      topPos = rect.top - contentHeight;
+    }
 
-// Falls es oben rausläuft → minimaler Abstand
-if (topPos < 20) {
-  topPos = 20;
-}
+    // Falls es oben rausläuft → minimaler Abstand
+    if (topPos < 20) {
+      topPos = 20;
+    }
 
-content.style.top = topPos + 'px';
-content.style.left = leftPos + 'px';
+    content.style.top = topPos + 'px';
+    content.style.left = leftPos + 'px';
 
     // ensure focusable close behavior if needed
     activeContent = content;
