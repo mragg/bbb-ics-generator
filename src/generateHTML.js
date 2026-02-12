@@ -33,12 +33,6 @@ function genHTML() {
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
-  console.log("TEAMS.JSON:");
-  console.log(JSON.stringify(teamsArray[0], null, 2));
-
-  console.log("METADATA.JSON:");
-  console.log(JSON.stringify(metadataArray[0], null, 2));
-
   // Finales, sauberes Team-Array für das Template (ohne Liga)
   const teams = metadataArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
@@ -103,13 +97,12 @@ header{
   gap:12px;
   margin-top:14px;
   align-items:flex-start;
-  transition: transform 280ms ease, opacity 280ms ease;
+  transition: transform 320ms ease, opacity 320ms ease;
 }
 
-/* shifted states (durch Anleitung / Popups) */
-.teams-container.shifted-down { transform: translateY(18px); } /* minimal visual nudge while measuring */
-.teams-container.shifted-by-guide { transition: transform 320ms ease, opacity 320ms ease; opacity:0.9; }
-.teams-container.shifted-by-popup { transform: translateX(18%) scale(0.98); opacity:0.35; pointer-events:none; }
+/* Dim / shift states */
+.teams-container.dimmed { opacity:0.28; transform: translateX(12%) scale(0.98); pointer-events:none; }
+.teams-container.shifted-down { transform: translateY(20px); opacity:0.96; }
 
 /* Team card */
 .team-card{
@@ -137,9 +130,9 @@ header{
 }
 
 /* Focused card when popup opens */
-.team-card.focused { transform: translateX(-6%) scale(1.02); z-index:11000; }
+.team-card.focused { transform: translateX(-4%) scale(1.02); z-index:11000; }
 
-/* Overlay (team-content) - default fixed, doesn't affect layout */
+/* Overlay (team-content) */
 .team-content{
   position:fixed;
   display:none;
@@ -258,7 +251,6 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
     text-align:center;
   }
 
-  /* Info-popup inside overlay becomes full width block on mobile */
   .info-popup{
     width:100%;
     max-width:none;
@@ -266,7 +258,6 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
     margin-top:10px;
   }
 
-  /* guide button full width on small screens */
   .guide-btn{width:100%}
 }
 </style>
@@ -287,10 +278,10 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
 <div class="container">
 
-<!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
+<!-- Anleitung-Button -->
 <button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
-<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung und für alle ?-Popups wiederverwendet -->
+<!-- Template: Inhalt der Anleitung (wird kopiert) -->
 <div id="steps-template" style="display:none;">
   <div class="step-box">
     <div class="step-header">Schritt 1 – URL kopieren</div>
@@ -320,10 +311,10 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
   </div>
 </div>
 
-<!-- Steps wrapper: wird per JS mit dem Inhalt der Vorlage gefüllt -->
+<!-- Steps wrapper: wird per JS befüllt -->
 <div id="steps-wrapper" style="display:none;"></div>
 
-<div class="teams-container">
+<div class="teams-container" id="teams-container">
   ${teams.map((t, index) => `
     <div class="team-card" data-team-index="${index}">
       <div class="team-header" data-index="${index}">
@@ -340,7 +331,6 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
         <div class="info-block">
           <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
-          <!-- Leeres Popup: wird per JS mit der kompletten Anleitung gefüllt (gleicher Inhalt wie steps-wrapper) -->
           <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true"></div>
         </div>
 
@@ -361,371 +351,236 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/*
-  Verhalten:
-  - Accordion: Wenn ein Schritt geöffnet ist und ein anderer Schritt angeklickt wird, wird der vorherige geschlossen.
-    Gilt für die Haupt-Anleitung (steps-wrapper) und für alle ?-Popups (info-popup).
-  - Wenn die Anleitung (Haupt-Guide) angezeigt wird, verschiebt sie die restlichen Inhalte (teams/downloads) sichtbar aus dem Blickfeld
-    durch eine dynamische translateY auf .teams-container (weiche Animation).
-  - Wenn ein ?-Popup geöffnet wird, dimmen/verschieben wir die übrigen Inhalte und heben die dazugehörige Karte leicht hervor.
-*/
-
 document.addEventListener('DOMContentLoaded', () => {
   const template = document.getElementById('steps-template');
   const stepsWrapper = document.getElementById('steps-wrapper');
   const guideBtn = document.getElementById('show-steps-btn');
-  const teamsContainer = document.querySelector('.teams-container');
+  const teamsContainer = document.getElementById('teams-container');
 
-  /* Hilfsfunktion: setze Accordion-Verhalten innerhalb eines Containers */
+  if (!template || !stepsWrapper || !guideBtn || !teamsContainer) return;
+
+  // Kopiere Template in Steps-Wrapper
+  stepsWrapper.innerHTML = template.innerHTML;
+
+  // Accordion: schliesst andere Schritte in demselben Container
   function enableAccordion(container) {
     if (!container) return;
     const headers = container.querySelectorAll('.step-header');
     headers.forEach(h => {
+      // remove duplicate listeners guard
+      h.replaceWith(h.cloneNode(true));
+    });
+    // re-query after clone
+    const freshHeaders = container.querySelectorAll('.step-header');
+    freshHeaders.forEach(h => {
       h.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        const targetContent = h.nextElementSibling;
-        if (!targetContent) return;
-
-        // Close other open step-content within same container
+        const content = h.nextElementSibling;
+        if (!content) return;
+        // close siblings
         container.querySelectorAll('.step-content').forEach(c => {
-          if (c !== targetContent && c.style.display === 'block') {
-            c.style.display = 'none';
-          }
+          if (c !== content && c.style.display === 'block') c.style.display = 'none';
         });
-
-        // Toggle clicked one
-        targetContent.style.display = targetContent.style.display === 'block' ? 'none' : 'block';
-
-        // After toggling, if this container is the main stepsWrapper, re-evaluate teamsContainer shift
-        if (container === stepsWrapper) {
-          applyGuideShiftIfOpen();
-        }
+        // toggle clicked
+        content.style.display = content.style.display === 'block' ? 'none' : 'block';
       });
     });
   }
 
-  /* Populate steps-wrapper and all info-popups from the hidden template */
-  if (template && stepsWrapper) {
-    stepsWrapper.innerHTML = template.innerHTML;
-    enableAccordion(stepsWrapper);
-  }
+  // initial accordion on main guide
+  enableAccordion(stepsWrapper);
 
-  // Fill each info-popup with the same content and enable accordion inside each popup
+  // fill info-popups with same content and enable accordion inside them
   document.querySelectorAll('.info-popup').forEach(popup => {
     popup.innerHTML = template.innerHTML;
     enableAccordion(popup);
   });
 
-  /* Funktion: wenn die Haupt-Anleitung offen ist → verschiebe teams-container um Höhe der Anleitung (mit etwas Padding) */
-  function applyGuideShiftIfOpen() {
-    const isOpen = stepsWrapper.style.display === 'block';
-    if (!teamsContainer) return;
-
-    if (isOpen) {
-      // berechne Höhe der sichtbaren Anleitung (inkl. geöffneter Schritt-Contents)
-      const rect = stepsWrapper.getBoundingClientRect();
-      const height = Math.ceil(rect.height);
-      // ein wenig Abstand addieren
-      const shift = height + 24;
-      teamsContainer.classList.add('shifted-by-guide');
-      teamsContainer.style.transform = 'translateY(' + shift + 'px)';
-      teamsContainer.style.opacity = '0.95';
-    } else {
-      teamsContainer.classList.remove('shifted-by-guide');
+  // helper: compute and apply shift when main guide is open
+  function applyGuideShift() {
+    const open = stepsWrapper.style.display === 'block';
+    if (!open) {
+      teamsContainer.classList.remove('shifted-down');
       teamsContainer.style.transform = '';
       teamsContainer.style.opacity = '';
+      return;
     }
+    // compute wrapper height and shift teams down (with padding)
+    const rect = stepsWrapper.getBoundingClientRect();
+    const shift = Math.min(window.innerHeight * 0.45, Math.ceil(rect.height) + 20);
+    teamsContainer.classList.add('shifted-down');
+    teamsContainer.style.transform = \`translateY(\${shift}px)\`;
+    teamsContainer.style.opacity = '0.96';
   }
 
-  /* Anleitung-Button: zeigt/versteckt den steps-wrapper */
+  // guide button toggle
   guideBtn.addEventListener('click', (e) => {
-    const isOpen = stepsWrapper.style.display === 'block';
-    if (isOpen) {
+    const open = stepsWrapper.style.display === 'block';
+    if (open) {
       stepsWrapper.style.display = 'none';
       guideBtn.setAttribute('aria-expanded', 'false');
       guideBtn.textContent = 'Anleitung anzeigen';
-      // clean shift
-      applyGuideShiftIfOpen();
     } else {
       stepsWrapper.style.display = 'block';
+      // close any open step-content by default
+      stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
+      enableAccordion(stepsWrapper);
       guideBtn.setAttribute('aria-expanded', 'true');
       guideBtn.textContent = 'Anleitung verbergen';
-      // wait for layout to stabilize then shift
-      requestAnimationFrame(() => {
-        // open none of the internal steps by default, but keep their event handlers active
-        stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
-        enableAccordion(stepsWrapper); // ensure accordion bound
-        applyGuideShiftIfOpen();
-
-        // On small screens scroll the steps into view
-        if (window.innerWidth <= 600) {
-          stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
+      // small delay to allow layout → then compute shift
+      requestAnimationFrame(applyGuideShift);
     }
   });
 
-  /* Overlay / team popups logic with shifting of other content */
+  // Overlay logic for team popups
   const teamHeaders = document.querySelectorAll('.team-header');
-  let activeContent = null;
-  let activeFocusedCard = null;
-
-  function closeAllOverlays() {
+  let activeOverlay = null;
+  function closeOverlays() {
     document.querySelectorAll('.team-content').forEach(c => {
       c.style.display = 'none';
       c.setAttribute('aria-hidden', 'true');
     });
-    // remove any focused card highlight
     document.querySelectorAll('.team-card.focused').forEach(card => card.classList.remove('focused'));
-    // clear teams container shifting caused by popup
-    if (teamsContainer) {
-      teamsContainer.classList.remove('shifted-by-popup');
-      teamsContainer.style.transform = teamsContainer.style.transform || '';
-      teamsContainer.style.opacity = '';
-      teamsContainer.style.pointerEvents = '';
-    }
-    activeContent = null;
-    activeFocusedCard = null;
+    teamsContainer.classList.remove('dimmed');
+    teamsContainer.style.pointerEvents = '';
+    activeOverlay = null;
   }
 
-  teamHeaders.forEach((header) => {
+  teamHeaders.forEach(header => {
     const card = header.closest('.team-card');
     const content = card.querySelector('.team-content');
 
-    // prevent clicks inside overlay from bubbling up (so document click doesn't close)
     if (content) content.addEventListener('click', e => e.stopPropagation());
 
-    // close button (mobile)
-    if (content) {
-      const closeBtn = content.querySelector('.overlay-close');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          content.style.display = 'none';
-          content.setAttribute('aria-hidden', 'true');
-          closeAllOverlays();
-        });
-      }
+    const closeBtn = content.querySelector('.overlay-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        closeOverlays();
+      });
     }
 
-    header.addEventListener('click', e => {
-      e.stopPropagation();
+    header.addEventListener('click', (ev) => {
+      ev.stopPropagation();
       if (!content) return;
-
       // toggle
-      if (activeContent === content) {
-        content.style.display = 'none';
-        content.setAttribute('aria-hidden', 'true');
-        closeAllOverlays();
+      if (activeOverlay === content) {
+        closeOverlays();
         return;
       }
-
-      // close others
-      closeAllOverlays();
-
-      // ensure content is appended to body to avoid clipping by parents
-      if (!document.body.contains(content)) document.body.appendChild(content);
-
+      closeOverlays();
+      // show
       const isMobile = window.innerWidth <= 600;
-
-      // visual: highlight the clicked card
-      if (card) {
-        card.classList.add('focused');
-        activeFocusedCard = card;
-      }
-
       if (isMobile) {
-        // Mobile: full-screen modal
         content.style.position = 'fixed';
-        content.style.left = '0px';
-        content.style.top = '0px';
+        content.style.left = '0';
+        content.style.top = '0';
         content.style.width = '100vw';
         content.style.height = '100vh';
         content.style.maxHeight = 'none';
         content.style.display = 'block';
-        content.style.zIndex = 12000;
         content.setAttribute('aria-hidden', 'false');
-        content.scrollTop = 0;
-
-        // hide/shift teams container so the overlay is the focus (mobile)
-        if (teamsContainer) {
-          teamsContainer.style.transition = 'transform 280ms ease, opacity 280ms ease';
-          teamsContainer.style.transform = 'translateY(110vh)';
-          teamsContainer.style.opacity = '0.15';
-          teamsContainer.style.pointerEvents = 'none';
-        }
-
-        activeContent = content;
+        // move teams far down and dim
+        teamsContainer.style.transform = 'translateY(110vh)';
+        teamsContainer.style.opacity = '0.12';
+        teamsContainer.style.pointerEvents = 'none';
+        card.classList.add('focused');
+        activeOverlay = content;
         return;
       }
-
-      // Desktop / larger screens: position near header with width handling
+      // desktop: position near header
       const rect = header.getBoundingClientRect();
+      const desiredWidth = Math.min(Math.max(rect.width * 2.2, 360), window.innerWidth * 0.95);
+      const margin = 28;
+      let left = rect.left;
+      if (left + desiredWidth > window.innerWidth - margin) left = window.innerWidth - desiredWidth - margin;
+      if (left < margin) left = margin;
 
-      // Desired width factor
-      let desiredWidth = Math.max(rect.width * 2.2, 360);
-      // cap to 95% of viewport width
-      const maxWidth = window.innerWidth * 0.95;
-      if (desiredWidth > maxWidth) desiredWidth = maxWidth;
-
-      // margin from screen edges
-      const margin = 28; // px
-
-      // compute left position
-      let leftPos = rect.left;
-      if (leftPos + desiredWidth > window.innerWidth - margin) {
-        leftPos = window.innerWidth - desiredWidth - margin;
-      }
-      if (leftPos < margin) leftPos = margin;
-
-      // set styles
       content.style.position = 'fixed';
-      content.style.display = 'block';
-      content.style.zIndex = 12000;
       content.style.width = desiredWidth + 'px';
       content.style.maxHeight = '80vh';
+      content.style.display = 'block';
       content.setAttribute('aria-hidden', 'false');
 
-      // Erst unten platzieren
-      let topPos = rect.bottom;
+      let top = rect.bottom;
+      const ch = content.offsetHeight;
+      const vh = window.innerHeight;
+      if (top + ch > vh - 20) top = rect.top - ch;
+      if (top < 20) top = 20;
+      content.style.top = top + 'px';
+      content.style.left = left + 'px';
 
-      // Prüfen ob es unten rausläuft
-      const contentHeight = content.offsetHeight;
-      const viewportHeight = window.innerHeight;
-
-      if (topPos + contentHeight > viewportHeight - 20) {
-        // dann über dem Header anzeigen
-        topPos = rect.top - contentHeight;
-      }
-
-      // Falls es oben rausläuft → minimaler Abstand
-      if (topPos < 20) {
-        topPos = 20;
-      }
-
-      content.style.top = topPos + 'px';
-      content.style.left = leftPos + 'px';
-
-      // Shift other content a bit to the side and dim
-      if (teamsContainer) {
-        teamsContainer.classList.add('shifted-by-popup');
-        teamsContainer.style.transform = 'translateX(18%) scale(0.98)';
-        teamsContainer.style.opacity = '0.28';
-        teamsContainer.style.pointerEvents = 'none'; // avoid accidental clicks while popup is open
-      }
-
-      activeContent = content;
+      // dim / shift others and highlight card
+      teamsContainer.classList.add('dimmed');
+      teamsContainer.style.pointerEvents = 'none';
+      card.classList.add('focused');
+      activeOverlay = content;
     });
   });
 
-  // close overlays when clicking outside
-  document.addEventListener('click', () => {
-    // if main steps are open, keep them unless click outside was intended to close them as well
-    // We'll close overlays and info popups, but not the main guide unless click target was outside guide button and steps
-    closeAllOverlays();
-
-    // also close info popups
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
-  });
-
-  // Info popup toggles: clicking ? opens the same full guide content; also cause the shift
-  document.querySelectorAll('.info-btn').forEach((btn) => {
-    const card = btn.closest('.team-card');
-    const popup = card ? card.querySelector('.info-popup') : null;
-
-    if (popup) {
-      // prevent clicks inside popup from closing overlays
-      popup.addEventListener('click', e => e.stopPropagation());
-    }
-
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-
-      // close any other info popups
-      document.querySelectorAll('.info-popup').forEach(p => {
-        if (p !== popup) {
-          p.style.display = 'none';
-          p.setAttribute('aria-hidden','true');
-        }
-      });
-
+  // info buttons open small popup that contains the same guide template (accordion inside)
+  document.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const card = btn.closest('.team-card');
+      const popup = card.querySelector('.info-popup');
       if (!popup) return;
-      const isOpen = popup.style.display === 'block';
-
-      if (isOpen) {
+      const open = popup.style.display === 'block';
+      // close all other popups
+      document.querySelectorAll('.info-popup').forEach(p => {
+        if (p !== popup) { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); }
+      });
+      if (open) {
         popup.style.display = 'none';
-        popup.setAttribute('aria-hidden', 'true');
-        // reset teams container
-        if (teamsContainer) {
-          teamsContainer.classList.remove('shifted-by-popup');
-          teamsContainer.style.transform = '';
-          teamsContainer.style.opacity = '';
-          teamsContainer.style.pointerEvents = '';
-        }
-        if (card) card.classList.remove('focused');
+        popup.setAttribute('aria-hidden','true');
+        teamsContainer.classList.remove('dimmed');
+        card.classList.remove('focused');
         return;
       }
-
-      // show popup (desktop: small relative popup inside card; mobile: collapsible full width)
-      if (window.innerWidth <= 600) {
-        // on mobile, show full-screen style by adding a class to the card's popup element
-        popup.style.display = 'block';
+      // show popup (mobile: full width block)
+      const mobile = window.innerWidth <= 600;
+      if (mobile) {
         popup.style.position = 'relative';
-        popup.style.maxHeight = 'none';
-        popup.setAttribute('aria-hidden', 'false');
-
-        // shift teams container off viewport
-        if (teamsContainer) {
-          teamsContainer.style.transform = 'translateY(110vh)';
-          teamsContainer.style.opacity = '0.12';
-          teamsContainer.style.pointerEvents = 'none';
-        }
-        if (card) card.classList.add('focused');
+        popup.style.display = 'block';
+        popup.setAttribute('aria-hidden','false');
+        teamsContainer.style.transform = 'translateY(110vh)';
+        teamsContainer.style.opacity = '0.12';
+        teamsContainer.style.pointerEvents = 'none';
+        card.classList.add('focused');
         return;
       }
-
-      // Desktop: inject the template content into popup (already done at DOMContentLoaded)
+      // desktop: inject template (already injected initially)
       popup.style.display = 'block';
-      popup.setAttribute('aria-hidden', 'false');
-
-      // ensure only one step open inside popup at a time (accordion behavior)
+      popup.setAttribute('aria-hidden','false');
       enableAccordion(popup);
-
-      // shift/dim other content and highlight the card
-      if (teamsContainer) {
-        teamsContainer.classList.add('shifted-by-popup');
-        teamsContainer.style.transform = 'translateX(18%) scale(0.98)';
-        teamsContainer.style.opacity = '0.28';
-        teamsContainer.style.pointerEvents = 'none';
-      }
-      if (card) card.classList.add('focused');
+      teamsContainer.classList.add('dimmed');
+      card.classList.add('focused');
     });
   });
 
-  // Close popups on scroll for better UX on mobile/desktop
+  // clicking outside closes overlays and info-popups, but leaves main guide as-is unless click outside guide
+  document.addEventListener('click', (e) => {
+    // if click outside the steps and not on the guide button, leave guide but close overlays/popups
+    if (stepsWrapper.contains(e.target) || guideBtn.contains(e.target)) {
+      // click inside guide area — ignore here
+    } else {
+      // close info popups and overlays
+      document.querySelectorAll('.info-popup').forEach(p => { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); });
+      closeOverlays();
+    }
+  });
+
+  // close on scroll (for mobile usability) and reset dims
   window.addEventListener('scroll', () => {
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
-    // reset styles applied by popups
-    closeAllOverlays();
+    document.querySelectorAll('.info-popup').forEach(p => { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); });
+    closeOverlays();
   }, { passive: true });
 
-  // ensure overlays close on resize to avoid misplacement and reset shifts
+  // recompute guide shift on resize
   window.addEventListener('resize', () => {
-    closeAllOverlays();
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
-    // also update guide shift if its open (recompute)
-    applyGuideShiftIfOpen();
+    applyGuideShift();
+    closeOverlays();
   }, { passive: true });
-
 });
 </script>
 </body>
