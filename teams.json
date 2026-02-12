@@ -12,12 +12,12 @@
   },
   {
     "id": "161199",
-    "name": "Herren",
-    "ageGroup": "2, Bezirksliga"
+    "name": "Herren 2",
+    "ageGroup": "Bezirksliga"
   },
   {
     "id": "276298",
-    "name": "U18",
+    "name": "U18 männlich",
     "ageGroup": "Kreisliga"
   },
   {
@@ -32,8 +32,8 @@
   },
   {
     "id": "319432",
-    "name": "U16 männlich",
-    "ageGroup": "2, Kreisliga"
+    "name": "U16 2 männlich",
+    "ageGroup": "Kreisliga"
   },
   {
     "id": "155756",
@@ -42,8 +42,8 @@
   },
   {
     "id": "161387",
-    "name": "U14",
-    "ageGroup": "2, Kreisliga"
+    "name": "U14 2",
+    "ageGroup": "Kreisliga"
   },
   {
     "id": "161395",
@@ -52,8 +52,8 @@
   },
   {
     "id": "276319",
-    "name": "U12",
-    "ageGroup": "2, Kreisliga"
+    "name": "U12 2", 
+    "ageGroup": "Kreisliga"
   },
   {
     "id": "161690",
@@ -62,8 +62,8 @@
   },
   {
     "id": "276318",
-    "name": "U10",
-    "ageGroup": "2, Kreisliga"
+    "name": "U10 2",
+    "ageGroup": "Kreisliga"
   }
 
 ]
