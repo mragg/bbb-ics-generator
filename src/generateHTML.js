@@ -449,13 +449,31 @@ teamHeaders.forEach((header) => {
 
     // set styles
     content.style.position = 'fixed';
-    content.style.top = (rect.bottom) + 'px';
-    content.style.left = leftPos + 'px';
-    content.style.width = desiredWidth + 'px';
-    content.style.display = 'block';
-    content.style.zIndex = 12000;
-    content.style.maxHeight = '80vh';
-    content.setAttribute('aria-hidden', 'false');
+content.style.display = 'block';
+content.style.zIndex = 12000;
+content.style.width = desiredWidth + 'px';
+content.style.maxHeight = '80vh';
+content.setAttribute('aria-hidden', 'false');
+
+// Erst unten platzieren
+let topPos = rect.bottom;
+
+// Prüfen ob es unten rausläuft
+const contentHeight = content.offsetHeight;
+const viewportHeight = window.innerHeight;
+
+if (topPos + contentHeight > viewportHeight - 20) {
+  // dann über dem Header anzeigen
+  topPos = rect.top - contentHeight;
+}
+
+// Falls es oben rausläuft → minimaler Abstand
+if (topPos < 20) {
+  topPos = 20;
+}
+
+content.style.top = topPos + 'px';
+content.style.left = leftPos + 'px';
 
     // ensure focusable close behavior if needed
     activeContent = content;
