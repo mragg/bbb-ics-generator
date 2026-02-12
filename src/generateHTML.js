@@ -179,9 +179,9 @@ header{
   max-height:60vh;
 }
 
-/* close button inside info-popup (desktop hidden, mobile visible) */
+/* popup close button: jetzt immer sichtbar auf Desktop und Mobil */
 .info-popup .popup-close-btn{
-  display:none;
+  display:block;
   position:absolute;
   top:8px;
   right:8px;
@@ -192,7 +192,7 @@ header{
   cursor:pointer;
 }
 
-/* close button for mobile overlay */
+/* close button for mobile overlay (team content) */
 .overlay-close{
   display:none;
   position:absolute;right:12px;top:10px;background:transparent;border:none;font-size:1.6rem;cursor:pointer;
@@ -294,9 +294,6 @@ header{
     margin-top:0;
     box-shadow:0 30px 60px rgba(0,0,0,0.35);
   }
-  .info-popup .popup-close-btn{ display:block; }
-
-  /* Info-popup inside overlay becomes full width block on mobile */
   .info-popup .step-box{ margin-top:28px; }
 
   /* guide button full width on small screens */
@@ -456,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fill each info-popup with the same content and bind their step headers
   document.querySelectorAll('.info-popup').forEach(p => {
-    // include a close button inside the popup so mobile users have a visible X
+    // include a close button inside the popup so desktop + mobile users have a visible X
     p.innerHTML = '<button class="popup-close-btn" aria-label="Schließen">&times;</button>' + template.innerHTML;
     bindStepHeadersInContainer(p);
 
@@ -647,6 +644,8 @@ document.addEventListener('DOMContentLoaded', () => {
       p.style.display = 'none';
       p.setAttribute('aria-hidden','true');
     });
+    // restore body scroll if mobile
+    if (window.innerWidth <= 600) document.body.style.overflow = '';
   });
 
   // Info popup toggles with improved positioning (keeps popups clear of .buttons area)
@@ -706,41 +705,75 @@ document.addEventListener('DOMContentLoaded', () => {
         if (left + popupRect.width > viewportW - margin) left = viewportW - popupRect.width - margin;
         if (left < margin) left = margin;
 
-        // compute space below and above
+        // compute space below and above relative to viewport
         const spaceBelow = viewportH - btnRect.bottom - margin;
         const spaceAbove = btnRect.top - margin;
 
         // get buttons rect to check overlap (if present)
         const buttonsRect = buttonsEl ? buttonsEl.getBoundingClientRect() : null;
 
-        // prefer below if fits and doesn't overlap buttons; otherwise above if fits
+        // Preferred: place popup above the buttons area (so it doesn't cover download buttons)
+        // Strategy:
+        // 1. Try placing below the button only if it does not overlap the buttons area.
+        // 2. Otherwise place above the button.
+        // 3. If neither side fits fully, clamp height so it doesn't cover the buttons area.
+
         let top;
-        if (popupRect.height <= spaceBelow) {
-          // tentative below
-          top = btnRect.bottom + 8;
-          // if buttons exist and popup would overlap them, prefer above
-          if (buttonsRect && !(top + popupRect.height < buttonsRect.top)) {
-            // overlaps -> try above
-            if (popupRect.height <= spaceAbove) {
-              top = btnRect.top - popupRect.height - 8;
-            } else {
-              // doesn't fully fit above either -> clamp below height to available spaceBelow (avoid covering buttons)
-              top = btnRect.bottom + 8;
-              popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
-            }
-          }
-        } else if (popupRect.height <= spaceAbove) {
-          // fits above
-          top = btnRect.top - popupRect.height - 8;
+
+        // helper to test overlap with buttons area
+        function wouldOverlapButtons(candidateTop, candidateHeight) {
+          if (!buttonsRect) return false;
+          const candidateBottom = candidateTop + candidateHeight;
+          // if candidate bottom is greater than buttonsRect.top => overlap
+          return candidateBottom > (buttonsRect.top - 8);
+        }
+
+        popupRect = popup.getBoundingClientRect(); // re-measure after any CSS changes
+        const popupHeight = popupRect.height;
+
+        // Try below
+        const tentativeBelowTop = btnRect.bottom + 8;
+        if (!wouldOverlapButtons(tentativeBelowTop, popupHeight) && popupHeight <= spaceBelow) {
+          top = tentativeBelowTop;
         } else {
-          // doesn't fit fully either side, pick side with more space and clamp height
-          if (spaceBelow >= spaceAbove) {
-            top = btnRect.bottom + 8;
-            popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
+          // Try above
+          const tentativeAboveTop = btnRect.top - popupHeight - 8;
+          if (tentativeAboveTop >= margin && popupHeight <= spaceAbove) {
+            top = tentativeAboveTop;
           } else {
-            const desiredHeight = Math.max(80, spaceAbove - 20);
-            popup.style.maxHeight = desiredHeight + 'px';
-            top = Math.max(margin, btnRect.top - desiredHeight - 8);
+            // pick the side with more space but clamp height so popup does not cover buttons
+            if (buttonsRect) {
+              // space available above until buttons top
+              const availableAbove = Math.max(0, buttonsRect.top - margin - 8);
+              const availableBelow = Math.max(0, viewportH - buttonsRect.bottom - margin - 8);
+              if (availableAbove >= availableBelow) {
+                // place above and clamp height to availableAbove
+                popup.style.maxHeight = Math.max(80, availableAbove) + 'px';
+                top = Math.max(margin, buttonsRect.top - Math.min(popup.offsetHeight, availableAbove) - 8);
+              } else {
+                // place below buttons area (i.e., below whole card buttons area) if possible
+                const belowButtonsTop = buttonsRect.bottom + 8;
+                const availableBelowButtons = viewportH - belowButtonsTop - margin;
+                popup.style.maxHeight = Math.max(80, availableBelowButtons) + 'px';
+                top = belowButtonsTop;
+              }
+            } else {
+              // no buttons rect -> fallback to below or clamp by viewport
+              if (popupHeight <= spaceBelow) {
+                top = tentativeBelowTop;
+              } else if (popupHeight <= spaceAbove) {
+                top = btnRect.top - popupHeight - 8;
+              } else {
+                // clamp to whichever side has more space
+                if (spaceBelow >= spaceAbove) {
+                  popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
+                  top = tentativeBelowTop;
+                } else {
+                  popup.style.maxHeight = Math.max(80, spaceAbove - 20) + 'px';
+                  top = Math.max(margin, btnRect.top - (spaceAbove - 20) - 8);
+                }
+              }
+            }
           }
         }
 
