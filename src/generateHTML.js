@@ -274,9 +274,8 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 <!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
 <button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
-<!-- Steps wrapper: standardmäßig versteckt; wird erst durch Klick auf Anleitung-Button sichtbar -->
-<div id="steps-wrapper" style="display:none;">
-
+<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung und für alle ?-Popups wiederverwendet -->
+<div id="steps-template" style="display:none;">
   <div class="step-box">
     <div class="step-header">Schritt 1 – URL kopieren</div>
     <div class="step-content">
@@ -303,8 +302,10 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
       <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
     </div>
   </div>
-
 </div>
+
+<!-- Steps wrapper: wird per JS mit dem Inhalt der Vorlage gefüllt -->
+<div id="steps-wrapper" style="display:none;"></div>
 
 <div class="teams-container">
   ${teams.map((t, index) => `
@@ -323,10 +324,8 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
         <div class="info-block">
           <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
-          <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true">
-            <p>📱 <strong>Smartphone/Tablet:</strong> Link lang drücken → <em>„Link kopieren“</em> → Kalender-App öffnen → <em>„Aus URL hinzufügen“</em></p>
-            <p>💻 <strong>Computer:</strong> Rechtsklick auf Link → <em>„Link kopieren“</em> → Kalender-App öffnen → <em>„Aus Internet hinzufügen“</em></p>
-          </div>
+          <!-- Leeres Popup: wird per JS mit der kompletten Anleitung gefüllt (gleicher Inhalt wie steps-wrapper) -->
+          <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true"></div>
         </div>
 
         <div class="buttons">
@@ -346,6 +345,35 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
+/* Populate steps-wrapper and all info popups from the hidden template */
+document.addEventListener('DOMContentLoaded', () => {
+  const template = document.getElementById('steps-template');
+  const stepsWrapper = document.getElementById('steps-wrapper');
+  if (template && stepsWrapper) {
+    stepsWrapper.innerHTML = template.innerHTML;
+    // ensure step headers work for the copied content in steps-wrapper
+    stepsWrapper.querySelectorAll('.step-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const c = h.nextElementSibling;
+        c.style.display = c.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+  }
+
+  // Fill each info-popup with the same content
+  document.querySelectorAll('.info-popup').forEach(p => {
+    p.innerHTML = template.innerHTML;
+    // Also enable the toggle behavior for the step headers inside the popup
+    p.querySelectorAll('.step-header').forEach(h => {
+      h.addEventListener('click', (e) => {
+        e.stopPropagation(); // don't close the popup when clicking a step
+        const c = h.nextElementSibling;
+        c.style.display = c.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+  });
+});
+
 /* Anleitung-Button: zeigt/versteckt den steps-wrapper */
 const guideBtn = document.getElementById('show-steps-btn');
 const stepsWrapper = document.getElementById('steps-wrapper');
@@ -360,19 +388,10 @@ guideBtn.addEventListener('click', (e) => {
     stepsWrapper.style.display = 'block';
     guideBtn.setAttribute('aria-expanded', 'true');
     guideBtn.textContent = 'Anleitung verbergen';
-    // optional: scroll to steps on smaller viewports
     if (window.innerWidth <= 600) {
       stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
-});
-
-/* Step toggles ( unverändert, funktioniert innerhalb des steps-wrapper ) */
-document.querySelectorAll('.step-header').forEach(h => {
-  h.addEventListener('click', () => {
-    const c = h.nextElementSibling;
-    c.style.display = c.style.display === 'block' ? 'none' : 'block';
-  });
 });
 
 /* Overlay logic */
@@ -391,10 +410,8 @@ teamHeaders.forEach((header) => {
   const card = header.closest('.team-card');
   const content = card.querySelector('.team-content');
 
-  // prevent clicks inside overlay from bubbling up (so document click doesn't close)
   if (content) content.addEventListener('click', e => e.stopPropagation());
 
-  // close button (mobile)
   if (content) {
     const closeBtn = content.querySelector('.overlay-close');
     if (closeBtn) {
@@ -411,7 +428,6 @@ teamHeaders.forEach((header) => {
     e.stopPropagation();
     if (!content) return;
 
-    // toggle
     if (activeContent === content) {
       content.style.display = 'none';
       content.setAttribute('aria-hidden', 'true');
@@ -419,16 +435,13 @@ teamHeaders.forEach((header) => {
       return;
     }
 
-    // close others
     closeAllOverlays();
 
-    // ensure content is appended to body to avoid clipping by parents
     if (!document.body.contains(content)) document.body.appendChild(content);
 
     const isMobile = window.innerWidth <= 600;
 
     if (isMobile) {
-      // Mobile: let CSS make it full-screen. just show it.
       content.style.position = 'fixed';
       content.style.left = '0px';
       content.style.top = '0px';
@@ -438,32 +451,23 @@ teamHeaders.forEach((header) => {
       content.style.display = 'block';
       content.style.zIndex = 12000;
       content.setAttribute('aria-hidden', 'false');
-      // reset scroll to top of overlay
       content.scrollTop = 0;
       activeContent = content;
       return;
     }
 
-    // Desktop / larger screens: position near header with width handling
     const rect = header.getBoundingClientRect();
-
-    // Desired width factor
     let desiredWidth = Math.max(rect.width * 2.2, 360);
-    // cap to 95% of viewport width
     const maxWidth = window.innerWidth * 0.95;
     if (desiredWidth > maxWidth) desiredWidth = maxWidth;
+    const margin = 28;
 
-    // margin from screen edges
-    const margin = 28; // px
-
-    // compute left position
     let leftPos = rect.left;
     if (leftPos + desiredWidth > window.innerWidth - margin) {
       leftPos = window.innerWidth - desiredWidth - margin;
     }
     if (leftPos < margin) leftPos = margin;
 
-    // set styles
     content.style.position = 'fixed';
     content.style.display = 'block';
     content.style.zIndex = 12000;
@@ -471,27 +475,19 @@ teamHeaders.forEach((header) => {
     content.style.maxHeight = '80vh';
     content.setAttribute('aria-hidden', 'false');
 
-    // Erst unten platzieren
     let topPos = rect.bottom;
-
-    // Prüfen ob es unten rausläuft
     const contentHeight = content.offsetHeight;
     const viewportHeight = window.innerHeight;
 
     if (topPos + contentHeight > viewportHeight - 20) {
-      // dann über dem Header anzeigen
       topPos = rect.top - contentHeight;
     }
-
-    // Falls es oben rausläuft → minimaler Abstand
     if (topPos < 20) {
       topPos = 20;
     }
-
     content.style.top = topPos + 'px';
     content.style.left = leftPos + 'px';
 
-    // ensure focusable close behavior if needed
     activeContent = content;
   });
 });
@@ -499,7 +495,6 @@ teamHeaders.forEach((header) => {
 // close overlays when clicking outside
 document.addEventListener('click', () => {
   closeAllOverlays();
-  // also close info popups
   document.querySelectorAll('.info-popup').forEach(p => {
     p.style.display = 'none';
     p.setAttribute('aria-hidden','true');
@@ -508,18 +503,15 @@ document.addEventListener('click', () => {
 
 // Info popup toggles
 document.querySelectorAll('.info-btn').forEach((btn) => {
-  // target popup inside the same card/content
   const card = btn.closest('.team-card');
   const popup = card ? card.querySelector('.info-popup') : null;
 
   if (popup) {
-    // prevent clicks inside popup from closing overlays
     popup.addEventListener('click', e => e.stopPropagation());
   }
 
   btn.addEventListener('click', e => {
     e.stopPropagation();
-    // close other popups
     document.querySelectorAll('.info-popup').forEach(p => {
       if (p !== popup) {
         p.style.display = 'none';
@@ -558,3 +550,4 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
+
