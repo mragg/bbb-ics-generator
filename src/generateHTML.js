@@ -187,6 +187,21 @@ header{
 .step-header{padding:12px 14px;cursor:pointer;font-weight:600;background:var(--tvn-blue);color:var(--tvn-white);font-family:'Oswald',sans-serif}
 .step-content{padding:12px 14px;display:none;font-size:0.95rem;line-height:1.45;background:#fafafa}
 
+/* Anleitung button — styled like step-header */
+.guide-btn{
+  display:inline-block;
+  padding:12px 14px;
+  cursor:pointer;
+  font-weight:600;
+  font-family:'Oswald',sans-serif;
+  background:var(--tvn-blue);
+  color:var(--tvn-white);
+  border-radius:8px;
+  border:none;
+  text-transform:none;
+  margin-bottom:12px;
+}
+
 /* Footer */
 footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
@@ -234,6 +249,9 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
     position:relative;
     margin-top:10px;
   }
+
+  /* guide button full width on small screens */
+  .guide-btn{width:100%}
 }
 </style>
 
@@ -253,31 +271,39 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
 <div class="container">
 
-<div class="step-box">
-  <div class="step-header">Schritt 1 – URL kopieren</div>
-  <div class="step-content">
-     <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
-    <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
-    <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
-  </div>
-</div>
+<!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
+<button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
-<div class="step-box">
-  <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
-  <div class="step-content">
-     <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
-    <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
-  </div>
-</div>
+<!-- Steps wrapper: standardmäßig versteckt; wird erst durch Klick auf Anleitung-Button sichtbar -->
+<div id="steps-wrapper" style="display:none;">
 
-<div class="step-box">
-  <div class="step-header">Schritt 3 – Link einfügen</div>
-  <div class="step-content">
-     <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
-    <p>Bestätigen Sie anschließend das Abonnement.</p>
-    <p>Der Kalender wird danach automatisch synchronisiert.</p>
-    <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
+  <div class="step-box">
+    <div class="step-header">Schritt 1 – URL kopieren</div>
+    <div class="step-content">
+       <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+      <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
+      <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
+    </div>
   </div>
+
+  <div class="step-box">
+    <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
+    <div class="step-content">
+       <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
+      <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step-box">
+    <div class="step-header">Schritt 3 – Link einfügen</div>
+    <div class="step-content">
+       <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+      <p>Bestätigen Sie anschließend das Abonnement.</p>
+      <p>Der Kalender wird danach automatisch synchronisiert.</p>
+      <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
+    </div>
+  </div>
+
 </div>
 
 <div class="teams-container">
@@ -320,7 +346,28 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/* Step toggles */
+/* Anleitung-Button: zeigt/versteckt den steps-wrapper */
+const guideBtn = document.getElementById('show-steps-btn');
+const stepsWrapper = document.getElementById('steps-wrapper');
+
+guideBtn.addEventListener('click', (e) => {
+  const isOpen = stepsWrapper.style.display === 'block';
+  if (isOpen) {
+    stepsWrapper.style.display = 'none';
+    guideBtn.setAttribute('aria-expanded', 'false');
+    guideBtn.textContent = 'Anleitung anzeigen';
+  } else {
+    stepsWrapper.style.display = 'block';
+    guideBtn.setAttribute('aria-expanded', 'true');
+    guideBtn.textContent = 'Anleitung verbergen';
+    // optional: scroll to steps on smaller viewports
+    if (window.innerWidth <= 600) {
+      stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+});
+
+/* Step toggles ( unverändert, funktioniert innerhalb des steps-wrapper ) */
 document.querySelectorAll('.step-header').forEach(h => {
   h.addEventListener('click', () => {
     const c = h.nextElementSibling;
@@ -511,5 +558,3 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
-
-
