@@ -33,12 +33,6 @@ function genHTML() {
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
-  console.log("TEAMS.JSON:");
-  console.log(JSON.stringify(teamsArray[0], null, 2));
-
-  console.log("METADATA.JSON:");
-  console.log(JSON.stringify(metadataArray[0], null, 2));
-
   // Finales, sauberes Team-Array für das Template (ohne Liga)
   const teams = metadataArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
@@ -108,7 +102,7 @@ header{
   min-width:220px;
   display:flex;
   flex-direction:column;
-  position:relative;
+  position:relative; /* wichtig: Referenz für absolute info-popup */
 }
 .team-header{
   padding:12px 14px;
@@ -159,21 +153,41 @@ header{
 .team-content .buttons a:hover{background:var(--tvn-red);transform:translateY(-2px)}
 
 /* Info button & popup */
-.info-block{display:flex;align-items:flex-start;gap:8px}
+.info-block{display:flex;align-items:flex-start;gap:8px;position:relative}
 .info-btn{
   background:var(--tvn-gray);
   border:none;border-radius:50%;
   width:30px;height:30px;display:flex;align-items:center;justify-content:center;
   font-weight:700;cursor:pointer;font-size:0.95rem;
 }
+
+/* INFO-POPUP: overlay, außerhalb des normalen Flows, verschiebt nichts */
 .info-popup{
   display:none;
-  position:relative;
-  background:#fff;padding:10px;border-radius:8px;
+  position:absolute; /* relativ zur .team-card / .info-block */
+  top: calc(100% + 8px);
+  left: 0;
+  background:#fff;
+  padding:12px 12px 20px 12px;
+  border-radius:8px;
   box-shadow:0 10px 30px rgba(0,0,0,0.12);
-  width:320px;max-width:calc(100vw - 60px);
-  margin-top:6px;
+  width:320px;
+  max-width:calc(100vw - 40px);
   z-index:13000;
+  box-sizing:border-box;
+}
+
+/* close button inside info-popup (desktop hidden, mobile visible) */
+.info-popup .popup-close-btn{
+  display:none;
+  position:absolute;
+  top:8px;
+  right:8px;
+  background:transparent;
+  border:none;
+  font-size:1.6rem;
+  line-height:1;
+  cursor:pointer;
 }
 
 /* close button for mobile overlay */
@@ -264,13 +278,24 @@ header{
     text-align:center;
   }
 
-  /* Info-popup inside overlay becomes full width block on mobile */
+  /* INFO-POPUP becomes full-screen modal on mobile with visible close button */
   .info-popup{
-    width:100%;
-    max-width:none;
-    position:relative;
-    margin-top:10px;
+    position:fixed !important;
+    left:0 !important;
+    top:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    max-height:none !important;
+    border-radius:0 !important;
+    padding:18px !important;
+    overflow-y:auto !important;
+    margin-top:0;
+    box-shadow:0 30px 60px rgba(0,0,0,0.35);
   }
+  .info-popup .popup-close-btn{ display:block; }
+
+  /* Info-popup inside overlay becomes full width block on mobile */
+  .info-popup .step-box{ margin-top:28px; }
 
   /* guide button full width on small screens */
   .guide-btn{width:100%}
@@ -387,6 +412,12 @@ function bindStepHeadersInContainer(container) {
   if (!container) return;
   const headers = container.querySelectorAll('.step-header');
   headers.forEach(h => {
+    // remove any previous listener by cloning (prevents duplicate listeners if re-bound)
+    const newH = h.cloneNode(true);
+    h.parentNode.replaceChild(newH, h);
+  });
+
+  container.querySelectorAll('.step-header').forEach(h => {
     h.addEventListener('click', (e) => {
       e.stopPropagation();
       const c = h.nextElementSibling;
@@ -414,13 +445,33 @@ document.addEventListener('DOMContentLoaded', () => {
     bindStepHeadersInContainer(stepsWrapper);
   }
 
+  // helper to close content overlays (team overlays)
+  function closeAllOverlays() {
+    document.querySelectorAll('.team-content').forEach(c => {
+      c.style.display = 'none';
+      c.setAttribute('aria-hidden', 'true');
+    });
+    activeContent = null;
+  }
+
   // Fill each info-popup with the same content and bind their step headers
   document.querySelectorAll('.info-popup').forEach(p => {
-    p.innerHTML = template.innerHTML;
+    // include a close button inside the popup so mobile users have a visible X
+    p.innerHTML = '<button class="popup-close-btn" aria-label="Schließen">&times;</button>' + template.innerHTML;
     bindStepHeadersInContainer(p);
 
     // Prevent clicks inside the popup from closing the modal/backdrop handlers
     p.addEventListener('click', e => e.stopPropagation());
+
+    // close button inside the info-popup
+    const closeBtn = p.querySelector('.popup-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        p.style.display = 'none';
+        p.setAttribute('aria-hidden','true');
+      });
+    }
   });
 
   // Guide button: open/close modal with backdrop
@@ -441,6 +492,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // focus first step header for accessibility
     const firstHeader = stepsWrapper.querySelector('.step-header');
     if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
+    // prevent body scroll while modal is open
+    document.body.style.overflow = 'hidden';
   }
 
   function closeStepsModal() {
@@ -452,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // also close any open step-content inside modal for a clean state
     stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
+    document.body.style.overflow = '';
   }
 
   guideBtn.addEventListener('click', (e) => {
@@ -466,13 +520,12 @@ document.addEventListener('DOMContentLoaded', () => {
     closeStepsModal();
   });
 
-  // close modal on ESC
+  // close modal on ESC (and close other popups/overlays)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (stepsWrapper.style.display === 'block') {
         closeStepsModal();
       } else {
-        // also close other popups/overlays on ESC
         document.querySelectorAll('.info-popup').forEach(p => {
           p.style.display = 'none';
           p.setAttribute('aria-hidden','true');
@@ -485,14 +538,6 @@ document.addEventListener('DOMContentLoaded', () => {
   /* Overlay logic (team content popups) */
   const teamHeaders = document.querySelectorAll('.team-header');
   let activeContent = null;
-
-  function closeAllOverlays() {
-    document.querySelectorAll('.team-content').forEach(c => {
-      c.style.display = 'none';
-      c.setAttribute('aria-hidden', 'true');
-    });
-    activeContent = null;
-  }
 
   teamHeaders.forEach((header) => {
     const card = header.closest('.team-card');
@@ -605,18 +650,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      // close other info popups
+      // close other info popups & overlays
       document.querySelectorAll('.info-popup').forEach(p => {
         if (p !== popup) {
           p.style.display = 'none';
           p.setAttribute('aria-hidden','true');
         }
       });
+      closeAllOverlays();
+      // also close the main steps modal if open
+      if (stepsWrapper.style.display === 'block') closeStepsModal();
+
       if (!popup) return;
       const isOpen = popup.style.display === 'block';
-      popup.style.display = isOpen ? 'none' : 'block';
-      popup.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+
+      if (isOpen) {
+        popup.style.display = 'none';
+        popup.setAttribute('aria-hidden','true');
+        btn.setAttribute('aria-expanded','false');
+        return;
+      }
+
+      // show popup as overlay (absolute/ fixed depending on viewport)
+      popup.style.display = 'block';
+      popup.setAttribute('aria-hidden','false');
+      btn.setAttribute('aria-expanded','true');
+
+      // On desktop ensure popup fits in viewport horizontally; adjust left if necessary
+      if (window.innerWidth > 600) {
+        const popupRect = popup.getBoundingClientRect();
+        const btnRect = btn.getBoundingClientRect();
+        // prefer aligning popup's left to button's left; if overflow, shift left
+        let left = btnRect.left;
+        const margin = 12;
+        if (left + popupRect.width > window.innerWidth - margin) {
+          left = window.innerWidth - popupRect.width - margin;
+        }
+        if (left < margin) left = margin;
+        // top we already set with CSS to below button; optionally adjust if near bottom
+        let top = btnRect.bottom + 8;
+        // if popup overflows bottom, position above button
+        const estimatedHeight = popupRect.height || 220;
+        if (top + estimatedHeight > window.innerHeight - 20) {
+          top = btnRect.top - estimatedHeight - 8;
+          if (top < 12) top = 12;
+        }
+        popup.style.left = left + 'px';
+        popup.style.top = top + 'px';
+      } else {
+        // on mobile, popup is fixed full-screen per CSS; focus close button for accessibility
+        const closeBtn = popup.querySelector('.popup-close-btn');
+        if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
+        // prevent body scroll while popup is open on mobile
+        document.body.style.overflow = 'hidden';
+      }
     });
+  });
+
+  // ensure that closing info popups restores body scroll if needed
+  document.addEventListener('click', () => {
+    if (window.innerWidth <= 600) {
+      // if any info-popup or steps modal open, we handle overflow when opened; otherwise restore
+      const anyOpenPopup = Array.from(document.querySelectorAll('.info-popup')).some(p => p.style.display === 'block');
+      const stepsOpen = stepsWrapper.style.display === 'block';
+      if (!anyOpenPopup && !stepsOpen) document.body.style.overflow = '';
+    }
   });
 
   // Close popups on scroll for better UX on mobile/desktop
@@ -625,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
       p.style.display = 'none';
       p.setAttribute('aria-hidden','true');
     });
+    if (window.innerWidth <= 600) document.body.style.overflow = '';
   }, { passive: true });
 
   // ensure overlays close on resize to avoid misplacement
@@ -636,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // also close steps modal on resize to avoid visual issues
     closeStepsModal();
+    document.body.style.overflow = '';
   }, { passive: true });
 });
 </script>
