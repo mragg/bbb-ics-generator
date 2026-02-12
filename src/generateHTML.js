@@ -290,7 +290,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
      <div class="team-content" aria-hidden="true">
         <button class="overlay-close" aria-label="Schließen">&times;</button>
         <div class="team-content-preview">
-          <p><strong>${t.name}</strong></p>
+         ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
           <p>Liga: <strong>${t.league}</strong></p>
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
         </div>
