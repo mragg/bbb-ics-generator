@@ -33,12 +33,16 @@ function genHTML() {
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
-  // Falls metadataArray leer ist, fallback auf teamsArray (sicherstellen, dass teams nicht leer)
-  const sourceArray = metadataArray.length ? metadataArray : teamsArray;
+  console.log("TEAMS.JSON:");
+  console.log(JSON.stringify(teamsArray[0], null, 2));
 
-  // Finales Team-Array
-  const teams = Array.isArray(sourceArray) ? sourceArray.map((m) => {
+  console.log("METADATA.JSON:");
+  console.log(JSON.stringify(metadataArray[0], null, 2));
+
+  // Finales, sauberes Team-Array für das Template (ohne Liga)
+  const teams = metadataArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
+
     return {
       teamId: id,
       name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
@@ -47,7 +51,7 @@ function genHTML() {
       homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
       awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0,
     };
-  }) : [];
+  });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -93,18 +97,7 @@ header{
 
 /* Layout */
 .container{max-width:960px;margin:28px auto;padding:0 16px}
-.teams-container{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-  margin-top:14px;
-  align-items:flex-start;
-  transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 320ms ease;
-}
-
-/* Verschiebungs-/Dimmzustände */
-.teams-container.shifted-down { transform: translateY(20px); opacity:0.98; }
-.teams-container.dimmed { transform: translateX(12%) scale(0.98); opacity:0.28; pointer-events:none; }
+.teams-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;align-items:flex-start}
 
 /* Team card */
 .team-card{
@@ -116,7 +109,6 @@ header{
   display:flex;
   flex-direction:column;
   position:relative;
-  transition: transform 220ms ease, opacity 220ms ease;
 }
 .team-header{
   padding:12px 14px;
@@ -131,10 +123,7 @@ header{
   padding:12px 14px;
 }
 
-/* Fokus-Hervorhebung */
-.team-card.focused { transform: translateX(-4%) scale(1.02); z-index:11000; }
-
-/* Overlay (team-content) */
+/* Overlay (team-content) - default fixed, doesn't affect layout */
 .team-content{
   position:fixed;
   display:none;
@@ -198,7 +187,7 @@ header{
 .step-header{padding:12px 14px;cursor:pointer;font-weight:600;background:var(--tvn-blue);color:var(--tvn-white);font-family:'Oswald',sans-serif}
 .step-content{padding:12px 14px;display:none;font-size:0.95rem;line-height:1.45;background:#fafafa}
 
-/* Anleitung-Button */
+/* Anleitung button — styled like step-header */
 .guide-btn{
   display:inline-block;
   padding:12px 14px;
@@ -216,8 +205,10 @@ header{
 /* Footer */
 footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
-/* MOBILE specific */
+/* MOBILE specific: full-screen overlay, stacked buttons, 2-column grid for teams */
 @media (max-width: 600px) {
+
+  /* Teams 2 per row */
   .teams-container{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -226,6 +217,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
   }
   .team-card{min-width:0}
 
+  /* Overlay becomes full-screen modal / bottom-sheet style */
   .team-content{
     left:0 !important;
     top:0 !important;
@@ -250,6 +242,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
     text-align:center;
   }
 
+  /* Info-popup inside overlay becomes full width block on mobile */
   .info-popup{
     width:100%;
     max-width:none;
@@ -257,6 +250,7 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
     margin-top:10px;
   }
 
+  /* guide button full width on small screens */
   .guide-btn{width:100%}
 }
 </style>
@@ -277,71 +271,72 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
 
 <div class="container">
 
-  <!-- Anleitung-Button -->
-  <button id="guide-btn" class="guide-btn" aria-expanded="false" aria-controls="guide-steps">Anleitung anzeigen</button>
+<!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
+<button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
-  <!-- zentrale Vorlage für die Schritte (versteckt) -->
-  <template id="steps-template">
-    <div class="step-box">
-      <div class="step-header">Schritt 1 – URL kopieren</div>
-      <div class="step-content">
-         <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
-        <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
-        <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
-      </div>
+<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung und für alle ?-Popups wiederverwendet -->
+<div id="steps-template" style="display:none;">
+  <div class="step-box">
+    <div class="step-header">Schritt 1 – URL kopieren</div>
+    <div class="step-content">
+       <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+      <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
+      <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
     </div>
-
-    <div class="step-box">
-      <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
-      <div class="step-content">
-         <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
-        <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
-      </div>
-    </div>
-
-    <div class="step-box">
-      <div class="step-header">Schritt 3 – Link einfügen</div>
-      <div class="step-content">
-         <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
-        <p>Bestätigen Sie anschließend das Abonnement.</p>
-        <p>Der Kalender wird danach automatisch synchronisiert.</p>
-        <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
-      </div>
-    </div>
-  </template>
-
-  <!-- hier wird die Anleitung dynamisch eingefügt -->
-  <div id="guide-steps" style="display:none;"></div>
-
-  <div id="teams-container" class="teams-container">
-    ${teams.map((t, index) => `
-      <div class="team-card" data-team-index="${index}">
-        <div class="team-header" data-index="${index}">
-          ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-        </div>
-
-        <div class="team-content" aria-hidden="true">
-          <button class="overlay-close" aria-label="Schließen">&times;</button>
-
-          <div class="team-content-preview">
-            ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-            <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-          </div>
-
-          <div class="info-block">
-            <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
-            <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true"></div>
-          </div>
-
-          <div class="buttons">
-            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_all.ics') : (encodeURIComponent(t.name) + '_all.ics'))}">Alle Spiele abonnieren</a>
-            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_home.ics') : (encodeURIComponent(t.name) + '_home.ics'))}">Nur Heimspiele abonnieren</a>
-            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_away.ics') : (encodeURIComponent(t.name) + '_away.ics'))}">Nur Auswärts abonnieren</a>
-          </div>
-        </div>
-      </div>
-    `).join('')}
   </div>
+
+  <div class="step-box">
+    <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
+    <div class="step-content">
+       <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
+      <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step-box">
+    <div class="step-header">Schritt 3 – Link einfügen</div>
+    <div class="step-content">
+       <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+      <p>Bestätigen Sie anschließend das Abonnement.</p>
+      <p>Der Kalender wird danach automatisch synchronisiert.</p>
+      <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Steps wrapper: wird per JS mit dem Inhalt der Vorlage gefüllt -->
+<div id="steps-wrapper" style="display:none;"></div>
+
+<div class="teams-container">
+  ${teams.map((t, index) => `
+    <div class="team-card">
+      <div class="team-header" data-index="${index}">
+        ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
+      </div>
+
+      <div class="team-content" aria-hidden="true">
+        <button class="overlay-close" aria-label="Schließen">&times;</button>
+
+        <div class="team-content-preview">
+          ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
+          <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
+        </div>
+
+        <div class="info-block">
+          <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
+          <!-- Leeres Popup: wird per JS mit der kompletten Anleitung gefüllt (gleicher Inhalt wie steps-wrapper) -->
+          <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true"></div>
+        </div>
+
+        <div class="buttons">
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_all.ics') : (encodeURIComponent(t.name) + '_all.ics'))}">Alle Spiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_home.ics') : (encodeURIComponent(t.name) + '_home.ics'))}">Nur Heimspiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_away.ics') : (encodeURIComponent(t.name) + '_away.ics'))}">Nur Auswärts abonnieren</a>
+        </div>
+      </div>
+    </div>
+  `).join('')}
+</div>
 
 </div>
 
@@ -350,280 +345,203 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/* --- Hilfsfunktionen --- */
-function qsAll(selector, root=document) { return Array.from(root.querySelectorAll(selector)); }
-function qs(selector, root=document) { return root.querySelector(selector); }
-
-/* Accordion: innerhalb eines Containers immer nur ein offener Schritt */
-function enableAccordion(container) {
-  if (!container) return;
-  // entferne alte Listener, indem wir Header neu ersetzen (sicher gegen doppelte Listener)
-  qsAll('.step-header', container).forEach(h => {
-    const clone = h.cloneNode(true);
-    h.parentNode.replaceChild(clone, h);
-  });
-  // neu binden
-  qsAll('.step-header', container).forEach(header => {
-    header.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const content = header.nextElementSibling;
-      if (!content) return;
-      // schließe alle anderen step-content im selben container
-      qsAll('.step-content', container).forEach(c => {
-        if (c !== content) c.style.display = 'none';
+/* Populate steps-wrapper and all info popups from the hidden template */
+document.addEventListener('DOMContentLoaded', () => {
+  const template = document.getElementById('steps-template');
+  const stepsWrapper = document.getElementById('steps-wrapper');
+  if (template && stepsWrapper) {
+    stepsWrapper.innerHTML = template.innerHTML;
+    // ensure step headers work for the copied content in steps-wrapper
+    stepsWrapper.querySelectorAll('.step-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const c = h.nextElementSibling;
+        c.style.display = c.style.display === 'block' ? 'none' : 'block';
       });
-      // toggle den angeklickten
-      content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+    });
+  }
+
+  // Fill each info-popup with the same content
+  document.querySelectorAll('.info-popup').forEach(p => {
+    p.innerHTML = template.innerHTML;
+    // Also enable the toggle behavior for the step headers inside the popup
+    p.querySelectorAll('.step-header').forEach(h => {
+      h.addEventListener('click', (e) => {
+        e.stopPropagation(); // don't close the popup when clicking a step
+        const c = h.nextElementSibling;
+        c.style.display = c.style.display === 'block' ? 'none' : 'block';
+      });
     });
   });
+});
+
+/* Anleitung-Button: zeigt/versteckt den steps-wrapper */
+const guideBtn = document.getElementById('show-steps-btn');
+const stepsWrapper = document.getElementById('steps-wrapper');
+
+guideBtn.addEventListener('click', (e) => {
+  const isOpen = stepsWrapper.style.display === 'block';
+  if (isOpen) {
+    stepsWrapper.style.display = 'none';
+    guideBtn.setAttribute('aria-expanded', 'false');
+    guideBtn.textContent = 'Anleitung anzeigen';
+  } else {
+    stepsWrapper.style.display = 'block';
+    guideBtn.setAttribute('aria-expanded', 'true');
+    guideBtn.textContent = 'Anleitung verbergen';
+    if (window.innerWidth <= 600) {
+      stepsWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+});
+
+/* Overlay logic */
+const teamHeaders = document.querySelectorAll('.team-header');
+let activeContent = null;
+
+function closeAllOverlays() {
+  document.querySelectorAll('.team-content').forEach(c => {
+    c.style.display = 'none';
+    c.setAttribute('aria-hidden', 'true');
+  });
+  activeContent = null;
 }
 
-/* --- Initialisierung nach DOM ready --- */
-document.addEventListener('DOMContentLoaded', () => {
-  const template = qs('#steps-template');
-  const guideSteps = qs('#guide-steps');
-  const guideBtn = qs('#guide-btn');
-  const teamsContainer = qs('#teams-container');
+teamHeaders.forEach((header) => {
+  const card = header.closest('.team-card');
+  const content = card.querySelector('.team-content');
 
-  if (!template || !guideSteps || !guideBtn || !teamsContainer) return;
+  if (content) content.addEventListener('click', e => e.stopPropagation());
 
-  // Fülle Hauptanleitung aus Template (cloneNode um IDs im Template zu verhindern)
-  guideSteps.appendChild(template.content.cloneNode(true));
-  enableAccordion(guideSteps);
+  if (content) {
+    const closeBtn = content.querySelector('.overlay-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        content.style.display = 'none';
+        content.setAttribute('aria-hidden', 'true');
+        activeContent = null;
+      });
+    }
+  }
 
-  // Fülle jede info-popup mit derselben Vorlage (clone für Unabhängigkeit)
-  qsAll('.info-popup').forEach(popup => {
-    const clone = template.content.cloneNode(true);
-    popup.appendChild(clone);
-    enableAccordion(popup);
-  });
+  header.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!content) return;
 
-  /* --- Guide-Button Verhalten --- */
-  function applyGuideShift() {
-    const open = guideSteps.style.display === 'block';
-    if (!open) {
-      teamsContainer.classList.remove('shifted-down');
-      teamsContainer.style.transform = '';
-      teamsContainer.style.opacity = '';
+    if (activeContent === content) {
+      content.style.display = 'none';
+      content.setAttribute('aria-hidden', 'true');
+      activeContent = null;
       return;
     }
-    // Messung: sichtbare Höhe der Anleitung (nach render)
-    const rect = guideSteps.getBoundingClientRect();
-    const shift = Math.min(window.innerHeight * 0.5, Math.ceil(rect.height) + 18);
-    teamsContainer.classList.add('shifted-down');
-    teamsContainer.style.transform = \`translateY(\${shift}px)\`;
-    teamsContainer.style.opacity = '0.98';
-  }
 
-  guideBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const open = guideSteps.style.display === 'block';
-    if (open) {
-      guideSteps.style.display = 'none';
-      guideBtn.setAttribute('aria-expanded','false');
-      guideBtn.textContent = 'Anleitung anzeigen';
-      applyGuideShift();
-    } else {
-      // schließe alle offenen Schritte zunächst
-      guideSteps.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
-      guideSteps.style.display = 'block';
-      guideBtn.setAttribute('aria-expanded','true');
-      guideBtn.textContent = 'Anleitung verbergen';
-      // sicherstellen, dass Accordion gebunden ist
-      enableAccordion(guideSteps);
-      // shift nach Layout-stabilisierung
-      requestAnimationFrame(applyGuideShift);
-    }
-  });
+    closeAllOverlays();
 
-  /* --- Team Overlay (bei Klick auf Team-Header) --- */
-  let activeOverlay = null;
-  function closeOverlays() {
-    qsAll('.team-content').forEach(c => {
-      c.style.display = 'none';
-      c.setAttribute('aria-hidden','true');
-      // falls es per DOM aus dem body verschoben wurde, keine Rückverschiebung nötig (es bleibt im DOM)
-    });
-    qsAll('.team-card.focused').forEach(card => card.classList.remove('focused'));
-    teamsContainer.classList.remove('dimmed');
-    teamsContainer.style.pointerEvents = '';
-    activeOverlay = null;
-  }
+    if (!document.body.contains(content)) document.body.appendChild(content);
 
-  qsAll('.team-header').forEach(header => {
-    const card = header.closest('.team-card');
-    const content = qs('.team-content', card);
+    const isMobile = window.innerWidth <= 600;
 
-    if (content) {
-      // clicks inside overlay shouldn't bubble to document
-      content.addEventListener('click', e => e.stopPropagation());
-      // close button (mobile)
-      const closeBtn = qs('.overlay-close', content);
-      if (closeBtn) {
-        closeBtn.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          closeOverlays();
-        });
-      }
-    }
-
-    header.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      if (!content) return;
-
-      // toggle
-      if (activeOverlay === content) {
-        closeOverlays();
-        return;
-      }
-
-      closeOverlays(); // schließe andere Overlays
-
-      // füge content optional ins body (verhindert clipping)
-      if (!document.body.contains(content)) document.body.appendChild(content);
-
-      const isMobile = window.innerWidth <= 600;
-      if (isMobile) {
-        // full-screen modal
-        Object.assign(content.style, {
-          position: 'fixed',
-          left: '0px',
-          top: '0px',
-          width: '100vw',
-          height: '100vh',
-          maxHeight: 'none',
-          display: 'block',
-          zIndex: 12000
-        });
-        content.setAttribute('aria-hidden','false');
-        // teams aus dem Blick schieben
-        teamsContainer.style.transform = 'translateY(110vh)';
-        teamsContainer.style.opacity = '0.12';
-        teamsContainer.style.pointerEvents = 'none';
-        card.classList.add('focused');
-        activeOverlay = content;
-        return;
-      }
-
-      // Desktop: positioniere neben Header
-      // zuerst anzeigen, sonst offsetHeight = 0
-      content.style.display = 'block';
+    if (isMobile) {
       content.style.position = 'fixed';
+      content.style.left = '0px';
+      content.style.top = '0px';
+      content.style.width = '100vw';
+      content.style.height = '100vh';
+      content.style.maxHeight = 'none';
+      content.style.display = 'block';
       content.style.zIndex = 12000;
-      content.setAttribute('aria-hidden','false');
-
-      const rect = header.getBoundingClientRect();
-      let desiredWidth = Math.max(rect.width * 2.2, 360);
-      const maxWidth = window.innerWidth * 0.95;
-      if (desiredWidth > maxWidth) desiredWidth = maxWidth;
-      const margin = 28;
-
-      let leftPos = rect.left;
-      if (leftPos + desiredWidth > window.innerWidth - margin) {
-        leftPos = window.innerWidth - desiredWidth - margin;
-      }
-      if (leftPos < margin) leftPos = margin;
-
-      // Messung der Höhe nach Anzeige
-      const contentHeight = content.offsetHeight;
-      let topPos = rect.bottom;
-      const viewportHeight = window.innerHeight;
-      if (topPos + contentHeight > viewportHeight - 20) {
-        topPos = rect.top - contentHeight;
-      }
-      if (topPos < 20) topPos = 20;
-
-      content.style.width = desiredWidth + 'px';
-      content.style.maxHeight = '80vh';
-      content.style.left = leftPos + 'px';
-      content.style.top = topPos + 'px';
-
-      // dimme und verschiebe übrige Inhalte, hebe Karte hervor
-      teamsContainer.classList.add('dimmed');
-      teamsContainer.style.pointerEvents = 'none';
-      card.classList.add('focused');
-      activeOverlay = content;
-    });
-  });
-
-  /* --- Info-Button ( ? ) Verhalten: zeigt dieselbe Anleitung in Popup --- */
-  qsAll('.info-btn').forEach(btn => {
-    btn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const card = btn.closest('.team-card');
-      const popup = qs('.info-popup', card);
-      if (!popup) return;
-      const isOpen = popup.style.display === 'block';
-
-      // schließe alle anderen popups
-      qsAll('.info-popup').forEach(p => {
-        if (p !== popup) { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); }
-      });
-
-      if (isOpen) {
-        popup.style.display = 'none';
-        popup.setAttribute('aria-hidden','true');
-        teamsContainer.classList.remove('dimmed');
-        card.classList.remove('focused');
-        return;
-      }
-
-      // mobile: full-width block
-      const isMobile = window.innerWidth <= 600;
-      if (isMobile) {
-        popup.style.display = 'block';
-        popup.style.position = 'relative';
-        popup.style.maxHeight = 'none';
-        popup.setAttribute('aria-hidden','false');
-        // teams aus dem Blick schieben
-        teamsContainer.style.transform = 'translateY(110vh)';
-        teamsContainer.style.opacity = '0.12';
-        teamsContainer.style.pointerEvents = 'none';
-        card.classList.add('focused');
-        return;
-      }
-
-      // desktop: ensure popup has the template content (wurde bei DOMContentLoaded eingefügt)
-      popup.style.display = 'block';
-      popup.setAttribute('aria-hidden','false');
-      enableAccordion(popup);
-
-      // dimme übrige Inhalte und hebe Kartei hervor
-      teamsContainer.classList.add('dimmed');
-      card.classList.add('focused');
-    });
-  });
-
-  /* Klick außerhalb schließt Overlays und Popups (Hauptanleitung bleibt offen wenn sie offen ist) */
-  document.addEventListener('click', (e) => {
-    // wenn Klick innerhalb der Anleitung, nichts tun
-    if (guideSteps.contains(e.target) || guideBtn.contains(e.target)) return;
-
-    // sonst: schließe team overlays & info popups
-    closeOverlays();
-    qsAll('.info-popup').forEach(p => { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); });
-  });
-
-  /* scroll/responsive cleanup */
-  window.addEventListener('scroll', () => {
-    // für bessere mobile UX: schließen
-    qsAll('.info-popup').forEach(p => { p.style.display = 'none'; p.setAttribute('aria-hidden','true'); });
-    closeOverlays();
-  }, { passive: true });
-
-  window.addEventListener('resize', () => {
-    // recompute guide shift und close overlays
-    if (guideSteps.style.display === 'block') {
-      requestAnimationFrame(() => {
-        const rect = guideSteps.getBoundingClientRect();
-        const shift = Math.min(window.innerHeight * 0.5, Math.ceil(rect.height) + 18);
-        teamsContainer.style.transform = \`translateY(\${shift}px)\`;
-      });
+      content.setAttribute('aria-hidden', 'false');
+      content.scrollTop = 0;
+      activeContent = content;
+      return;
     }
-    closeOverlays();
-  }, { passive: true });
 
-}); // DOMContentLoaded end
+    const rect = header.getBoundingClientRect();
+    let desiredWidth = Math.max(rect.width * 2.2, 360);
+    const maxWidth = window.innerWidth * 0.95;
+    if (desiredWidth > maxWidth) desiredWidth = maxWidth;
+    const margin = 28;
+
+    let leftPos = rect.left;
+    if (leftPos + desiredWidth > window.innerWidth - margin) {
+      leftPos = window.innerWidth - desiredWidth - margin;
+    }
+    if (leftPos < margin) leftPos = margin;
+
+    content.style.position = 'fixed';
+    content.style.display = 'block';
+    content.style.zIndex = 12000;
+    content.style.width = desiredWidth + 'px';
+    content.style.maxHeight = '80vh';
+    content.setAttribute('aria-hidden', 'false');
+
+    let topPos = rect.bottom;
+    const contentHeight = content.offsetHeight;
+    const viewportHeight = window.innerHeight;
+
+    if (topPos + contentHeight > viewportHeight - 20) {
+      topPos = rect.top - contentHeight;
+    }
+    if (topPos < 20) {
+      topPos = 20;
+    }
+    content.style.top = topPos + 'px';
+    content.style.left = leftPos + 'px';
+
+    activeContent = content;
+  });
+});
+
+// close overlays when clicking outside
+document.addEventListener('click', () => {
+  closeAllOverlays();
+  document.querySelectorAll('.info-popup').forEach(p => {
+    p.style.display = 'none';
+    p.setAttribute('aria-hidden','true');
+  });
+});
+
+// Info popup toggles
+document.querySelectorAll('.info-btn').forEach((btn) => {
+  const card = btn.closest('.team-card');
+  const popup = card ? card.querySelector('.info-popup') : null;
+
+  if (popup) {
+    popup.addEventListener('click', e => e.stopPropagation());
+  }
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.info-popup').forEach(p => {
+      if (p !== popup) {
+        p.style.display = 'none';
+        p.setAttribute('aria-hidden','true');
+      }
+    });
+    if (!popup) return;
+    const isOpen = popup.style.display === 'block';
+    popup.style.display = isOpen ? 'none' : 'block';
+    popup.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+  });
+});
+
+// Close popups on scroll for better UX on mobile/desktop
+window.addEventListener('scroll', () => {
+  document.querySelectorAll('.info-popup').forEach(p => {
+    p.style.display = 'none';
+    p.setAttribute('aria-hidden','true');
+  });
+}, { passive: true });
+
+// ensure overlays close on resize to avoid misplacement
+window.addEventListener('resize', () => {
+  closeAllOverlays();
+  document.querySelectorAll('.info-popup').forEach(p => {
+    p.style.display = 'none';
+    p.setAttribute('aria-hidden','true');
+  });
+}, { passive: true });
+
 </script>
 </body>
 </html>`;
