@@ -175,6 +175,8 @@ header{
   max-width:calc(100vw - 40px);
   z-index:13000;
   box-sizing:border-box;
+  overflow:auto;
+  max-height:60vh;
 }
 
 /* close button inside info-popup (desktop hidden, mobile visible) */
@@ -410,13 +412,11 @@ TVN Baskets – Offizielle Kalenderübersicht
 /* Helper: toggles a step header within a given container so only one step-content is open at a time */
 function bindStepHeadersInContainer(container) {
   if (!container) return;
-  const headers = container.querySelectorAll('.step-header');
-  headers.forEach(h => {
-    // remove any previous listener by cloning (prevents duplicate listeners if re-bound)
+  // remove duplicate listeners by replacing nodes when re-binding
+  container.querySelectorAll('.step-header').forEach(h => {
     const newH = h.cloneNode(true);
     h.parentNode.replaceChild(newH, h);
   });
-
   container.querySelectorAll('.step-header').forEach(h => {
     h.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
     p.innerHTML = '<button class="popup-close-btn" aria-label="Schließen">&times;</button>' + template.innerHTML;
     bindStepHeadersInContainer(p);
 
-    // Prevent clicks inside the popup from closing the modal/backdrop handlers
+    // Prevent clicks inside the popup from closing the document click handler
     p.addEventListener('click', e => e.stopPropagation());
 
     // close button inside the info-popup
@@ -470,6 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         p.style.display = 'none';
         p.setAttribute('aria-hidden','true');
+        // restore body scroll if mobile
+        if (window.innerWidth <= 600) document.body.style.overflow = '';
       });
     }
   });
@@ -531,6 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
           p.setAttribute('aria-hidden','true');
         });
         closeAllOverlays();
+        document.body.style.overflow = '';
       }
     }
   });
@@ -630,8 +633,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // close overlays when clicking outside
-  document.addEventListener('click', () => {
+  // document click: close overlays/popups but IGNORE clicks that originate inside popups/buttons/modal
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!target) return;
+    // if click inside a popup, the info-btn, or inside the steps modal/backdrop, ignore
+    if (target.closest('.info-popup') || target.closest('.info-btn') || target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) {
+      return;
+    }
+    // else close things
     closeAllOverlays();
     document.querySelectorAll('.info-popup').forEach(p => {
       p.style.display = 'none';
@@ -639,17 +649,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Info popup toggles
+  // Info popup toggles with improved positioning (keeps popups clear of .buttons area)
   document.querySelectorAll('.info-btn').forEach((btn) => {
     const card = btn.closest('.team-card');
     const popup = card ? card.querySelector('.info-popup') : null;
+    const buttonsEl = card ? card.querySelector('.buttons') : null;
 
     if (popup) {
+      // stop clicks inside popup from bubbling
       popup.addEventListener('click', e => e.stopPropagation());
     }
 
     btn.addEventListener('click', e => {
       e.stopPropagation();
+
       // close other info popups & overlays
       document.querySelectorAll('.info-popup').forEach(p => {
         if (p !== popup) {
@@ -668,49 +681,86 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.style.display = 'none';
         popup.setAttribute('aria-hidden','true');
         btn.setAttribute('aria-expanded','false');
+        if (window.innerWidth <= 600) document.body.style.overflow = '';
         return;
       }
 
-      // show popup as overlay (absolute/ fixed depending on viewport)
+      // show popup (temporarily block body scroll on mobile)
       popup.style.display = 'block';
       popup.setAttribute('aria-hidden','false');
       btn.setAttribute('aria-expanded','true');
 
-      // On desktop ensure popup fits in viewport horizontally; adjust left if necessary
-      if (window.innerWidth > 600) {
-        const popupRect = popup.getBoundingClientRect();
+      // Ensure popup has its internal content bound
+      bindStepHeadersInContainer(popup);
+
+      // After rendering, measure and position to avoid overlapping the download buttons
+      requestAnimationFrame(() => {
         const btnRect = btn.getBoundingClientRect();
-        // prefer aligning popup's left to button's left; if overflow, shift left
-        let left = btnRect.left;
+        let popupRect = popup.getBoundingClientRect();
         const margin = 12;
-        if (left + popupRect.width > window.innerWidth - margin) {
-          left = window.innerWidth - popupRect.width - margin;
-        }
+        const viewportW = window.innerWidth;
+        const viewportH = window.innerHeight;
+
+        // horizontal: prefer aligning left to button, adjust to viewport
+        let left = btnRect.left;
+        if (left + popupRect.width > viewportW - margin) left = viewportW - popupRect.width - margin;
         if (left < margin) left = margin;
-        // top we already set with CSS to below button; optionally adjust if near bottom
-        let top = btnRect.bottom + 8;
-        // if popup overflows bottom, position above button
-        const estimatedHeight = popupRect.height || 220;
-        if (top + estimatedHeight > window.innerHeight - 20) {
-          top = btnRect.top - estimatedHeight - 8;
-          if (top < 12) top = 12;
+
+        // compute space below and above
+        const spaceBelow = viewportH - btnRect.bottom - margin;
+        const spaceAbove = btnRect.top - margin;
+
+        // get buttons rect to check overlap (if present)
+        const buttonsRect = buttonsEl ? buttonsEl.getBoundingClientRect() : null;
+
+        // prefer below if fits and doesn't overlap buttons; otherwise above if fits
+        let top;
+        if (popupRect.height <= spaceBelow) {
+          // tentative below
+          top = btnRect.bottom + 8;
+          // if buttons exist and popup would overlap them, prefer above
+          if (buttonsRect && !(top + popupRect.height < buttonsRect.top)) {
+            // overlaps -> try above
+            if (popupRect.height <= spaceAbove) {
+              top = btnRect.top - popupRect.height - 8;
+            } else {
+              // doesn't fully fit above either -> clamp below height to available spaceBelow (avoid covering buttons)
+              top = btnRect.bottom + 8;
+              popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
+            }
+          }
+        } else if (popupRect.height <= spaceAbove) {
+          // fits above
+          top = btnRect.top - popupRect.height - 8;
+        } else {
+          // doesn't fit fully either side, pick side with more space and clamp height
+          if (spaceBelow >= spaceAbove) {
+            top = btnRect.bottom + 8;
+            popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
+          } else {
+            const desiredHeight = Math.max(80, spaceAbove - 20);
+            popup.style.maxHeight = desiredHeight + 'px';
+            top = Math.max(margin, btnRect.top - desiredHeight - 8);
+          }
         }
+
+        // final assignments
         popup.style.left = left + 'px';
         popup.style.top = top + 'px';
-      } else {
-        // on mobile, popup is fixed full-screen per CSS; focus close button for accessibility
-        const closeBtn = popup.querySelector('.popup-close-btn');
-        if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
-        // prevent body scroll while popup is open on mobile
-        document.body.style.overflow = 'hidden';
-      }
+
+        // on mobile treat popup as full-screen (CSS handles it), focus close button
+        if (viewportW <= 600) {
+          const closeBtn = popup.querySelector('.popup-close-btn');
+          if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
+          document.body.style.overflow = 'hidden';
+        }
+      });
     });
   });
 
   // ensure that closing info popups restores body scroll if needed
   document.addEventListener('click', () => {
     if (window.innerWidth <= 600) {
-      // if any info-popup or steps modal open, we handle overflow when opened; otherwise restore
       const anyOpenPopup = Array.from(document.querySelectorAll('.info-popup')).some(p => p.style.display === 'block');
       const stepsOpen = stepsWrapper.style.display === 'block';
       if (!anyOpenPopup && !stepsOpen) document.body.style.overflow = '';
