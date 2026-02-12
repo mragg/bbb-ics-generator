@@ -45,6 +45,13 @@ function genHTML() {
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
+  console.log("TEAMS.JSON:");
+console.log(JSON.stringify(teamsArray[0], null, 2));
+
+console.log("METADATA.JSON:");
+console.log(JSON.stringify(metadataArray[0], null, 2));
+
+
   // Erstelle Map: verschiedene id-Felder werden unterstützt, alle normalisiert
   const leagueMap = {};
   teamsArray.forEach(t => {
