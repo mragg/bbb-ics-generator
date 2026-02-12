@@ -345,6 +345,26 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
+/* Helper: toggles a step header within a given container so only one step-content is open at a time */
+function bindStepHeadersInContainer(container) {
+  if (!container) return;
+  const headers = container.querySelectorAll('.step-header');
+  headers.forEach(h => {
+    h.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const c = h.nextElementSibling;
+      if (!c) return;
+      const isOpen = window.getComputedStyle(c).display === 'block';
+      // close all other step contents in this container
+      container.querySelectorAll('.step-content').forEach(cc => {
+        if (cc !== c) cc.style.display = 'none';
+      });
+      // toggle current
+      c.style.display = isOpen ? 'none' : 'block';
+    });
+  });
+}
+
 /* Populate steps-wrapper and all info popups from the hidden template */
 document.addEventListener('DOMContentLoaded', () => {
   const template = document.getElementById('steps-template');
@@ -352,25 +372,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (template && stepsWrapper) {
     stepsWrapper.innerHTML = template.innerHTML;
     // ensure step headers work for the copied content in steps-wrapper
-    stepsWrapper.querySelectorAll('.step-header').forEach(h => {
-      h.addEventListener('click', () => {
-        const c = h.nextElementSibling;
-        c.style.display = c.style.display === 'block' ? 'none' : 'block';
-      });
-    });
+    bindStepHeadersInContainer(stepsWrapper);
   }
 
   // Fill each info-popup with the same content
   document.querySelectorAll('.info-popup').forEach(p => {
     p.innerHTML = template.innerHTML;
     // Also enable the toggle behavior for the step headers inside the popup
-    p.querySelectorAll('.step-header').forEach(h => {
-      h.addEventListener('click', (e) => {
-        e.stopPropagation(); // don't close the popup when clicking a step
-        const c = h.nextElementSibling;
-        c.style.display = c.style.display === 'block' ? 'none' : 'block';
-      });
-    });
+    bindStepHeadersInContainer(p);
   });
 });
 
@@ -550,3 +559,4 @@ window.addEventListener('resize', () => {
 }
 
 genHTML();
+
