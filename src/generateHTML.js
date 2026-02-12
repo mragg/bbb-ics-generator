@@ -1,3 +1,4 @@
+// complete generator script — ersetzt deine alte Datei komplett
 const fs = require('fs');
 const path = require('path');
 
@@ -17,6 +18,23 @@ function safeReadJson(filePath) {
   }
 }
 
+function normalizeId(value) {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+}
+
+function detectLeagueFromObject(obj) {
+  if (!obj) return '';
+  return (
+    obj.league ??
+    obj.leagueName ??
+    obj.liga ??
+    obj.competition ??
+    obj.division ??
+    ''
+  );
+}
+
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
@@ -24,32 +42,37 @@ function genHTML() {
   const rawMeta = safeReadJson(metaPath) || [];
   const rawTeams = safeReadJson(teamsPath) || [];
 
-  // Normalisiere falls die JSONs als Objekt mit "teams" oder "data" kommen
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
-  // Erstelle eine Map von team id -> league (verschiedene mögliche id-felder unterstützen)
+  // Erstelle Map: verschiedene id-Felder werden unterstützt, alle normalisiert
   const leagueMap = {};
   teamsArray.forEach(t => {
     if (!t) return;
-    if (t.id !== undefined) leagueMap[String(t.id)] = t.league;
-    if (t.teamId !== undefined) leagueMap[String(t.teamId)] = t.league;
-    if (t.team_id !== undefined) leagueMap[String(t.team_id)] = t.league;
+    const leagueValue = detectLeagueFromObject(t);
+    const candidateIds = [t.id, t.teamId, t.team_id, t.identifier];
+    candidateIds.forEach(rawId => {
+      const id = normalizeId(rawId);
+      if (id) leagueMap[id] = leagueValue;
+    });
   });
 
-  // Finales Team-Array für das Template: sichere Feldnamen, Fallbacks
+  // Finales, sauberes Team-Array für das Template
   const teams = metadataArray.map(m => {
-    const id = m.teamId || m.id || m.idStr || '';
-    const leagueFromMeta = m.league || m.leagueName || null;
-    const leagueFromMap = leagueMap[String(id)] || leagueMap[id] || null;
+    const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
+    const leagueFromMeta = detectLeagueFromObject(m);
+    const leagueFromMap = leagueMap[id] ?? '';
+
+    const finalLeague = leagueFromMeta !== '' ? leagueFromMeta : (leagueFromMap !== '' ? leagueFromMap : 'unbekannt');
+
     return {
       teamId: id,
-      name: m.teamName || m.name || m.title || 'Unbenannt',
-      ageGroup: m.ageGroup || '',
-      league: leagueFromMeta || leagueFromMap || 'unbekannt',
-      matchCount: m.matchCount != null ? m.matchCount : (m.matches != null ? m.matches : 0),
-      homeMatchCount: m.homeMatchCount != null ? m.homeMatchCount : (m.homeMatches != null ? m.homeMatches : 0),
-      awayMatchCount: m.awayMatchCount != null ? m.awayMatchCount : (m.awayMatches != null ? m.awayMatches : 0),
+      name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
+      ageGroup: m.ageGroup ?? '',
+      league: finalLeague,
+      matchCount: m.matchCount ?? m.matches ?? 0,
+      homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
+      awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0,
     };
   });
 
@@ -287,15 +310,14 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
         ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
       </div>
 
-     <div class="team-content" aria-hidden="true">
+      <div class="team-content" aria-hidden="true">
         <button class="overlay-close" aria-label="Schließen">&times;</button>
+
         <div class="team-content-preview">
-         ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-          ${t.league}
+          ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
+          <div><strong>Liga:</strong> ${t.league}</div>
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
         </div>
-
-
 
         <div class="info-block">
           <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
@@ -306,9 +328,9 @@ footer{text-align:center;padding:24px 10px;font-size:0.85rem;color:#666}
         </div>
 
         <div class="buttons">
-          <a href="${makeWebcalLink(t.teamId+"_all.ics")}">Alle Spiele abonnieren</a>
-          <a href="${makeWebcalLink(t.teamId+"_home.ics")}">Nur Heimspiele abonnieren</a>
-          <a href="${makeWebcalLink(t.teamId+"_away.ics")}">Nur Auswärts abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_all.ics') : (encodeURIComponent(t.name) + '_all.ics'))}">Alle Spiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_home.ics') : (encodeURIComponent(t.name) + '_home.ics'))}">Nur Heimspiele abonnieren</a>
+          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_away.ics') : (encodeURIComponent(t.name) + '_away.ics'))}">Nur Auswärts abonnieren</a>
         </div>
       </div>
     </div>
@@ -342,26 +364,29 @@ function closeAllOverlays() {
   activeContent = null;
 }
 
-teamHeaders.forEach((header, idx) => {
+teamHeaders.forEach((header) => {
   const card = header.closest('.team-card');
   const content = card.querySelector('.team-content');
 
   // prevent clicks inside overlay from bubbling up (so document click doesn't close)
-  content.addEventListener('click', e => e.stopPropagation());
+  if (content) content.addEventListener('click', e => e.stopPropagation());
 
   // close button (mobile)
-  const closeBtn = content.querySelector('.overlay-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      content.style.display = 'none';
-      content.setAttribute('aria-hidden', 'true');
-      activeContent = null;
-    });
+  if (content) {
+    const closeBtn = content.querySelector('.overlay-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        content.style.display = 'none';
+        content.setAttribute('aria-hidden', 'true');
+        activeContent = null;
+      });
+    }
   }
 
   header.addEventListener('click', e => {
     e.stopPropagation();
+    if (!content) return;
 
     // toggle
     if (activeContent === content) {
@@ -441,10 +466,10 @@ document.addEventListener('click', () => {
 });
 
 // Info popup toggles
-document.querySelectorAll('.info-btn').forEach((btn, idx) => {
+document.querySelectorAll('.info-btn').forEach((btn) => {
   // target popup inside the same card/content
   const card = btn.closest('.team-card');
-  const popup = card.querySelector('.info-popup');
+  const popup = card ? card.querySelector('.info-popup') : null;
 
   if (popup) {
     // prevent clicks inside popup from closing overlays
@@ -488,8 +513,9 @@ window.addEventListener('resize', () => {
 </body>
 </html>`;
 
-  fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content);
+  fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
 }
 
 genHTML();
+
 
