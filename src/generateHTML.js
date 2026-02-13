@@ -154,7 +154,33 @@ header{
 
 /* Steps */
 .step-box{background:var(--tvn-white);margin-bottom:12px;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
-.step-header{padding:12px 14px;cursor:pointer;font-weight:600;background:var(--tvn-blue);color:var(--tvn-white);font-family:'Oswald',sans-serif}
+.step-header{
+  padding:12px 14px;
+  cursor:pointer;
+  font-weight:600;
+  background:var(--tvn-blue);
+  color:var(--tvn-white);
+  font-family:'Oswald',sans-serif;
+  position:relative;
+  padding-right:40px; /* Platz für Pfeil */
+  user-select:none;
+}
+.step-header::after{
+  content: '▾'; /* Pfeil nach unten */
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%) rotate(0deg);
+  transition:transform 0.18s ease, opacity 0.12s;
+  opacity:0.95;
+  font-size:1.05rem;
+  line-height:1;
+}
+.step-header.open::after{
+  transform:translateY(-50%) rotate(180deg); /* Pfeil nach oben */
+}
+
+/* Inhalte der Schritte (standard zugeklappt) */
 .step-content{padding:12px 14px;display:none;font-size:0.95rem;line-height:1.45;background:#fafafa}
 
 /* Anleitung button — styled like step-header */
@@ -303,7 +329,7 @@ header{
 <!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung wiederverwendet -->
 <div id="steps-template" style="display:none;">
   <div class="step-box">
-    <div class="step-header">Schritt 1 – URL kopieren</div>
+    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 1 – URL kopieren</div>
     <div class="step-content">
        <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
       <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
@@ -312,7 +338,7 @@ header{
   </div>
 
   <div class="step-box">
-    <div class="step-header">Schritt 2 – Kalender hinzufügen</div>
+    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 2 – Kalender hinzufügen</div>
     <div class="step-content">
        <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
       <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
@@ -320,7 +346,7 @@ header{
   </div>
 
   <div class="step-box">
-    <div class="step-header">Schritt 3 – Link einfügen</div>
+    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 3 – Link einfügen</div>
     <div class="step-content">
        <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
       <p>Bestätigen Sie anschließend das Abonnement.</p>
@@ -365,15 +391,21 @@ TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/* Helper: toggles a step header within a given container so only one step-content is open at a time */
+/* Helper: toggles a step header within a given container so only one step-content is open at a time
+   Zusätzlich: aria-expanded setzen und .open Klasse für Pfeil-Icon */
 function bindStepHeadersInContainer(container) {
   if (!container) return;
   // remove duplicate listeners by replacing nodes when re-binding
   container.querySelectorAll('.step-header').forEach(h => {
     const newH = h.cloneNode(true);
+    // ensure accessible attributes exist on the cloned node
+    if (!newH.hasAttribute('role')) newH.setAttribute('role','button');
+    if (!newH.hasAttribute('tabindex')) newH.setAttribute('tabindex','0');
+    newH.setAttribute('aria-expanded', 'false');
     h.parentNode.replaceChild(newH, h);
   });
   container.querySelectorAll('.step-header').forEach(h => {
+    // click handler
     h.addEventListener('click', (e) => {
       e.stopPropagation();
       const c = h.nextElementSibling;
@@ -381,10 +413,30 @@ function bindStepHeadersInContainer(container) {
       const isOpen = window.getComputedStyle(c).display === 'block';
       // close all other step contents in this container
       container.querySelectorAll('.step-content').forEach(cc => {
-        if (cc !== c) cc.style.display = 'none';
+        if (cc !== c) {
+          cc.style.display = 'none';
+          const hh = cc.previousElementSibling;
+          if (hh && hh.classList) hh.classList.remove('open');
+          if (hh && hh.getAttribute) hh.setAttribute('aria-expanded','false');
+        }
       });
       // toggle current
-      c.style.display = isOpen ? 'none' : 'block';
+      if (isOpen) {
+        c.style.display = 'none';
+        h.classList.remove('open');
+        h.setAttribute('aria-expanded','false');
+      } else {
+        c.style.display = 'block';
+        h.classList.add('open');
+        h.setAttribute('aria-expanded','true');
+      }
+    });
+    // keyboard accessibility: toggle on Enter / Space
+    h.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        h.click();
+      }
     });
   });
 }
@@ -437,14 +489,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeStepsModal() {
+    // close all step contents and remove open classes for a clean state
+    stepsWrapper.querySelectorAll('.step-content').forEach(c => {
+      c.style.display = 'none';
+      const hh = c.previousElementSibling;
+      if (hh && hh.classList) hh.classList.remove('open');
+      if (hh && hh.setAttribute) hh.setAttribute('aria-expanded','false');
+    });
+
     stepsWrapper.style.display = 'none';
     stepsWrapper.setAttribute('aria-hidden', 'true');
     backdrop.style.display = 'none';
     backdrop.setAttribute('aria-hidden', 'true');
     guideBtn.setAttribute('aria-expanded', 'false');
 
-    // also close any open step-content inside modal for a clean state
-    stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
     document.body.style.overflow = '';
   }
 
