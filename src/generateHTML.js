@@ -152,52 +152,6 @@ header{
 }
 .team-content .buttons a:hover{background:var(--tvn-red);transform:translateY(-2px)}
 
-/* Info button & popup */
-.info-block{display:flex;align-items:flex-start;gap:8px;position:relative}
-.info-btn{
-  background:var(--tvn-gray);
-  border:none;border-radius:50%;
-  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
-  font-weight:700;cursor:pointer;font-size:0.95rem;
-}
-
-/* INFO-POPUP: overlay, außerhalb des normalen Flows, verschiebt nichts */
-.info-popup{
-  display:none;
-  position:absolute; /* relativ zur .team-card / .info-block */
-  top: calc(100% + 8px);
-  left: 0;
-  background:#fff;
-  padding:12px 12px 20px 12px;
-  border-radius:8px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.12);
-  width:320px;
-  max-width:calc(100vw - 40px);
-  z-index:13000;
-  box-sizing:border-box;
-  overflow:auto;
-  max-height:60vh;
-}
-
-/* popup close button: jetzt immer sichtbar auf Desktop und Mobil */
-.info-popup .popup-close-btn{
-  display:block;
-  position:absolute;
-  top:8px;
-  right:8px;
-  background:transparent;
-  border:none;
-  font-size:1.6rem;
-  line-height:1;
-  cursor:pointer;
-}
-
-/* close button for mobile overlay (team content) */
-.overlay-close{
-  display:none;
-  position:absolute;right:12px;top:10px;background:transparent;border:none;font-size:1.6rem;cursor:pointer;
-}
-
 /* Steps */
 .step-box{background:var(--tvn-white);margin-bottom:12px;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
 .step-header{padding:12px 14px;cursor:pointer;font-weight:600;background:var(--tvn-blue);color:var(--tvn-white);font-family:'Oswald',sans-serif}
@@ -280,22 +234,6 @@ header{
     text-align:center;
   }
 
-  /* INFO-POPUP becomes full-screen modal on mobile with visible close button */
-  .info-popup{
-    position:fixed !important;
-    left:0 !important;
-    top:0 !important;
-    width:100vw !important;
-    height:100vh !important;
-    max-height:none !important;
-    border-radius:0 !important;
-    padding:18px !important;
-    overflow-y:auto !important;
-    margin-top:0;
-    box-shadow:0 30px 60px rgba(0,0,0,0.35);
-  }
-  .info-popup .step-box{ margin-top:28px; }
-
   /* guide button full width on small screens */
   .guide-btn{width:100%}
 
@@ -335,7 +273,7 @@ header{
 <!-- Backdrop for modal -->
 <div id="steps-backdrop" tabindex="-1" aria-hidden="true"></div>
 
-<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung und für alle ?-Popups wiederverwendet -->
+<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung wiederverwendet -->
 <div id="steps-template" style="display:none;">
   <div class="step-box">
     <div class="step-header">Schritt 1 – URL kopieren</div>
@@ -381,12 +319,6 @@ header{
         <div class="team-content-preview">
           ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
           <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-        </div>
-
-        <div class="info-block">
-          <button class="info-btn" aria-expanded="false" aria-controls="info-${index}">?</button>
-          <!-- Leeres Popup: wird per JS mit der kompletten Anleitung gefüllt (gleicher Inhalt wie steps-wrapper) -->
-          <div id="info-${index}" class="info-popup" role="dialog" aria-hidden="true"></div>
         </div>
 
         <div class="buttons">
@@ -451,35 +383,9 @@ document.addEventListener('DOMContentLoaded', () => {
     activeContent = null;
   }
 
-  // Fill each info-popup with the same content and bind their step headers
-  document.querySelectorAll('.info-popup').forEach(p => {
-    // include a close button inside the popup so desktop + mobile users have a visible X
-    p.innerHTML = '<button class="popup-close-btn" aria-label="Schließen">&times;</button>' + template.innerHTML;
-    bindStepHeadersInContainer(p);
-
-    // Prevent clicks inside the popup from closing the document click handler
-    p.addEventListener('click', e => e.stopPropagation());
-
-    // close button inside the info-popup
-    const closeBtn = p.querySelector('.popup-close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        p.style.display = 'none';
-        p.setAttribute('aria-hidden','true');
-        // restore body scroll if mobile
-        if (window.innerWidth <= 600) document.body.style.overflow = '';
-      });
-    }
-  });
-
   // Guide button: open/close modal with backdrop
   function openStepsModal() {
-    // close any open info-popups or team overlays (avoid stacking)
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
+    // close any open team overlays (avoid stacking)
     closeAllOverlays();
 
     stepsWrapper.style.display = 'block';
@@ -519,16 +425,12 @@ document.addEventListener('DOMContentLoaded', () => {
     closeStepsModal();
   });
 
-  // close modal on ESC (and close other popups/overlays)
+  // close modal on ESC (and close other overlays)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (stepsWrapper.style.display === 'block') {
         closeStepsModal();
       } else {
-        document.querySelectorAll('.info-popup').forEach(p => {
-          p.style.display = 'none';
-          p.setAttribute('aria-hidden','true');
-        });
         closeAllOverlays();
         document.body.style.overflow = '';
       }
@@ -630,192 +532,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // document click: close overlays/popups but IGNORE clicks that originate inside popups/buttons/modal
+  // document click: close overlays/popups but IGNORE clicks that originate inside the steps modal/backdrop
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target) return;
-    // if click inside a popup, the info-btn, or inside the steps modal/backdrop, ignore
-    if (target.closest('.info-popup') || target.closest('.info-btn') || target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) {
+    // if click inside the steps modal/backdrop, ignore
+    if (target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) {
       return;
     }
     // else close things
     closeAllOverlays();
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
     // restore body scroll if mobile
     if (window.innerWidth <= 600) document.body.style.overflow = '';
   });
 
-  // Info popup toggles with improved positioning (keeps popups clear of .buttons area)
-  document.querySelectorAll('.info-btn').forEach((btn) => {
-    const card = btn.closest('.team-card');
-    const popup = card ? card.querySelector('.info-popup') : null;
-    const buttonsEl = card ? card.querySelector('.buttons') : null;
-
-    if (popup) {
-      // stop clicks inside popup from bubbling
-      popup.addEventListener('click', e => e.stopPropagation());
-    }
-
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-
-      // close other info popups & overlays
-      document.querySelectorAll('.info-popup').forEach(p => {
-        if (p !== popup) {
-          p.style.display = 'none';
-          p.setAttribute('aria-hidden','true');
-        }
-      });
-      closeAllOverlays();
-      // also close the main steps modal if open
-      if (stepsWrapper.style.display === 'block') closeStepsModal();
-
-      if (!popup) return;
-      const isOpen = popup.style.display === 'block';
-
-      if (isOpen) {
-        popup.style.display = 'none';
-        popup.setAttribute('aria-hidden','true');
-        btn.setAttribute('aria-expanded','false');
-        if (window.innerWidth <= 600) document.body.style.overflow = '';
-        return;
-      }
-
-      // show popup (temporarily block body scroll on mobile)
-      popup.style.display = 'block';
-      popup.setAttribute('aria-hidden','false');
-      btn.setAttribute('aria-expanded','true');
-
-      // Ensure popup has its internal content bound
-      bindStepHeadersInContainer(popup);
-
-      // After rendering, measure and position to avoid overlapping the download buttons
-      requestAnimationFrame(() => {
-        const btnRect = btn.getBoundingClientRect();
-        let popupRect = popup.getBoundingClientRect();
-        const margin = 12;
-        const viewportW = window.innerWidth;
-        const viewportH = window.innerHeight;
-
-        // horizontal: prefer aligning left to button, adjust to viewport
-        let left = btnRect.left;
-        if (left + popupRect.width > viewportW - margin) left = viewportW - popupRect.width - margin;
-        if (left < margin) left = margin;
-
-        // compute space below and above relative to viewport
-        const spaceBelow = viewportH - btnRect.bottom - margin;
-        const spaceAbove = btnRect.top - margin;
-
-        // get buttons rect to check overlap (if present)
-        const buttonsRect = buttonsEl ? buttonsEl.getBoundingClientRect() : null;
-
-        // Preferred: place popup above the buttons area (so it doesn't cover download buttons)
-        // Strategy:
-        // 1. Try placing below the button only if it does not overlap the buttons area.
-        // 2. Otherwise place above the button.
-        // 3. If neither side fits fully, clamp height so it doesn't cover the buttons area.
-
-        let top;
-
-        // helper to test overlap with buttons area
-        function wouldOverlapButtons(candidateTop, candidateHeight) {
-          if (!buttonsRect) return false;
-          const candidateBottom = candidateTop + candidateHeight;
-          // if candidate bottom is greater than buttonsRect.top => overlap
-          return candidateBottom > (buttonsRect.top - 8);
-        }
-
-        popupRect = popup.getBoundingClientRect(); // re-measure after any CSS changes
-        const popupHeight = popupRect.height;
-
-        // Try below
-        const tentativeBelowTop = btnRect.bottom + 8;
-        if (!wouldOverlapButtons(tentativeBelowTop, popupHeight) && popupHeight <= spaceBelow) {
-          top = tentativeBelowTop;
-        } else {
-          // Try above
-          const tentativeAboveTop = btnRect.top - popupHeight - 8;
-          if (tentativeAboveTop >= margin && popupHeight <= spaceAbove) {
-            top = tentativeAboveTop;
-          } else {
-            // pick the side with more space but clamp height so popup does not cover buttons
-            if (buttonsRect) {
-              // space available above until buttons top
-              const availableAbove = Math.max(0, buttonsRect.top - margin - 8);
-              const availableBelow = Math.max(0, viewportH - buttonsRect.bottom - margin - 8);
-              if (availableAbove >= availableBelow) {
-                // place above and clamp height to availableAbove
-                popup.style.maxHeight = Math.max(80, availableAbove) + 'px';
-                top = Math.max(margin, buttonsRect.top - Math.min(popup.offsetHeight, availableAbove) - 8);
-              } else {
-                // place below buttons area (i.e., below whole card buttons area) if possible
-                const belowButtonsTop = buttonsRect.bottom + 8;
-                const availableBelowButtons = viewportH - belowButtonsTop - margin;
-                popup.style.maxHeight = Math.max(80, availableBelowButtons) + 'px';
-                top = belowButtonsTop;
-              }
-            } else {
-              // no buttons rect -> fallback to below or clamp by viewport
-              if (popupHeight <= spaceBelow) {
-                top = tentativeBelowTop;
-              } else if (popupHeight <= spaceAbove) {
-                top = btnRect.top - popupHeight - 8;
-              } else {
-                // clamp to whichever side has more space
-                if (spaceBelow >= spaceAbove) {
-                  popup.style.maxHeight = Math.max(80, spaceBelow - 20) + 'px';
-                  top = tentativeBelowTop;
-                } else {
-                  popup.style.maxHeight = Math.max(80, spaceAbove - 20) + 'px';
-                  top = Math.max(margin, btnRect.top - (spaceAbove - 20) - 8);
-                }
-              }
-            }
-          }
-        }
-
-        // final assignments
-        popup.style.left = left + 'px';
-        popup.style.top = top + 'px';
-
-        // on mobile treat popup as full-screen (CSS handles it), focus close button
-        if (viewportW <= 600) {
-          const closeBtn = popup.querySelector('.popup-close-btn');
-          if (closeBtn && typeof closeBtn.focus === 'function') closeBtn.focus();
-          document.body.style.overflow = 'hidden';
-        }
-      });
-    });
-  });
-
-  // ensure that closing info popups restores body scroll if needed
+  // ensure that closing overlays restores body scroll if needed
   document.addEventListener('click', () => {
     if (window.innerWidth <= 600) {
-      const anyOpenPopup = Array.from(document.querySelectorAll('.info-popup')).some(p => p.style.display === 'block');
       const stepsOpen = stepsWrapper.style.display === 'block';
-      if (!anyOpenPopup && !stepsOpen) document.body.style.overflow = '';
+      if (!stepsOpen) document.body.style.overflow = '';
     }
   });
 
-  // Close popups on scroll for better UX on mobile/desktop
+  // Close overlays on scroll for better UX on mobile/desktop
   window.addEventListener('scroll', () => {
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
+    closeAllOverlays();
     if (window.innerWidth <= 600) document.body.style.overflow = '';
   }, { passive: true });
 
   // ensure overlays close on resize to avoid misplacement
   window.addEventListener('resize', () => {
     closeAllOverlays();
-    document.querySelectorAll('.info-popup').forEach(p => {
-      p.style.display = 'none';
-      p.setAttribute('aria-hidden','true');
-    });
     // also close steps modal on resize to avoid visual issues
     closeStepsModal();
     document.body.style.overflow = '';
