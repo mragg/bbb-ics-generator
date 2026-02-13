@@ -195,6 +195,27 @@ header{
   border-radius:12px;
   box-shadow:0 25px 60px rgba(0,0,0,0.35);
   z-index:15000;
+  box-sizing:border-box;
+}
+
+/* Close button for the steps modal (visible on desktop + mobile) */
+.steps-close{
+  position:absolute;
+  top:12px;
+  right:12px;
+  background:transparent;
+  border:none;
+  font-size:1.6rem;
+  line-height:1;
+  cursor:pointer;
+  color:#222;
+  padding:6px;
+}
+
+/* popup close button for team overlays: jetzt nur mobil sichtbar */
+.overlay-close{
+  display:none;
+  position:absolute;right:12px;top:10px;background:transparent;border:none;font-size:1.6rem;cursor:pointer;
 }
 
 /* MOBILE specific: full-screen overlay, stacked buttons, 2-column grid for teams */
@@ -246,7 +267,13 @@ header{
     height:100vh;
     max-height:none;
     border-radius:0;
-    padding:18px;
+    padding:48px 18px 18px 18px; /* leave space for close button */
+  }
+
+  /* Ensure the steps-close remains visible on mobile as well */
+  .steps-close{
+    top:12px;
+    right:12px;
   }
 }
 </style>
@@ -371,6 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // populate the modal from template
   if (template && stepsWrapper) {
     stepsWrapper.innerHTML = template.innerHTML;
+    // insert a visible close-X for the modal (desktop + mobile)
+    stepsWrapper.insertAdjacentHTML('afterbegin', '<button id="close-steps-btn" class="steps-close" aria-label="Schließen">&times;</button>');
     bindStepHeadersInContainer(stepsWrapper);
   }
 
@@ -394,9 +423,15 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.setAttribute('aria-hidden', 'false');
     guideBtn.setAttribute('aria-expanded', 'true');
 
-    // focus first step header for accessibility
-    const firstHeader = stepsWrapper.querySelector('.step-header');
-    if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
+    // focus close button for accessibility (if present), otherwise first header
+    const closeBtn = stepsWrapper.querySelector('#close-steps-btn');
+    if (closeBtn && typeof closeBtn.focus === 'function') {
+      closeBtn.focus();
+    } else {
+      const firstHeader = stepsWrapper.querySelector('.step-header');
+      if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
+    }
+
     // prevent body scroll while modal is open
     document.body.style.overflow = 'hidden';
   }
@@ -411,6 +446,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // also close any open step-content inside modal for a clean state
     stepsWrapper.querySelectorAll('.step-content').forEach(c => c.style.display = 'none');
     document.body.style.overflow = '';
+  }
+
+  // hook close button inside modal (the X)
+  const modalCloseBtn = document.getElementById('close-steps-btn');
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeStepsModal();
+    });
   }
 
   guideBtn.addEventListener('click', (e) => {
