@@ -2,68 +2,68 @@
   {
     "id": "161336",
     "name": "Damen",
-    "ageGroup": "Bezirksliga"
+    "ageGroup": ""
     
   },
   {
     "id": "159756",
     "name": "Herren",
-    "ageGroup": "Oberliga"   
+    "ageGroup": ""   
   },
   {
     "id": "161199",
     "name": "Herren 2",
-    "ageGroup": "Bezirksliga"
+    "ageGroup": ""
   },
   {
     "id": "276298",
     "name": "U18 männlich",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "276291",
     "name": "U16 weiblich",
-    "ageGroup": "Oberliga"
+    "ageGroup": ""
   },
   {
     "id": "158729",
     "name": "U16 männlich",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "319432",
     "name": "U16 2 männlich",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "155756",
     "name": "U14",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "161387",
     "name": "U14 2",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "161395",
     "name": "U12",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "276319",
     "name": "U12 2", 
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "161690",
     "name": "U10",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   },
   {
     "id": "276318",
     "name": "U10 2",
-    "ageGroup": "Kreisliga"
+    "ageGroup": ""
   }
 
 ]
