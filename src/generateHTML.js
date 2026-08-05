@@ -1,5 +1,4 @@
-```js
-// complete generator script — ersetzt deine alte Datei komplett
+
 const fs = require('fs');
 const path = require('path');
 
@@ -26,11 +25,11 @@ function normalizeId(value) {
 
 function escapeHtml(value) {
   return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function genHTML() {
@@ -45,7 +44,6 @@ function genHTML() {
 
   const sourceArray = metadataArray.length > 0 ? metadataArray : teamsArray;
 
-  // Finales, sauberes Team-Array für das Template
   const teams = sourceArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
 
@@ -72,7 +70,6 @@ function genHTML() {
 :root{
   --bg:#fff7f0;
   --surface:#ffffff;
-  --surface-2:#fff0e2;
   --text:#24160f;
   --muted:#6d5a50;
   --orange:#ff7a18;
@@ -84,12 +81,9 @@ function genHTML() {
   --radius:18px;
 }
 
-/* Reset / global */
 *{box-sizing:border-box}
 html,body{height:100%}
-html{
-  scroll-behavior:smooth;
-}
+html{scroll-behavior:smooth}
 body{
   margin:0;
   font-family:'Inter',sans-serif;
@@ -102,11 +96,10 @@ body{
   -moz-osx-font-smoothing:grayscale;
 }
 
-/* Header */
 header{
   background:linear-gradient(135deg, var(--orange-3), var(--orange), var(--orange-2));
   color:#fff;
-  padding:20px 20px;
+  padding:20px;
   box-shadow:0 10px 30px rgba(255,122,24,.25);
 }
 .header-inner{
@@ -144,7 +137,6 @@ header{
   line-height:1.45;
 }
 
-/* Layout */
 .container{
   max-width:1100px;
   margin:28px auto 0;
@@ -158,7 +150,6 @@ header{
   align-items:start;
 }
 
-/* Team card */
 .team-card{
   background:var(--surface);
   border:1px solid var(--line);
@@ -198,7 +189,6 @@ header{
   color:var(--muted);
 }
 
-/* Overlay (team-content) */
 .team-content{
   position:fixed;
   display:none;
@@ -209,11 +199,9 @@ header{
   z-index:12000;
   max-height:80vh;
   overflow:auto;
-  box-sizing:border-box;
   border:1px solid rgba(255,122,24,.14);
 }
 
-/* Buttons area */
 .team-content .buttons{
   display:flex;
   flex-wrap:wrap;
@@ -248,7 +236,6 @@ header{
   transform:translateY(0);
 }
 
-/* Steps */
 .step-box{
   background:var(--surface);
   margin-bottom:12px;
@@ -292,7 +279,6 @@ header{
   color:var(--text);
 }
 
-/* Anleitung button */
 .guide-btn{
   display:inline-flex;
   align-items:center;
@@ -314,7 +300,6 @@ header{
   transform:translateY(-1px);
 }
 
-/* Modal for the steps */
 #steps-backdrop{
   display:none;
   position:fixed;
@@ -337,11 +322,9 @@ header{
   border-radius:22px;
   box-shadow:0 28px 70px rgba(0,0,0,0.28);
   z-index:15000;
-  box-sizing:border-box;
   border:1px solid rgba(255,122,24,.16);
 }
 
-/* Close button */
 .steps-close{
   position:absolute;
   top:12px;
@@ -358,7 +341,6 @@ header{
   color:var(--orange-3);
 }
 
-/* popup close button for team overlays: mobile visible */
 .overlay-close{
   display:none;
   position:absolute;
@@ -371,7 +353,6 @@ header{
   color:#3b2413;
 }
 
-/* Bottom link area */
 .page-bottom{
   max-width:1100px;
   margin:28px auto 0;
@@ -388,7 +369,6 @@ header{
   align-items:center;
 }
 
-/* Footer */
 footer{
   padding:18px 16px 28px;
   text-align:center;
@@ -396,7 +376,6 @@ footer{
   font-size:0.95rem;
 }
 
-/* MOBILE */
 @media (max-width: 600px) {
   .container{
     margin-top:20px;
@@ -408,9 +387,7 @@ footer{
     gap:12px;
   }
 
-  .team-card{
-    min-width:0;
-  }
+  .team-card{min-width:0}
 
   .team-content{
     left:0 !important;
@@ -424,9 +401,7 @@ footer{
     box-shadow:0 30px 60px rgba(0,0,0,0.35);
   }
 
-  .overlay-close{
-    display:block;
-  }
+  .overlay-close{display:block}
 
   .team-content .buttons{
     flex-direction:column;
@@ -437,9 +412,7 @@ footer{
     text-align:center;
   }
 
-  .guide-btn{
-    width:100%;
-  }
+  .guide-btn{width:100%}
 
   #steps-wrapper{
     top:0;
@@ -466,7 +439,6 @@ footer{
   }
 }
 </style>
-
 </head>
 <body>
 
@@ -482,7 +454,6 @@ footer{
 </header>
 
 <div class="container">
-
   <button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
   <div id="steps-backdrop" tabindex="-1" aria-hidden="true"></div>
@@ -818,4 +789,3 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 genHTML();
-```
