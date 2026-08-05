@@ -1,3 +1,4 @@
+```js
 // complete generator script — ersetzt deine alte Datei komplett
 const fs = require('fs');
 const path = require('path');
@@ -23,6 +24,15 @@ function normalizeId(value) {
   return String(value).trim();
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
@@ -33,8 +43,10 @@ function genHTML() {
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
   const teamsArray = Array.isArray(rawTeams) ? rawTeams : (rawTeams.teams || rawTeams.data || []);
 
-  // Finales, sauberes Team-Array für das Template (ohne Liga)
-  const teams = metadataArray.map(m => {
+  const sourceArray = metadataArray.length > 0 ? metadataArray : teamsArray;
+
+  // Finales, sauberes Team-Array für das Template
+  const teams = sourceArray.map(m => {
     const id = normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? '');
 
     return {
@@ -54,81 +66,151 @@ function genHTML() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TV Neunkirchen Baskets – Kalender Übersicht</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 :root{
-  --tvn-blue:#003b75;
-  --tvn-light-blue:#0057a3;
-  --tvn-red:#d72638;
-  --tvn-white:#ffffff;
-  --tvn-gray:#f2f4f8;
+  --bg:#fff7f0;
+  --surface:#ffffff;
+  --surface-2:#fff0e2;
+  --text:#24160f;
+  --muted:#6d5a50;
+  --orange:#ff7a18;
+  --orange-2:#ff9a3d;
+  --orange-3:#ff5f1f;
+  --line:rgba(255,122,24,.18);
+  --shadow:0 18px 40px rgba(67,31,5,.12);
+  --shadow-soft:0 8px 22px rgba(67,31,5,.08);
+  --radius:18px;
 }
 
 /* Reset / global */
 *{box-sizing:border-box}
 html,body{height:100%}
+html{
+  scroll-behavior:smooth;
+}
 body{
   margin:0;
   font-family:'Inter',sans-serif;
-  background:var(--tvn-gray);
-  color:#222;
+  background:
+    radial-gradient(circle at top left, rgba(255,154,61,.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(255,122,24,.14), transparent 24%),
+    linear-gradient(180deg, #fffaf6 0%, var(--bg) 100%);
+  color:var(--text);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
 
 /* Header */
 header{
-  background:linear-gradient(135deg,var(--tvn-blue),var(--tvn-light-blue));
-  color:var(--tvn-white);
-  padding:18px 20px;
+  background:linear-gradient(135deg, var(--orange-3), var(--orange), var(--orange-2));
+  color:#fff;
+  padding:20px 20px;
+  box-shadow:0 10px 30px rgba(255,122,24,.25);
 }
-.header-inner{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
-.logo{height:120px;flex-shrink:0}
-.header-text{display:flex;flex-direction:column;justify-content:center;flex:1}
-.header-text h1{font-family:'Oswald',sans-serif;font-size:1.9rem;margin:0;text-transform:uppercase}
-.header-text p{margin-top:6px;font-weight:300;opacity:0.95;font-size:0.95rem}
+.header-inner{
+  display:flex;
+  gap:16px;
+  align-items:center;
+  flex-wrap:wrap;
+  max-width:1100px;
+  margin:0 auto;
+}
+.logo{
+  height:108px;
+  flex-shrink:0;
+  filter:drop-shadow(0 8px 16px rgba(0,0,0,.16));
+}
+.header-text{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  flex:1;
+  min-width:240px;
+}
+.header-text h1{
+  font-family:'Oswald',sans-serif;
+  font-size:clamp(1.8rem, 3vw, 2.6rem);
+  margin:0;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+}
+.header-text p{
+  margin:8px 0 0;
+  font-weight:400;
+  opacity:0.96;
+  font-size:0.98rem;
+  line-height:1.45;
+}
 
 /* Layout */
-.container{max-width:960px;margin:28px auto;padding:0 16px}
-.teams-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;align-items:flex-start}
+.container{
+  max-width:1100px;
+  margin:28px auto 0;
+  padding:0 16px 40px;
+}
+.teams-container{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:14px;
+  margin-top:16px;
+  align-items:start;
+}
 
 /* Team card */
 .team-card{
-  background:var(--tvn-white);
-  border-radius:8px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.08);
-  flex:1 1 220px;
-  min-width:220px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-soft);
+  overflow:hidden;
   display:flex;
   flex-direction:column;
-  position:relative; /* wichtig: Referenz für absolute info-popup */
+  position:relative;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.team-card:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow);
+  border-color:rgba(255,122,24,.28);
 }
 .team-header{
-  padding:12px 14px;
-  font-weight:600;
+  padding:14px 14px 13px;
+  font-weight:700;
   font-family:'Oswald',sans-serif;
-  background:var(--tvn-blue);
-  color:var(--tvn-white);
-  border-radius:8px;
+  background:linear-gradient(135deg, #2a1a11, #4b2a15);
+  color:#fff;
   cursor:pointer;
+  user-select:none;
+  letter-spacing:.3px;
+}
+.team-header strong{
+  color:#ffd3b0;
+  font-weight:700;
 }
 .team-card .team-content-preview{
-  padding:12px 14px;
+  padding:14px 14px 16px;
+  color:var(--text);
+}
+.team-content-preview p{
+  margin:10px 0 0;
+  color:var(--muted);
 }
 
-/* Overlay (team-content) - default fixed, doesn't affect layout */
+/* Overlay (team-content) */
 .team-content{
   position:fixed;
   display:none;
   background:#fff;
   padding:18px;
-  border-radius:10px;
-  box-shadow:0 18px 40px rgba(0,0,0,0.25);
+  border-radius:22px;
+  box-shadow:0 24px 60px rgba(0,0,0,0.22);
   z-index:12000;
   max-height:80vh;
   overflow:auto;
   box-sizing:border-box;
+  border:1px solid rgba(255,122,24,.14);
 }
 
 /* Buttons area */
@@ -136,37 +218,59 @@ header{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
-  margin-top:12px;
+  margin-top:14px;
   align-items:flex-start;
 }
-.team-content .buttons a{
-  display:inline-block;
-  padding:10px 16px;
-  background:var(--tvn-blue);
-  color:var(--tvn-white);
+.team-content .buttons a,
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px 16px;
+  background:linear-gradient(135deg, var(--orange), var(--orange-2));
+  color:#fff;
   text-decoration:none;
-  border-radius:6px;
-  font-weight:600;
-  font-size:0.9rem;
-  transition:transform 0.12s, background 0.12s;
+  border-radius:14px;
+  font-weight:700;
+  font-size:0.95rem;
+  border:0;
+  transition:transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+  box-shadow:0 10px 20px rgba(255,122,24,.18);
 }
-.team-content .buttons a:hover{background:var(--tvn-red);transform:translateY(-2px)}
+.team-content .buttons a:hover,
+.back-link:hover{
+  filter:brightness(.98);
+  transform:translateY(-2px);
+  box-shadow:0 14px 24px rgba(255,122,24,.22);
+}
+.team-content .buttons a:active,
+.back-link:active{
+  transform:translateY(0);
+}
 
 /* Steps */
-.step-box{background:var(--tvn-white);margin-bottom:12px;border-radius:8px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,0.06)}
+.step-box{
+  background:var(--surface);
+  margin-bottom:12px;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow-soft);
+  border:1px solid var(--line);
+}
 .step-header{
-  padding:12px 14px;
+  padding:13px 14px;
   cursor:pointer;
-  font-weight:600;
-  background:var(--tvn-blue);
-  color:var(--tvn-white);
+  font-weight:700;
+  background:linear-gradient(135deg, #2a1a11, #4b2a15);
+  color:#fff;
   font-family:'Oswald',sans-serif;
   position:relative;
-  padding-right:40px; /* Platz für Pfeil */
+  padding-right:42px;
   user-select:none;
+  letter-spacing:.2px;
 }
 .step-header::after{
-  content: '▾'; /* Pfeil nach unten */
+  content:'▾';
   position:absolute;
   right:12px;
   top:50%;
@@ -177,34 +281,47 @@ header{
   line-height:1;
 }
 .step-header.open::after{
-  transform:translateY(-50%) rotate(180deg); /* Pfeil nach oben */
+  transform:translateY(-50%) rotate(180deg);
+}
+.step-content{
+  padding:13px 14px 16px;
+  display:none;
+  font-size:0.96rem;
+  line-height:1.52;
+  background:#fffaf5;
+  color:var(--text);
 }
 
-/* Inhalte der Schritte (standard zugeklappt) */
-.step-content{padding:12px 14px;display:none;font-size:0.95rem;line-height:1.45;background:#fafafa}
-
-/* Anleitung button — styled like step-header */
+/* Anleitung button */
 .guide-btn{
-  display:inline-block;
-  padding:12px 14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:13px 16px;
   cursor:pointer;
-  font-weight:600;
+  font-weight:700;
   font-family:'Oswald',sans-serif;
-  background:var(--tvn-blue);
-  color:var(--tvn-white);
-  border-radius:8px;
+  background:linear-gradient(135deg, var(--orange), var(--orange-2));
+  color:#fff;
+  border-radius:14px;
   border:none;
-  text-transform:none;
-  margin-bottom:12px;
+  box-shadow:0 12px 24px rgba(255,122,24,.18);
+  margin-bottom:16px;
+  letter-spacing:.3px;
+}
+.guide-btn:hover{
+  filter:brightness(.98);
+  transform:translateY(-1px);
 }
 
-/* Modal for the steps (fixed, above content) */
+/* Modal for the steps */
 #steps-backdrop{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.45);
+  background:rgba(35,16,5,0.50);
   z-index:14000;
+  backdrop-filter:blur(3px);
 }
 #steps-wrapper{
   display:none;
@@ -212,19 +329,19 @@ header{
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  width:90%;
-  max-width:720px;
+  width:min(90vw, 760px);
   max-height:80vh;
   overflow-y:auto;
   background:#fff;
   padding:20px;
-  border-radius:12px;
-  box-shadow:0 25px 60px rgba(0,0,0,0.35);
+  border-radius:22px;
+  box-shadow:0 28px 70px rgba(0,0,0,0.28);
   z-index:15000;
   box-sizing:border-box;
+  border:1px solid rgba(255,122,24,.16);
 }
 
-/* Close button for the steps modal (visible on desktop + mobile) */
+/* Close button */
 .steps-close{
   position:absolute;
   top:12px;
@@ -234,29 +351,67 @@ header{
   font-size:1.6rem;
   line-height:1;
   cursor:pointer;
-  color:#222;
+  color:#3b2413;
   padding:6px;
 }
-
-/* popup close button for team overlays: jetzt nur mobil sichtbar */
-.overlay-close{
-  display:none;
-  position:absolute;right:12px;top:10px;background:transparent;border:none;font-size:1.6rem;cursor:pointer;
+.steps-close:hover{
+  color:var(--orange-3);
 }
 
-/* MOBILE specific: full-screen overlay, stacked buttons, 2-column grid for teams */
-@media (max-width: 600px) {
+/* popup close button for team overlays: mobile visible */
+.overlay-close{
+  display:none;
+  position:absolute;
+  right:12px;
+  top:10px;
+  background:transparent;
+  border:none;
+  font-size:1.6rem;
+  cursor:pointer;
+  color:#3b2413;
+}
 
-  /* Teams 2 per row */
-  .teams-container{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
+/* Bottom link area */
+.page-bottom{
+  max-width:1100px;
+  margin:28px auto 0;
+  padding:0 16px 40px;
+}
+.bottom-card{
+  background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,241,.98));
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow-soft);
+  padding:18px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* Footer */
+footer{
+  padding:18px 16px 28px;
+  text-align:center;
+  color:var(--muted);
+  font-size:0.95rem;
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .container{
+    margin-top:20px;
     padding-bottom:24px;
   }
-  .team-card{min-width:0}
 
-  /* Overlay becomes full-screen modal / bottom-sheet style */
+  .teams-container{
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  .team-card{
+    min-width:0;
+  }
+
   .team-content{
     left:0 !important;
     top:0 !important;
@@ -269,7 +424,9 @@ header{
     box-shadow:0 30px 60px rgba(0,0,0,0.35);
   }
 
-  .overlay-close{display:block}
+  .overlay-close{
+    display:block;
+  }
 
   .team-content .buttons{
     flex-direction:column;
@@ -277,14 +434,13 @@ header{
   }
   .team-content .buttons a{
     width:100%;
-    margin:8px 0;
     text-align:center;
   }
 
-  /* guide button full width on small screens */
-  .guide-btn{width:100%}
+  .guide-btn{
+    width:100%;
+  }
 
-  /* Steps modal becomes full screen on mobile */
   #steps-wrapper{
     top:0;
     left:0;
@@ -293,13 +449,20 @@ header{
     height:100vh;
     max-height:none;
     border-radius:0;
-    padding:48px 18px 18px 18px; /* leave space for close button */
+    padding:48px 18px 18px 18px;
   }
 
-  /* Ensure the steps-close remains visible on mobile as well */
   .steps-close{
     top:12px;
     right:12px;
+  }
+
+  .bottom-card{
+    padding:16px;
+  }
+
+  .back-link{
+    width:100%;
   }
 }
 </style>
@@ -320,118 +483,117 @@ header{
 
 <div class="container">
 
-<!-- Anleitung-Button: erst klicken, dann zeigen sich die drei Schritte -->
-<button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
+  <button id="show-steps-btn" class="guide-btn" aria-expanded="false" aria-controls="steps-wrapper">Anleitung anzeigen</button>
 
-<!-- Backdrop for modal -->
-<div id="steps-backdrop" tabindex="-1" aria-hidden="true"></div>
+  <div id="steps-backdrop" tabindex="-1" aria-hidden="true"></div>
 
-<!-- Hidden template: zentraler Inhalt für die Anleitung. Wird für die Haupt-Anleitung wiederverwendet -->
-<div id="steps-template" style="display:none;">
-  <div class="step-box">
-    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 1 – URL kopieren</div>
-    <div class="step-content">
-       <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
-      <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
-      <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
+  <div id="steps-template" style="display:none;">
+    <div class="step-box">
+      <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 1 – URL kopieren</div>
+      <div class="step-content">
+        <p>Kopieren Sie die URL der gewünschten Kalenderdatei (Endung „.ics“).</p>
+        <p>Auf Smartphones oder Tablets geschieht dies durch langes Drücken auf den Link und Auswahl von <strong>„Link kopieren“</strong>.</p>
+        <p>Am Computer klicken Sie mit der rechten Maustaste auf den Link und wählen ebenfalls <strong>„Link kopieren“</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 2 – Kalender hinzufügen</div>
+      <div class="step-content">
+        <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
+        <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step-box">
+      <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 3 – Link einfügen</div>
+      <div class="step-content">
+        <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
+        <p>Bestätigen Sie anschließend das Abonnement.</p>
+        <p>Der Kalender wird danach automatisch synchronisiert.</p>
+        <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
+      </div>
     </div>
   </div>
 
-  <div class="step-box">
-    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 2 – Kalender hinzufügen</div>
-    <div class="step-content">
-       <p>Öffnen Sie anschließend Ihre <strong>Kalender-Anwendung</strong>.</p>
-      <p>Wählen Sie die Option <strong>„Kalender hinzufügen“</strong> und dann <strong>„Aus dem Internet“</strong> bzw. <strong>„Per URL“</strong>.</p>
-    </div>
-  </div>
+  <div id="steps-wrapper" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;"></div>
 
-  <div class="step-box">
-    <div class="step-header" role="button" tabindex="0" aria-expanded="false">Schritt 3 – Link einfügen</div>
-    <div class="step-content">
-       <p>Fügen Sie den kopierten Link in das vorgesehene Feld ein.</p>
-      <p>Bestätigen Sie anschließend das Abonnement.</p>
-      <p>Der Kalender wird danach automatisch synchronisiert.</p>
-      <p>Änderungen werden selbstständig übernommen, sobald sie auftreten.</p>
-    </div>
+  <div class="teams-container">
+    ${teams.map((t, index) => `
+      <div class="team-card">
+        <div class="team-header" data-index="${index}">
+          ${escapeHtml(t.name)}${t.ageGroup ? ` (<strong>${escapeHtml(t.ageGroup)}</strong>)` : ''}
+        </div>
+
+        <div class="team-content" aria-hidden="true">
+          <button class="overlay-close" aria-label="Schließen">&times;</button>
+
+          <div class="team-content-preview">
+            ${escapeHtml(t.name)}${t.ageGroup ? ` (<strong>${escapeHtml(t.ageGroup)}</strong>)` : ''}
+            <p>${escapeHtml(t.matchCount)} Spiele, Heim: ${escapeHtml(t.homeMatchCount)}, Auswärts: ${escapeHtml(t.awayMatchCount)}</p>
+          </div>
+
+          <div class="buttons">
+            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_all.ics') : (encodeURIComponent(t.name) + '_all.ics'))}">Alle Spiele abonnieren</a>
+            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_home.ics') : (encodeURIComponent(t.name) + '_home.ics'))}">Nur Heimspiele abonnieren</a>
+            <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_away.ics') : (encodeURIComponent(t.name) + '_away.ics'))}">Nur Auswärts abonnieren</a>
+          </div>
+        </div>
+      </div>
+    `).join('')}
   </div>
 </div>
 
-<!-- Steps wrapper (Modal) -->
-<div id="steps-wrapper" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;"></div>
-
-<div class="teams-container">
-  ${teams.map((t, index) => `
-    <div class="team-card">
-      <div class="team-header" data-index="${index}">
-        ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-      </div>
-
-      <div class="team-content" aria-hidden="true">
-        <button class="overlay-close" aria-label="Schließen">&times;</button>
-
-        <div class="team-content-preview">
-          ${t.name}${t.ageGroup ? ` (<strong>${t.ageGroup}</strong>)` : ''}
-          <p>${t.matchCount} Spiele, Heim: ${t.homeMatchCount}, Auswärts: ${t.awayMatchCount}</p>
-        </div>
-
-        <div class="buttons">
-          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_all.ics') : (encodeURIComponent(t.name) + '_all.ics'))}">Alle Spiele abonnieren</a>
-          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_home.ics') : (encodeURIComponent(t.name) + '_home.ics'))}">Nur Heimspiele abonnieren</a>
-          <a href="${makeWebcalLink(t.teamId ? (t.teamId + '_away.ics') : (encodeURIComponent(t.name) + '_away.ics'))}">Nur Auswärts abonnieren</a>
-        </div>
-      </div>
-    </div>
-  `).join('')}
-</div>
-
+<div class="page-bottom">
+  <div class="bottom-card">
+    <a class="back-link" href="https://www.tvn-baskets.de/teams/">Zurück zu den Teams</a>
+  </div>
 </div>
 
 <footer>
-TVN Baskets – Offizielle Kalenderübersicht
+  TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
 <script>
-/* Helper: toggles a step header within a given container so only one step-content is open at a time
-   Zusätzlich: aria-expanded setzen und .open Klasse für Pfeil-Icon */
 function bindStepHeadersInContainer(container) {
   if (!container) return;
-  // remove duplicate listeners by replacing nodes when re-binding
+
   container.querySelectorAll('.step-header').forEach(h => {
     const newH = h.cloneNode(true);
-    // ensure accessible attributes exist on the cloned node
-    if (!newH.hasAttribute('role')) newH.setAttribute('role','button');
-    if (!newH.hasAttribute('tabindex')) newH.setAttribute('tabindex','0');
+    if (!newH.hasAttribute('role')) newH.setAttribute('role', 'button');
+    if (!newH.hasAttribute('tabindex')) newH.setAttribute('tabindex', '0');
     newH.setAttribute('aria-expanded', 'false');
     h.parentNode.replaceChild(newH, h);
   });
+
   container.querySelectorAll('.step-header').forEach(h => {
-    // click handler
     h.addEventListener('click', (e) => {
       e.stopPropagation();
       const c = h.nextElementSibling;
       if (!c) return;
+
       const isOpen = window.getComputedStyle(c).display === 'block';
-      // close all other step contents in this container
+
       container.querySelectorAll('.step-content').forEach(cc => {
         if (cc !== c) {
           cc.style.display = 'none';
           const hh = cc.previousElementSibling;
           if (hh && hh.classList) hh.classList.remove('open');
-          if (hh && hh.getAttribute) hh.setAttribute('aria-expanded','false');
+          if (hh && hh.setAttribute) hh.setAttribute('aria-expanded', 'false');
         }
       });
-      // toggle current
+
       if (isOpen) {
         c.style.display = 'none';
         h.classList.remove('open');
-        h.setAttribute('aria-expanded','false');
+        h.setAttribute('aria-expanded', 'false');
       } else {
         c.style.display = 'block';
         h.classList.add('open');
-        h.setAttribute('aria-expanded','true');
+        h.setAttribute('aria-expanded', 'true');
       }
     });
-    // keyboard accessibility: toggle on Enter / Space
+
     h.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -447,15 +609,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const backdrop = document.getElementById('steps-backdrop');
   const guideBtn = document.getElementById('show-steps-btn');
 
-  // populate the modal from template
   if (template && stepsWrapper) {
     stepsWrapper.innerHTML = template.innerHTML;
-    // insert a visible close-X for the modal (desktop + mobile)
     stepsWrapper.insertAdjacentHTML('afterbegin', '<button id="close-steps-btn" class="steps-close" aria-label="Schließen">&times;</button>');
     bindStepHeadersInContainer(stepsWrapper);
   }
 
-  // helper to close content overlays (team overlays)
   function closeAllOverlays() {
     document.querySelectorAll('.team-content').forEach(c => {
       c.style.display = 'none';
@@ -464,9 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeContent = null;
   }
 
-  // Guide button: open/close modal with backdrop
   function openStepsModal() {
-    // close any open team overlays (avoid stacking)
     closeAllOverlays();
 
     stepsWrapper.style.display = 'block';
@@ -475,7 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.setAttribute('aria-hidden', 'false');
     guideBtn.setAttribute('aria-expanded', 'true');
 
-    // focus close button for accessibility (if present), otherwise first header
     const closeBtn = stepsWrapper.querySelector('#close-steps-btn');
     if (closeBtn && typeof closeBtn.focus === 'function') {
       closeBtn.focus();
@@ -484,17 +640,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
     }
 
-    // prevent body scroll while modal is open
     document.body.style.overflow = 'hidden';
   }
 
   function closeStepsModal() {
-    // close all step contents and remove open classes for a clean state
     stepsWrapper.querySelectorAll('.step-content').forEach(c => {
       c.style.display = 'none';
       const hh = c.previousElementSibling;
       if (hh && hh.classList) hh.classList.remove('open');
-      if (hh && hh.setAttribute) hh.setAttribute('aria-expanded','false');
+      if (hh && hh.setAttribute) hh.setAttribute('aria-expanded', 'false');
     });
 
     stepsWrapper.style.display = 'none';
@@ -502,11 +656,9 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.style.display = 'none';
     backdrop.setAttribute('aria-hidden', 'true');
     guideBtn.setAttribute('aria-expanded', 'false');
-
     document.body.style.overflow = '';
   }
 
-  // hook close button inside modal (the X)
   const modalCloseBtn = document.getElementById('close-steps-btn');
   if (modalCloseBtn) {
     modalCloseBtn.addEventListener('click', (e) => {
@@ -522,12 +674,10 @@ document.addEventListener('DOMContentLoaded', () => {
     else openStepsModal();
   });
 
-  // clicking backdrop closes modal
   backdrop.addEventListener('click', () => {
     closeStepsModal();
   });
 
-  // close modal on ESC (and close other overlays)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (stepsWrapper.style.display === 'block') {
@@ -539,7 +689,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* Overlay logic (team content popups) */
   const teamHeaders = document.querySelectorAll('.team-header');
   let activeContent = null;
 
@@ -565,7 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       if (!content) return;
 
-      // if steps modal is open, close it first (avoid stacking)
       if (stepsWrapper.style.display === 'block') {
         closeStepsModal();
       }
@@ -634,21 +782,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // document click: close overlays/popups but IGNORE clicks that originate inside the steps modal/backdrop
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target) return;
-    // if click inside the steps modal/backdrop, ignore
     if (target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) {
       return;
     }
-    // else close things
     closeAllOverlays();
-    // restore body scroll if mobile
     if (window.innerWidth <= 600) document.body.style.overflow = '';
   });
 
-  // ensure that closing overlays restores body scroll if needed
   document.addEventListener('click', () => {
     if (window.innerWidth <= 600) {
       const stepsOpen = stepsWrapper.style.display === 'block';
@@ -656,16 +799,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Close overlays on scroll for better UX on mobile/desktop
   window.addEventListener('scroll', () => {
     closeAllOverlays();
     if (window.innerWidth <= 600) document.body.style.overflow = '';
   }, { passive: true });
 
-  // ensure overlays close on resize to avoid misplacement
   window.addEventListener('resize', () => {
     closeAllOverlays();
-    // also close steps modal on resize to avoid visual issues
     closeStepsModal();
     document.body.style.overflow = '';
   }, { passive: true });
@@ -678,3 +818,4 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 genHTML();
+```
