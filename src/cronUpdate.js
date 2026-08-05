@@ -39,7 +39,7 @@ async function updateAll() {
       };
 
       for (const [kind, ms] of Object.entries(matchVariants)) {
-        console.log(`[DEBUG] Erzeuge ICS für Team ${t.id}, Typ ${kind}, Spiele: ${ms.length}`);
+        console.log(`[DEBUG] Erzeuge ICS für Team ${t.id}, Typ ${kind}`);
         const ics = await generateICS(ms, details, t.id, kind);
         console.log(`[DEBUG] ICS erzeugt: Länge ${ics?.length || 0}`);
 
