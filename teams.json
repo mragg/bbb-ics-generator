@@ -1,13 +1,7 @@
 [
   {
-    "id": "161336",
-    "name": "Damen",
-    "ageGroup": ""
-    
-  },
-  {
     "id": "159756", 
-    "name": "Herren",
+    "name": "Herren 1",
     "ageGroup": ""   
   },
   {
@@ -16,58 +10,64 @@
     "ageGroup": ""
   },
   {
+    "id": "161336",
+    "name": "Damen 1",
+    "ageGroup": ""
+    
+  },
+  {
     "id": "276298",
-    "name": "U18 männlich",
+    "name": "U18m",
     "ageGroup": ""
   },
   {
     "id": "276291",
-    "name": "U16 weiblich",
+    "name": "U16w",
     "ageGroup": ""
   },
   {
     "id": "158729",
-    "name": "U16 männlich",
+    "name": "U16.1m",
     "ageGroup": ""
   },
   {
     "id": "319432",
-    "name": "U16 2 männlich",
+    "name": "U16.2m",
     "ageGroup": ""
   },
   {
     "id": "155756",
-    "name": "U14",
+    "name": "U14.1",
     "ageGroup": ""
   },
   {
     "id": "161387",
-    "name": "U14 2",
+    "name": "U14.2",
     "ageGroup": ""
   },
   {
     "id": "323081",
-    "name": "U14 3",
+    "name": "U14.3",
     "ageGroup": ""
   },
   {
     "id": "161395",
-    "name": "U12",
+    "name": "U12.1",
     "ageGroup": ""
   },
   {
     "id": "276319",
-    "name": "U12 2", 
+    "name": "U12.2", 
     "ageGroup": ""
   },
   {
     "id": "161690",
-    "name": "U10",
+    "name": "U10.1",
     "ageGroup": ""
   },
   {
     "id": "276318",
-    "name": "U10 2",
+    "name": "U10.2",
     "ageGroup": ""
   }
 
