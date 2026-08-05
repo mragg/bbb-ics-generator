@@ -586,6 +586,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bindStepHeadersInContainer(stepsWrapper);
   }
 
+  let activeContent = null;
+
   function closeAllOverlays() {
     document.querySelectorAll('.team-content').forEach(c => {
       c.style.display = 'none';
@@ -606,9 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = stepsWrapper.querySelector('#close-steps-btn');
     if (closeBtn && typeof closeBtn.focus === 'function') {
       closeBtn.focus();
-    } else {
-      const firstHeader = stepsWrapper.querySelector('.step-header');
-      if (firstHeader && typeof firstHeader.focus === 'function') firstHeader.focus();
     }
 
     document.body.style.overflow = 'hidden';
@@ -661,25 +660,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const teamHeaders = document.querySelectorAll('.team-header');
-  let activeContent = null;
 
   teamHeaders.forEach((header) => {
     const card = header.closest('.team-card');
-    const content = card.querySelector('.team-content');
-
-    if (content) content.addEventListener('click', e => e.stopPropagation());
-
-    if (content) {
-      const closeBtn = content.querySelector('.overlay-close');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', e => {
-          e.stopPropagation();
-          content.style.display = 'none';
-          content.setAttribute('aria-hidden', 'true');
-          activeContent = null;
-        });
-      }
-    }
+    const content = card ? card.querySelector('.team-content') : null;
 
     header.addEventListener('click', e => {
       e.stopPropagation();
@@ -698,21 +682,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       closeAllOverlays();
 
-      if (!document.body.contains(content)) document.body.appendChild(content);
-
       const isMobile = window.innerWidth <= 600;
 
       if (isMobile) {
         content.style.position = 'fixed';
-        content.style.left = '0px';
-        content.style.top = '0px';
+        content.style.left = '0';
+        content.style.top = '0';
         content.style.width = '100vw';
         content.style.height = '100vh';
-        content.style.maxHeight = 'none';
         content.style.display = 'block';
-        content.style.zIndex = 12000;
+        content.style.zIndex = '12000';
+        content.style.maxHeight = 'none';
         content.setAttribute('aria-hidden', 'false');
-        content.scrollTop = 0;
         activeContent = content;
         return;
       }
@@ -731,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       content.style.position = 'fixed';
       content.style.display = 'block';
-      content.style.zIndex = 12000;
+      content.style.zIndex = '12000';
       content.style.width = desiredWidth + 'px';
       content.style.maxHeight = '80vh';
       content.setAttribute('aria-hidden', 'false');
@@ -746,28 +727,35 @@ document.addEventListener('DOMContentLoaded', () => {
       if (topPos < 20) {
         topPos = 20;
       }
+
       content.style.top = topPos + 'px';
       content.style.left = leftPos + 'px';
 
       activeContent = content;
     });
+
+    const closeBtn = content ? content.querySelector('.overlay-close') : null;
+    if (closeBtn && content) {
+      closeBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        content.style.display = 'none';
+        content.setAttribute('aria-hidden', 'true');
+        activeContent = null;
+      });
+    }
+
+    if (content) {
+      content.addEventListener('click', e => e.stopPropagation());
+    }
   });
 
   document.addEventListener('click', (e) => {
     const target = e.target;
     if (!target) return;
-    if (target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) {
-      return;
-    }
+    if (target.closest('#steps-wrapper') || target.closest('#steps-backdrop')) return;
+
     closeAllOverlays();
     if (window.innerWidth <= 600) document.body.style.overflow = '';
-  });
-
-  document.addEventListener('click', () => {
-    if (window.innerWidth <= 600) {
-      const stepsOpen = stepsWrapper.style.display === 'block';
-      if (!stepsOpen) document.body.style.overflow = '';
-    }
   });
 
   window.addEventListener('scroll', () => {
