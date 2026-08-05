@@ -74,8 +74,8 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     prefix = isHome ? 'HEIM: ' : isAway ? 'AUSWÄRTS: ' : '';
   }
 
-  const summary = `${prefix}${homeNameSummary} vs. ${guestNameSummary} (Spiel ${matchInfo?.matchNo || match.matchNo})`;
-
+  
+  const summary = `${prefix}${homeNameSummary} vs. ${guestNameSummary} `;
   const cleanSummary = (text) => (typeof text === 'string' ? text.replace(/[\r\n]+/g, ' ').trim() : 'Untitled event');
   const summaryClean = cleanSummary(summary);
 
@@ -99,7 +99,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const descriptionLines = [
     `Wettbewerb: ${matchInfo?.ligaData.liganame || match.ligaData.liganame || 'Unbekannt'}`,
     `Saison: ${matchInfo?.ligaData.seasonName || match.ligaData.seasonName || 'Unbekannt'}`,
-    `Spiel ${matchInfo?.matchNo || match.matchNo || '?'}`,
+    
     `Heim: ${homeNameDesc || 'Unbekannt'}`,
     `Gast: ${guestNameDesc || 'Unbekannt'}`,
     feld.bezeichnung ? `Halle: ${feld.bezeichnung}` : '',
