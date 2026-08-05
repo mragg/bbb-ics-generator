@@ -51,7 +51,7 @@ ${feld.strasse && feld.ort ? `<p><strong>Adresse:</strong> ${feld.strasse}, ${fe
   return icsEscape(html.replace(/\r?\n/g, ''));
 }
 
-async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
+async function buildEvent(matchInfo, teamId, calendarType = 'all') {
   const homeTeamObj = matchInfo?.homeTeam || match.homeTeam || {};
   const guestTeamObj = matchInfo?.guestTeam || match.guestTeam || {};
 
