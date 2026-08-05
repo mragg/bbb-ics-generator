@@ -40,7 +40,6 @@ function createHtmlDescription(descriptionLines, feld) {
   const html = `<!DOCTYPE HTML><HTML><HEAD><META CHARSET="UTF-8"></HEAD><BODY>
 <p><strong>${descriptionLines[0]}</strong></p>
 <p>${descriptionLines[1]}</p>
-<p><strong>Spiel ${descriptionLines[2].split(' ')[1]}</strong></p>
 <p>${descriptionLines[3]}<br>${descriptionLines[4]}</p>
 ${feld.bezeichnung ? `<p><strong>Halle:</strong> ${feld.bezeichnung}</p>` : ''}
 ${feld.strasse && feld.ort ? `<p><strong>Adresse:</strong> ${feld.strasse}, ${feld.plz} ${feld.ort}</p>` : ''}
