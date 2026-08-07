@@ -78,7 +78,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     (typeof text === 'string' ? text.replace(/[\r\n]+/g, ' ').trim() : 'Untitled event');
   const summaryClean = cleanSummary(summary);
 
-  // Kickoff-Zeit ohne Zeitverschiebung übernehmen
+  // Kickoff-Zeit ohne automatische Umrechnung bauen
   const dateStr = matchInfo?.kickoffDate || match.kickoffDate;
   const timeStr = matchInfo?.kickoffTime || match.kickoffTime;
 
