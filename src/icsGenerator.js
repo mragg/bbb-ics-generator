@@ -1,4 +1,3 @@
-
 const { createEvents } = require('ics');
 
 function dateToArr(d) {
@@ -31,9 +30,9 @@ function icsEscape(text) {
   return String(text)
     .replace(/\\/g, '\\\\')  // Backslash → \\
     .replace(/;/g, '\\;')    // Semikolon → \;
-    .replace(/,/g, '\\,')    // Komma → \,
-    .replace(/\n/g, '\\n')   // Newline → \n
-    .replace(/\r/g, '');     // Carriage Return entfernen
+    .replace(/,/g, '\\,')     // Komma → \,
+    .replace(/\n/g, '\\n')    // Newline → \n
+    .replace(/\r/g, '');      // Carriage Return entfernen
 }
 
 // HTML-Version für X-ALT-DESC erstellen
@@ -49,6 +48,12 @@ ${feld.strasse && feld.ort ? `<p><strong>Adresse:</strong> ${feld.strasse}, ${fe
 </BODY></HTML>`;
 
   return icsEscape(html.replace(/\r?\n/g, ''));
+}
+
+function parseLocalKickoff(dateStr, timeStr) {
+  const [year, month, day] = String(dateStr).split('-').map(Number);
+  const [hour, minute] = String(timeStr).split(':').map(Number);
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
 }
 
 async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
@@ -81,11 +86,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   // Kickoff-Zeit ohne automatische Umrechnung bauen
   const dateStr = matchInfo?.kickoffDate || match.kickoffDate;
   const timeStr = matchInfo?.kickoffTime || match.kickoffTime;
-
-  const [year, month, day] = String(dateStr).split('-').map(Number);
-  const [hour, minute] = String(timeStr).split(':').map(Number);
-
-  const kickoff = new Date(year, month - 1, day, hour, minute, 0, 0);
+  const kickoff = parseLocalKickoff(dateStr, timeStr);
 
   // Start exakt zur Anpfiffzeit
   const dtstart = new Date(kickoff);
@@ -121,10 +122,8 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     // htmlDescription, // bei Bedarf später wieder aktivieren
     start: dateToArr(dtstart),
     startInputType: 'local',
-    startOutputType: 'local',
     end: dateToArr(dtend),
     endInputType: 'local',
-    endOutputType: 'local',
     location,
     busyStatus: 'BUSY',
     alarms: [
@@ -149,6 +148,7 @@ async function generateICS(matches, details, teamId, type = 'all') {
 
   events.forEach((e, i) => console.log(`Event ${i} summary: "${e.title}"`));
 
+  // Teaminfo aus teams.json holen
   const teams = require('../teams.json');
   const team = teams.find(t => Number(t.id) === Number(teamId));
 
@@ -162,86 +162,93 @@ async function generateICS(matches, details, teamId, type = 'all') {
 
   const calendarName = `${teamName}${typeLabel}`;
 
+  // HTML-Descriptions extrahieren
   const htmlDescriptions = events.map(e => e.htmlDescription);
+
+  // htmlDescription aus Events entfernen
   events.forEach(e => delete e.htmlDescription);
 
   return new Promise((resolve, reject) => {
     createEvents(events, (error, value) => {
       if (error) {
         reject(error);
-        return;
-      }
+      } else {
+        const lines = value.split('\r\n');
+        const modifiedLines = [];
+        let eventIndex = -1;
+        let inEvent = false;
+        let inAlarm = false;
 
-      const lines = value.split('\r\n');
-      const modifiedLines = [];
-      let eventIndex = -1;
-      let inEvent = false;
-      let inAlarm = false;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+          // Calendar Header einfügen
+          if (line === 'BEGIN:VCALENDAR') {
+            modifiedLines.push(line);
+            modifiedLines.push('VERSION:2.0');
+            modifiedLines.push('PRODID:-//bbb-ics-generator//DE');
+            modifiedLines.push('CALSCALE:GREGORIAN');
+            modifiedLines.push('METHOD:PUBLISH');
+            modifiedLines.push('X-WR-CALNAME:' + icsEscape(calendarName));
+            modifiedLines.push('X-WR-TIMEZONE:Europe/Berlin');
+            modifiedLines.push('X-WR-CALDESC:Basketball-Spielplan');
+            continue;
+          }
 
-        if (line === 'BEGIN:VCALENDAR') {
-          modifiedLines.push(line);
-          modifiedLines.push('VERSION:2.0');
-          modifiedLines.push('PRODID:-//bbb-ics-generator//DE');
-          modifiedLines.push('CALSCALE:GREGORIAN');
-          modifiedLines.push('METHOD:PUBLISH');
-          modifiedLines.push('X-WR-CALNAME:' + icsEscape(calendarName));
-          modifiedLines.push('X-WR-TIMEZONE:Europe/Berlin');
-          modifiedLines.push('X-WR-CALDESC:Basketball-Spielplan');
-          continue;
-        }
-
-        if (
-          line.startsWith('VERSION:') ||
-          line.startsWith('PRODID:') ||
-          line.startsWith('CALSCALE:') ||
-          line.startsWith('METHOD:')
-        ) {
-          continue;
-        }
-
-        if (line === 'BEGIN:VEVENT') {
-          inEvent = true;
-          eventIndex++;
-        }
-
-        if (line === 'END:VEVENT') {
-          inEvent = false;
-        }
-
-        if (line === 'BEGIN:VALARM') {
-          inAlarm = true;
-        }
-
-        if (line === 'END:VALARM') {
-          inAlarm = false;
-        }
-
-        if (inEvent && !inAlarm && line.startsWith('DESCRIPTION:')) {
-          const descriptionLines = [line];
-
-          while (
-            i + 1 < lines.length &&
-            (lines[i + 1].startsWith(' ') || lines[i + 1].startsWith('\t'))
+          // Überspringe automatisch generierte Header
+          if (
+            line.startsWith('VERSION:') ||
+            line.startsWith('PRODID:') ||
+            line.startsWith('CALSCALE:') ||
+            line.startsWith('METHOD:')
           ) {
-            i++;
-            descriptionLines.push(lines[i]);
+            continue;
           }
 
-          descriptionLines.forEach(l => modifiedLines.push(l));
-
-          if (htmlDescriptions[eventIndex]) {
-            modifiedLines.push('X-ALT-DESC;FMTTYPE=text/html:' + htmlDescriptions[eventIndex]);
+          // Event-Zähler
+          if (line === 'BEGIN:VEVENT') {
+            inEvent = true;
+            eventIndex++;
           }
-          continue;
+
+          if (line === 'END:VEVENT') {
+            inEvent = false;
+          }
+
+          // Alarm-Tracking
+          if (line === 'BEGIN:VALARM') {
+            inAlarm = true;
+          }
+
+          if (line === 'END:VALARM') {
+            inAlarm = false;
+          }
+
+          // X-ALT-DESC nach DESCRIPTION einfügen (nur im EVENT, nicht im ALARM)
+          if (inEvent && !inAlarm && line.startsWith('DESCRIPTION:')) {
+            const descriptionLines = [line];
+
+            while (
+              i + 1 < lines.length &&
+              (lines[i + 1].startsWith(' ') || lines[i + 1].startsWith('\t'))
+            ) {
+              i++;
+              descriptionLines.push(lines[i]);
+            }
+
+            descriptionLines.forEach(l => modifiedLines.push(l));
+
+            if (htmlDescriptions[eventIndex]) {
+              modifiedLines.push('X-ALT-DESC;FMTTYPE=text/html:' + htmlDescriptions[eventIndex]);
+            }
+            continue;
+          }
+
+          modifiedLines.push(line);
         }
 
-        modifiedLines.push(line);
+        resolve(modifiedLines.join('\r\n'));
       }
-
-      resolve(modifiedLines.join('\r\n'));
     });
   });
 }
