@@ -85,7 +85,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const kickoff = new Date(`${dateStr}T${timeStr}:00`);
   
   // Start: 1 Stunde VOR Spielbeginn
-  const dtstart = kickoff;
+  const dtstart = new Date(kickoff.getTime() - 0);
   // Ende: 2.5 Stunden NACH Spielbeginn
   const dtend = new Date(kickoff.getTime() + 2.5 * 60 * 60 * 1000);
 
