@@ -401,7 +401,7 @@ footer{
     <div class="header-text">
       <h1>TV Neunkirchen Baskets</h1>
       <p>Kalender Übersicht – automatisch aktualisiert<br>
-      Stand: ${new Date().toLocaleString('de-DE')}</p>
+      Stand: ${new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })}
     </div>
   </div>
 </header>
