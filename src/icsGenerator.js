@@ -1,4 +1,3 @@
-
 const { createEvents } = require('ics');
 
 function dateToArr(d) {
@@ -12,6 +11,12 @@ function dateToArr(d) {
 }
 
 function kickoffToArr(dateStr, timeStr) {
+  if (!dateStr || !timeStr) {
+    throw new Error(
+      `Ungültige Spieldaten: date=${dateStr}, time=${timeStr}`
+    );
+  }
+
   const [year, month, day] = dateStr.split('-').map(Number);
   const [hour, minute] = timeStr.split(':').map(Number);
 
@@ -106,17 +111,41 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const summaryClean = cleanSummary(summary);
 
   /*
-   * WICHTIG:
    * Die Uhrzeit wird direkt aus der API übernommen.
-   *
-   * NICHT:
-   * new Date(...)
-   *
-   * Dadurch gibt es keine automatische Zeitzonenverschiebung.
+   * Es wird für den Start KEIN new Date(...) verwendet,
+   * damit keine automatische Zeitzonenverschiebung entsteht.
    */
-
   const dateStr = matchInfo?.kickoffDate || match?.kickoffDate;
   const timeStr = matchInfo?.kickoffTime || match?.kickoffTime;
+
+  /*
+   * Spiele mit ungewöhnlichen Uhrzeiten werden nicht erzeugt.
+   *
+   * Übersprungen werden:
+   * 22:00 - 23:59
+   * 00:00 - 04:59
+   *
+   * Dadurch werden beispielsweise ausgefallene Spiele,
+   * die von der API mit 00:00 Uhr zurückgegeben werden,
+   * nicht in den Kalender eingetragen.
+   */
+  if (timeStr) {
+    const [hour, minute] = timeStr.split(':').map(Number);
+
+    const timeInMinutes = hour * 60 + minute;
+
+    const tooLateOrEarly =
+      timeInMinutes >= 22 * 60 ||
+      timeInMinutes < 5 * 60;
+
+    if (tooLateOrEarly) {
+      console.log(
+        `[SKIP] Spiel wird nicht generiert, ungewöhnliche Uhrzeit: ${dateStr} ${timeStr} – Match ${match?.matchId}`
+      );
+
+      return null;
+    }
+  }
 
   console.log(
     `[TIME DEBUG] ${homeNameSummary} vs ${guestNameSummary}: API = ${dateStr} ${timeStr}`
@@ -127,6 +156,7 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
 
   /*
    * Ende: 2,5 Stunden nach Anpfiff.
+   *
    * Hier benutzen wir bewusst eine lokale Zeitberechnung,
    * aber NICHT für den Start.
    */
@@ -253,14 +283,17 @@ async function generateICS(
   for (const match of matches) {
     const matchInfo = details[match.matchId];
 
-    events.push(
-      await buildEvent(
-        match,
-        matchInfo,
-        teamId,
-        type
-      )
+    const event = await buildEvent(
+      match,
+      matchInfo,
+      teamId,
+      type
     );
+
+    // Nur tatsächlich erzeugte Events hinzufügen
+    if (event) {
+      events.push(event);
+    }
   }
 
   if (!events.length) {
