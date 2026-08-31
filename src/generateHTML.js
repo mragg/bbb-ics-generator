@@ -10,19 +10,31 @@ function makeWebcalLink(filename) {
 function safeReadJson(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
-    const raw = fs.readFileSync(filePath, 'utf8');
+
+    const raw = fs.readFileSync(
+      filePath,
+      'utf8'
+    );
+
     return JSON.parse(raw);
   } catch (err) {
     console.error(
       `Fehler beim Einlesen/Parsen von ${filePath}:`,
       err.message
     );
+
     return null;
   }
 }
 
 function normalizeId(value) {
-  if (value === undefined || value === null) return '';
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return '';
+  }
+
   return String(value).trim();
 }
 
@@ -46,12 +58,20 @@ function genHTML() {
   const metadataArray =
     Array.isArray(rawMeta)
       ? rawMeta
-      : (rawMeta.teams || rawMeta.data || []);
+      : (
+          rawMeta.teams ||
+          rawMeta.data ||
+          []
+        );
 
   const teamsArray =
     Array.isArray(rawTeams)
       ? rawTeams
-      : (rawTeams.teams || rawTeams.data || []);
+      : (
+          rawTeams.teams ||
+          rawTeams.data ||
+          []
+        );
 
   // Finales, sauberes Team-Array für das Template
   const teams = metadataArray.map(m => {
@@ -65,38 +85,55 @@ function genHTML() {
 
     return {
       teamId: id,
+
       name:
         m.teamName ??
         m.name ??
         m.title ??
         'Unbenannt',
+
       ageGroup:
         m.ageGroup ?? '',
+
       matchCount:
         m.matchCount ??
         m.matches ??
         0,
+
       homeMatchCount:
         m.homeMatchCount ??
         m.homeMatches ??
         0,
+
       awayMatchCount:
         m.awayMatchCount ??
         m.awayMatches ??
-        0,
+        0
     };
   });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TV Neunkirchen Baskets – Kalender Übersicht</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+>
+
+<title>
+  TV Neunkirchen Baskets – Kalender Übersicht
+</title>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&family=Inter:wght@300;400;600&display=swap"
+  rel="stylesheet"
+>
 
 <style>
+
 :root{
   --tvn-orange:#ff7a18;
   --tvn-orange-dark:#e86400;
@@ -109,14 +146,28 @@ function genHTML() {
   --tvn-border:rgba(255,122,24,.18);
 }
 
-/* Reset / global */
-*{box-sizing:border-box}
-html,body{height:100%}
-html{scroll-behavior:smooth}
+/* =========================================================
+   RESET / GLOBAL
+   ========================================================= */
+
+*{
+  box-sizing:border-box;
+}
+
+html,
+body{
+  height:100%;
+}
+
+html{
+  scroll-behavior:smooth;
+}
 
 body{
   margin:0;
+
   font-family:'Inter',sans-serif;
+
   background:
     radial-gradient(
       circle at top left,
@@ -133,12 +184,17 @@ body{
       #fffaf6 0%,
       var(--tvn-bg) 100%
     );
+
   color:var(--tvn-text);
+
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }
 
-/* Header */
+/* =========================================================
+   HEADER
+   ========================================================= */
+
 header{
   background:
     linear-gradient(
@@ -147,88 +203,132 @@ header{
       var(--tvn-orange),
       var(--tvn-orange-light)
     );
+
   color:var(--tvn-white);
+
   padding:18px 20px;
+
   box-shadow:
     0 10px 30px rgba(255,122,24,.25);
 }
 
 .header-inner{
   display:flex;
+
   gap:16px;
+
   align-items:flex-start;
+
   flex-wrap:wrap;
+
   max-width:960px;
+
   margin:0 auto;
 }
 
 .logo{
   height:120px;
+
   flex-shrink:0;
 }
 
 .header-text{
   display:flex;
+
   flex-direction:column;
+
   justify-content:center;
+
   flex:1;
 }
 
 .header-text h1{
   font-family:'Oswald',sans-serif;
+
   font-size:1.9rem;
+
   margin:0;
+
   text-transform:uppercase;
 }
 
 .header-text p{
   margin-top:6px;
+
   font-weight:300;
+
   opacity:0.95;
+
   font-size:0.95rem;
 }
 
-/* Layout */
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
 .container{
   max-width:960px;
+
   margin:28px auto;
+
   padding:0 16px;
 }
 
 .teams-container{
   display:flex;
+
   flex-wrap:wrap;
+
   gap:12px;
+
   margin-top:14px;
+
   align-items:flex-start;
 }
 
-/* Team card */
+/* =========================================================
+   TEAM CARD
+   ========================================================= */
+
 .team-card{
   background:var(--tvn-surface);
+
   border-radius:14px;
+
   border:1px solid var(--tvn-border);
+
   box-shadow:
     0 4px 12px rgba(0,0,0,0.08);
+
   flex:1 1 220px;
+
   min-width:220px;
+
   display:flex;
+
   flex-direction:column;
+
   position:relative;
 }
 
 .team-header{
   padding:12px 14px;
+
   font-weight:600;
+
   font-family:'Oswald',sans-serif;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:var(--tvn-white);
+
   border-radius:14px 14px 0 0;
+
   cursor:pointer;
 }
 
@@ -238,47 +338,75 @@ header{
 
 .team-content-preview p{
   margin:10px 0 0;
+
   color:var(--tvn-muted);
 }
 
-/* Team popup */
+/* =========================================================
+   TEAM POPUP
+   ========================================================= */
+
 .team-content{
   position:fixed;
+
   display:none;
+
   background:#fff;
+
   padding:18px;
+
   border-radius:10px;
+
   box-shadow:
     0 18px 40px rgba(0,0,0,0.25);
+
   z-index:12000;
+
   max-height:80vh;
+
   overflow:auto;
+
   box-sizing:border-box;
 }
 
-/* Buttons area */
+/* =========================================================
+   TEAM BUTTONS
+   ========================================================= */
+
 .team-content .buttons{
   display:flex;
+
   flex-wrap:wrap;
+
   gap:10px;
+
   margin-top:12px;
+
   align-items:flex-start;
 }
 
 .team-content .buttons a{
   display:inline-block;
+
   padding:10px 16px;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:var(--tvn-white);
+
   text-decoration:none;
+
   border-radius:6px;
+
   font-weight:600;
+
   font-size:0.9rem;
+
   transition:
     transform 0.12s,
     filter 0.12s;
@@ -286,50 +414,75 @@ header{
 
 .team-content .buttons a:hover{
   filter:brightness(1.03);
+
   transform:translateY(-2px);
 }
 
-/* Steps */
+/* =========================================================
+   STEPS
+   ========================================================= */
+
 .step-box{
   background:var(--tvn-surface);
+
   margin-bottom:12px;
+
   border-radius:8px;
+
   overflow:hidden;
+
   box-shadow:
     0 3px 8px rgba(0,0,0,0.06);
+
   border:1px solid var(--tvn-border);
 }
 
 .step-header{
   padding:12px 14px;
+
   cursor:pointer;
+
   font-weight:600;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:var(--tvn-white);
+
   font-family:'Oswald',sans-serif;
+
   position:relative;
+
   padding-right:40px;
+
   user-select:none;
 }
 
 .step-header::after{
   content:'▾';
+
   position:absolute;
+
   right:12px;
+
   top:50%;
+
   transform:
     translateY(-50%)
     rotate(0deg);
+
   transition:
     transform 0.18s ease,
     opacity 0.12s;
+
   opacity:0.95;
+
   font-size:1.05rem;
+
   line-height:1;
 }
 
@@ -341,91 +494,152 @@ header{
 
 .step-content{
   padding:12px 14px;
+
   display:none;
+
   font-size:0.95rem;
+
   line-height:1.45;
+
   background:#fffaf5;
 }
 
-/* Anleitung button */
+/* =========================================================
+   ANLEITUNG BUTTON
+   ========================================================= */
+
 .guide-btn{
   display:inline-block;
+
   padding:12px 14px;
+
   cursor:pointer;
+
   font-weight:600;
+
   font-family:'Oswald',sans-serif;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:var(--tvn-white);
+
   border-radius:10px;
+
   border:none;
+
   margin-bottom:12px;
 }
 
-/* Steps modal */
+/* =========================================================
+   STEPS MODAL
+   ========================================================= */
+
 #steps-backdrop{
   display:none;
+
   position:fixed;
+
   inset:0;
+
   background:rgba(0,0,0,0.45);
+
   z-index:14000;
 }
 
 #steps-wrapper{
   display:none;
+
   position:fixed;
+
   top:50%;
+
   left:50%;
+
   transform:
     translate(-50%,-50%);
+
   width:90%;
+
   max-width:720px;
+
   max-height:80vh;
+
   overflow-y:auto;
+
   background:#fff;
+
   padding:20px;
+
   border-radius:12px;
+
   box-shadow:
     0 25px 60px rgba(0,0,0,0.35);
+
   z-index:15000;
+
   box-sizing:border-box;
 }
 
-/* Close button */
 .steps-close{
   position:absolute;
+
   top:12px;
+
   right:12px;
+
   background:transparent;
+
   border:none;
+
   font-size:1.6rem;
+
   line-height:1;
+
   cursor:pointer;
+
   color:#222;
+
   padding:6px;
 }
 
-/* Popup close button */
+/* =========================================================
+   TEAM POPUP CLOSE
+   ========================================================= */
+
 .overlay-close{
   display:none;
+
   position:absolute;
+
   right:12px;
+
   top:10px;
+
   background:transparent;
+
   border:none;
+
   font-size:1.6rem;
+
   cursor:pointer;
+
   color:#222;
 }
 
-/* Bottom link area */
+/* =========================================================
+   BOTTOM LINK
+   ========================================================= */
+
 .page-bottom{
   max-width:960px;
+
   margin:28px auto 0;
+
   padding:0 16px 18px;
 }
 
@@ -436,29 +650,43 @@ header{
       rgba(255,255,255,.92),
       rgba(255,248,241,.98)
     );
+
   border:1px solid var(--tvn-border);
+
   border-radius:16px;
+
   box-shadow:
     0 4px 12px rgba(0,0,0,0.08);
+
   padding:18px;
+
   display:flex;
+
   justify-content:center;
+
   align-items:center;
 }
 
 .back-link{
   display:inline-block;
+
   padding:12px 18px;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:#fff;
+
   text-decoration:none;
+
   border-radius:8px;
+
   font-weight:700;
+
   box-shadow:
     0 8px 18px rgba(255,122,24,.18);
 }
@@ -469,7 +697,9 @@ header{
 
 .report-section{
   max-width:960px;
+
   margin:12px auto 0;
+
   padding:0 16px 18px;
 }
 
@@ -480,45 +710,66 @@ header{
       rgba(255,255,255,.96),
       rgba(255,248,241,.98)
     );
+
   border:1px solid var(--tvn-border);
+
   border-radius:16px;
+
   box-shadow:
     0 4px 12px rgba(0,0,0,0.08);
+
   padding:20px;
+
   text-align:center;
 }
 
 .report-card h2{
   margin:0 0 8px;
+
   font-family:'Oswald',sans-serif;
+
   font-size:1.35rem;
 }
 
 .report-card p{
   margin:0 auto 14px;
+
   color:var(--tvn-muted);
+
   line-height:1.45;
+
   max-width:650px;
 }
 
 .report-btn{
   display:inline-block;
+
   padding:12px 20px;
+
   border:none;
+
   border-radius:9px;
+
   cursor:pointer;
+
   font-family:'Oswald',sans-serif;
+
   font-weight:600;
+
   font-size:1rem;
+
   background:
     linear-gradient(
       135deg,
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:#fff;
+
   box-shadow:
     0 8px 18px rgba(255,122,24,.18);
+
   transition:
     transform .12s,
     filter .12s;
@@ -526,122 +777,181 @@ header{
 
 .report-btn:hover{
   filter:brightness(1.04);
+
   transform:translateY(-2px);
 }
 
-/* Report modal */
+/* =========================================================
+   REPORT MODAL
+   ========================================================= */
+
 #report-backdrop{
   display:none;
+
   position:fixed;
+
   inset:0;
+
   background:rgba(0,0,0,.5);
+
   z-index:16000;
 }
 
 #report-modal{
   display:none;
+
   position:fixed;
+
   top:50%;
+
   left:50%;
+
   transform:
     translate(-50%,-50%);
+
   width:92%;
+
   max-width:680px;
+
   max-height:88vh;
+
   overflow-y:auto;
+
   background:#fff;
+
   padding:22px;
+
   border-radius:14px;
+
   box-shadow:
     0 25px 70px rgba(0,0,0,.4);
+
   z-index:17000;
 }
 
 .report-modal-header{
   display:flex;
+
   align-items:center;
+
   justify-content:space-between;
+
   gap:16px;
+
   margin-bottom:16px;
 }
 
 .report-modal-header h2{
   margin:0;
+
   font-family:'Oswald',sans-serif;
+
   font-size:1.5rem;
 }
 
 .report-close{
   background:transparent;
+
   border:none;
+
   font-size:1.8rem;
+
   line-height:1;
+
   cursor:pointer;
+
   color:#222;
+
   padding:4px 6px;
 }
 
 .report-form-group{
   margin-bottom:15px;
+
   text-align:left;
 }
 
 .report-form-group label{
   display:block;
+
   margin-bottom:6px;
+
   font-weight:600;
 }
 
 .report-form-group input,
+.report-form-group select,
 .report-form-group textarea{
   width:100%;
+
   border:1px solid rgba(36,22,15,.18);
+
   border-radius:8px;
+
   padding:11px 12px;
+
   font:inherit;
+
   color:var(--tvn-text);
+
   background:#fff;
+
   outline:none;
 }
 
 .report-form-group input:focus,
+.report-form-group select:focus,
 .report-form-group textarea:focus{
   border-color:var(--tvn-orange);
+
   box-shadow:
     0 0 0 3px rgba(255,122,24,.12);
 }
 
 .report-form-group textarea{
   min-height:160px;
+
   resize:vertical;
 }
 
 .report-help{
   font-size:.88rem;
+
   color:var(--tvn-muted);
+
   margin-top:6px;
 }
 
 .report-actions{
   display:flex;
+
   justify-content:flex-end;
+
   gap:10px;
+
   margin-top:18px;
+
   flex-wrap:wrap;
 }
 
 .report-cancel-btn,
 .report-submit-btn{
   border:none;
+
   border-radius:8px;
+
   padding:11px 16px;
+
   font:inherit;
+
   font-weight:600;
+
   cursor:pointer;
 }
 
 .report-cancel-btn{
   background:#eee;
+
   color:#222;
 }
 
@@ -656,6 +966,7 @@ header{
       var(--tvn-orange-dark),
       var(--tvn-orange)
     );
+
   color:#fff;
 }
 
@@ -663,21 +974,81 @@ header{
   filter:brightness(1.04);
 }
 
-/* Footer */
+.report-submit-btn:disabled{
+  opacity:.65;
+
+  cursor:wait;
+
+  transform:none;
+}
+
+.report-error{
+  display:none;
+
+  margin-top:12px;
+
+  padding:10px 12px;
+
+  border-radius:8px;
+
+  background:#fff0f0;
+
+  color:#a00000;
+
+  font-size:.9rem;
+
+  text-align:left;
+}
+
+/* =========================================================
+   SUCCESS MESSAGE
+   ========================================================= */
+
+.report-success{
+  display:none;
+
+  padding:12px 14px;
+
+  margin-top:14px;
+
+  border-radius:8px;
+
+  background:#eef9ee;
+
+  color:#216621;
+
+  font-size:.92rem;
+
+  line-height:1.4;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
 footer{
   padding:18px 16px 28px;
+
   text-align:center;
+
   color:var(--tvn-muted);
+
   font-size:0.95rem;
 }
 
-/* MOBILE */
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
 @media (max-width:600px){
 
   .teams-container{
     display:grid;
+
     grid-template-columns:1fr 1fr;
+
     gap:12px;
+
     padding-bottom:24px;
   }
 
@@ -687,13 +1058,21 @@ footer{
 
   .team-content{
     left:0 !important;
+
     top:0 !important;
+
     width:100vw !important;
+
     height:100vh !important;
+
     max-height:none !important;
+
     border-radius:0 !important;
+
     padding:18px;
+
     overflow-y:auto;
+
     box-shadow:
       0 30px 60px rgba(0,0,0,0.35);
   }
@@ -704,12 +1083,15 @@ footer{
 
   .team-content .buttons{
     flex-direction:column;
+
     align-items:stretch;
   }
 
   .team-content .buttons a{
     width:100%;
+
     margin:8px 0;
+
     text-align:center;
   }
 
@@ -719,12 +1101,19 @@ footer{
 
   #steps-wrapper{
     top:0;
+
     left:0;
+
     transform:none;
+
     width:100vw;
+
     height:100vh;
+
     max-height:none;
+
     border-radius:0;
+
     padding:
       48px
       18px
@@ -734,11 +1123,13 @@ footer{
 
   .steps-close{
     top:12px;
+
     right:12px;
   }
 
   .back-link{
     width:100%;
+
     text-align:center;
   }
 
@@ -750,15 +1141,32 @@ footer{
     padding:18px;
   }
 
+  /*
+   * Wichtig:
+   * Das Report-Modal ist auf Mobilgeräten
+   * ein echtes Vollbild-Modal.
+   */
   #report-modal{
     top:0;
+
     left:0;
+
     transform:none;
+
     width:100vw;
+
     height:100vh;
+
     max-height:none;
+
     border-radius:0;
-    padding:18px;
+
+    padding:
+      18px;
+
+    overflow-y:auto;
+
+    -webkit-overflow-scrolling:touch;
   }
 
   .report-modal-header{
@@ -773,13 +1181,21 @@ footer{
   .report-submit-btn{
     width:100%;
   }
+
 }
+
+/* =========================================================
+   SCRIPT
+   ========================================================= */
+
 </style>
 
 </head>
+
 <body>
 
 <header>
+
   <div class="header-inner">
 
     <img
@@ -795,8 +1211,8 @@ footer{
       </h1>
 
       <p>
-        Kalender Übersicht –
-        automatisch aktualisiert<br>
+        Kalender Übersicht – automatisch aktualisiert<br>
+
         Stand:
         ${new Date().toLocaleString(
           'de-DE',
@@ -805,14 +1221,20 @@ footer{
               'Europe/Berlin'
           }
         )}
+
       </p>
 
     </div>
 
   </div>
+
 </header>
 
 <div class="container">
+
+  <!-- =====================================================
+       ANLEITUNG
+       ===================================================== -->
 
   <button
     id="show-steps-btn"
@@ -828,6 +1250,7 @@ footer{
     tabindex="-1"
     aria-hidden="true"
   ></div>
+
 
   <div
     id="steps-template"
@@ -869,6 +1292,7 @@ footer{
 
     </div>
 
+
     <div class="step-box">
 
       <div
@@ -892,13 +1316,13 @@ footer{
           <strong>„Kalender hinzufügen“</strong>
           und dann
           <strong>„Aus dem Internet“</strong>
-          bzw.
-          <strong>„Per URL“</strong>.
+          bzw. <strong>„Per URL“</strong>.
         </p>
 
       </div>
 
     </div>
+
 
     <div class="step-box">
 
@@ -939,6 +1363,7 @@ footer{
 
   </div>
 
+
   <div
     id="steps-wrapper"
     role="dialog"
@@ -946,6 +1371,11 @@ footer{
     aria-hidden="true"
     style="display:none;"
   ></div>
+
+
+  <!-- =====================================================
+       TEAMS
+       ===================================================== -->
 
   <div class="teams-container">
 
@@ -957,11 +1387,17 @@ footer{
           class="team-header"
           data-index="${index}"
         >
+
           ${t.name}
-          ${t.ageGroup
-            ? ` (<strong>${t.ageGroup}</strong>)`
-            : ''}
+
+          ${
+            t.ageGroup
+              ? ` (<strong>${t.ageGroup}</strong>)`
+              : ''
+          }
+
         </div>
+
 
         <div
           class="team-content"
@@ -975,68 +1411,87 @@ footer{
             &times;
           </button>
 
+
           <div class="team-content-preview">
 
             ${t.name}
-            ${t.ageGroup
-              ? ` (<strong>${t.ageGroup}</strong>)`
-              : ''}
+
+            ${
+              t.ageGroup
+                ? ` (<strong>${t.ageGroup}</strong>)`
+                : ''
+            }
 
             <p>
+
               ${t.matchCount} Spiele,
-              Heim: ${t.homeMatchCount},
-              Auswärts: ${t.awayMatchCount}
+
+              Heim:
+              ${t.homeMatchCount},
+
+              Auswärts:
+              ${t.awayMatchCount}
+
             </p>
 
           </div>
 
+
           <div class="buttons">
 
-            <a href="${makeWebcalLink(
-              t.teamId
-                ? (
-                    t.teamId +
-                    '_all.ics'
-                  )
-                : (
-                    encodeURIComponent(
-                      t.name
-                    ) +
-                    '_all.ics'
-                  )
-            )}">
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_all.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_all.ics'
+                    )
+              )}"
+            >
               Alle Spiele abonnieren
             </a>
 
-            <a href="${makeWebcalLink(
-              t.teamId
-                ? (
-                    t.teamId +
-                    '_home.ics'
-                  )
-                : (
-                    encodeURIComponent(
-                      t.name
-                    ) +
-                    '_home.ics'
-                  )
-            )}">
+
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_home.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_home.ics'
+                    )
+              )}"
+            >
               Nur Heimspiele abonnieren
             </a>
 
-            <a href="${makeWebcalLink(
-              t.teamId
-                ? (
-                    t.teamId +
-                    '_away.ics'
-                  )
-                : (
-                    encodeURIComponent(
-                      t.name
-                    ) +
-                    '_away.ics'
-                  )
-            )}">
+
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_away.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_away.ics'
+                    )
+              )}"
+            >
               Nur Auswärtsspiele abonnieren
             </a>
 
@@ -1052,7 +1507,11 @@ footer{
 
 </div>
 
-<!-- Zurück-Button -->
+
+<!-- =========================================================
+     ZURÜCK ZU DEN TEAMS
+     ========================================================= -->
+
 <div class="page-bottom">
 
   <div class="bottom-card">
@@ -1067,6 +1526,7 @@ footer{
   </div>
 
 </div>
+
 
 <!-- =========================================================
      FEHLER MELDEN
@@ -1083,8 +1543,6 @@ footer{
     <p>
       Falls etwas mit dem Kalender nicht stimmt,
       kannst du hier einen Fehler melden.
-      Deine Meldung wird als GitHub-Issue
-      vorbereitet.
     </p>
 
     <button
@@ -1099,13 +1557,17 @@ footer{
 
 </div>
 
+
 <!-- Report Backdrop -->
+
 <div
   id="report-backdrop"
   aria-hidden="true"
 ></div>
 
+
 <!-- Report Modal -->
+
 <div
   id="report-modal"
   role="dialog"
@@ -1131,7 +1593,90 @@ footer{
 
   </div>
 
+
   <form id="report-form">
+
+    <!-- Team -->
+
+    <div class="report-form-group">
+
+      <label for="report-team">
+        Betroffenes Team / Kalender
+      </label>
+
+      <select
+        id="report-team"
+        name="team"
+        required
+      >
+
+        <option
+          value=""
+          selected
+          disabled
+        >
+          Bitte Team auswählen
+        </option>
+
+        ${teams.map(t => `
+
+          <option
+            value="${t.teamId}"
+          >
+            ${t.name}${
+              t.ageGroup
+                ? ` (${t.ageGroup})`
+                : ''
+            }
+          </option>
+
+        `).join('')}
+
+      </select>
+
+    </div>
+
+
+    <!-- Kalender -->
+
+    <div class="report-form-group">
+
+      <label for="report-calendar">
+        Betroffener Kalender
+      </label>
+
+      <select
+        id="report-calendar"
+        name="calendar"
+        required
+      >
+
+        <option
+          value=""
+          selected
+          disabled
+        >
+          Bitte Kalender auswählen
+        </option>
+
+        <option value="Alle Spiele">
+          Alle Spiele
+        </option>
+
+        <option value="Nur Heimspiele">
+          Nur Heimspiele
+        </option>
+
+        <option value="Nur Auswärtsspiele">
+          Nur Auswärtsspiele
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- Titel -->
 
     <div class="report-form-group">
 
@@ -1149,6 +1694,9 @@ footer{
       >
 
     </div>
+
+
+    <!-- Beschreibung -->
 
     <div class="report-form-group">
 
@@ -1170,6 +1718,28 @@ footer{
       </div>
 
     </div>
+
+
+    <!-- Fehleranzeige -->
+
+    <div
+      id="report-error"
+      class="report-error"
+    ></div>
+
+
+    <!-- Erfolg -->
+
+    <div
+      id="report-success"
+      class="report-success"
+    >
+      Deine Fehlermeldung wurde erfolgreich
+      übermittelt.
+    </div>
+
+
+    <!-- Buttons -->
 
     <div class="report-actions">
 
@@ -1194,11 +1764,14 @@ footer{
 
 </div>
 
+
 <footer>
   TVN Baskets – Offizielle Kalenderübersicht
 </footer>
 
+
 <script>
+
 /* =========================================================
    ANLEITUNG
    ========================================================= */
@@ -1215,17 +1788,21 @@ function bindStepHeadersInContainer(container) {
         h.cloneNode(true);
 
       if (!newH.hasAttribute('role')) {
+
         newH.setAttribute(
           'role',
           'button'
         );
+
       }
 
       if (!newH.hasAttribute('tabindex')) {
+
         newH.setAttribute(
           'tabindex',
           '0'
         );
+
       }
 
       newH.setAttribute(
@@ -1239,6 +1816,7 @@ function bindStepHeadersInContainer(container) {
       );
 
     });
+
 
   container
     .querySelectorAll('.step-header')
@@ -1257,7 +1835,9 @@ function bindStepHeadersInContainer(container) {
 
           const isOpen =
             window.getComputedStyle(c)
-              .display === 'block';
+              .display ===
+            'block';
+
 
           container
             .querySelectorAll(
@@ -1277,24 +1857,29 @@ function bindStepHeadersInContainer(container) {
                   hh &&
                   hh.classList
                 ) {
+
                   hh.classList.remove(
                     'open'
                   );
+
                 }
 
                 if (
                   hh &&
                   hh.setAttribute
                 ) {
+
                   hh.setAttribute(
                     'aria-expanded',
                     'false'
                   );
+
                 }
 
               }
 
             });
+
 
           if (isOpen) {
 
@@ -1329,6 +1914,7 @@ function bindStepHeadersInContainer(container) {
         }
       );
 
+
       h.addEventListener(
         'keydown',
         (e) => {
@@ -1348,11 +1934,12 @@ function bindStepHeadersInContainer(container) {
       );
 
     });
+
 }
 
 
 /* =========================================================
-   HAUPTINITIALISIERUNG
+   DOM INITIALISIERUNG
    ========================================================= */
 
 document.addEventListener(
@@ -1378,6 +1965,7 @@ document.addEventListener(
       document.getElementById(
         'show-steps-btn'
       );
+
 
     const reportBtn =
       document.getElementById(
@@ -1419,9 +2007,36 @@ document.addEventListener(
         'report-description'
       );
 
+    const reportTeam =
+      document.getElementById(
+        'report-team'
+      );
+
+    const reportCalendar =
+      document.getElementById(
+        'report-calendar'
+      );
+
+    const reportError =
+      document.getElementById(
+        'report-error'
+      );
+
+    const reportSuccess =
+      document.getElementById(
+        'report-success'
+      );
+
+    const reportSubmitButton =
+      reportForm
+        ? reportForm.querySelector(
+            '.report-submit-btn'
+          )
+        : null;
+
 
     /* =======================================================
-       ANLEITUNG
+       ANLEITUNG INITIALISIEREN
        ======================================================= */
 
     if (
@@ -1448,6 +2063,10 @@ document.addEventListener(
       null;
 
 
+    /* =======================================================
+       TEAM OVERLAYS SCHLIESSEN
+       ======================================================= */
+
     function closeAllOverlays() {
 
       document
@@ -1471,6 +2090,10 @@ document.addEventListener(
 
     }
 
+
+    /* =======================================================
+       ANLEITUNG ÖFFNEN
+       ======================================================= */
 
     function openStepsModal() {
 
@@ -1497,6 +2120,10 @@ document.addEventListener(
         'true'
       );
 
+      document.body.style.overflow =
+        'hidden';
+
+
       const closeBtn =
         stepsWrapper.querySelector(
           '#close-steps-btn'
@@ -1510,30 +2137,18 @@ document.addEventListener(
 
         closeBtn.focus();
 
-      } else {
-
-        const firstHeader =
-          stepsWrapper.querySelector(
-            '.step-header'
-          );
-
-        if (
-          firstHeader &&
-          typeof firstHeader.focus ===
-            'function'
-        ) {
-          firstHeader.focus();
-        }
-
       }
-
-      document.body.style.overflow =
-        'hidden';
 
     }
 
 
+    /* =======================================================
+       ANLEITUNG SCHLIESSEN
+       ======================================================= */
+
     function closeStepsModal() {
+
+      if (!stepsWrapper) return;
 
       stepsWrapper
         .querySelectorAll(
@@ -1551,22 +2166,27 @@ document.addEventListener(
             hh &&
             hh.classList
           ) {
+
             hh.classList.remove(
               'open'
             );
+
           }
 
           if (
             hh &&
             hh.setAttribute
           ) {
+
             hh.setAttribute(
               'aria-expanded',
               'false'
             );
+
           }
 
         });
+
 
       stepsWrapper.style.display =
         'none';
@@ -1589,8 +2209,19 @@ document.addEventListener(
         'false'
       );
 
-      document.body.style.overflow =
-        '';
+      /*
+       * Nur dann Scrollen wieder erlauben,
+       * wenn kein anderes Modal offen ist.
+       */
+      if (
+        reportModal.style.display !==
+        'block'
+      ) {
+
+        document.body.style.overflow =
+          '';
+
+      }
 
     }
 
@@ -1627,9 +2258,13 @@ document.addEventListener(
           'block';
 
         if (isOpen) {
+
           closeStepsModal();
+
         } else {
+
           openStepsModal();
+
         }
 
       }
@@ -1647,13 +2282,14 @@ document.addEventListener(
 
 
     /* =======================================================
-       TEAM OVERLAYS
+       TEAM POPUPS
        ======================================================= */
 
     const teamHeaders =
       document.querySelectorAll(
         '.team-header'
       );
+
 
     teamHeaders.forEach(
       (header) => {
@@ -1771,7 +2407,8 @@ document.addEventListener(
 
 
             const isMobile =
-              window.innerWidth <= 600;
+              window.innerWidth <=
+              600;
 
 
             if (isMobile) {
@@ -1836,8 +2473,10 @@ document.addEventListener(
               desiredWidth >
               maxWidth
             ) {
+
               desiredWidth =
                 maxWidth;
+
             }
 
 
@@ -1868,8 +2507,10 @@ document.addEventListener(
               leftPos <
               margin
             ) {
+
               leftPos =
                 margin;
+
             }
 
 
@@ -1923,8 +2564,10 @@ document.addEventListener(
               topPos <
               20
             ) {
+
               topPos =
                 20;
+
             }
 
 
@@ -1939,142 +2582,39 @@ document.addEventListener(
               content;
 
           }
+
         );
 
       });
 
 
     /* =======================================================
-       TEAM / MODAL CLICK LOGIC
-       ======================================================= */
-
-    document.addEventListener(
-      'click',
-      (e) => {
-
-        const target =
-          e.target;
-
-        if (!target) return;
-
-
-        if (
-          target.closest(
-            '#steps-wrapper'
-          ) ||
-          target.closest(
-            '#steps-backdrop'
-          ) ||
-          target.closest(
-            '#report-modal'
-          ) ||
-          target.closest(
-            '#report-backdrop'
-          )
-        ) {
-          return;
-        }
-
-
-        closeAllOverlays();
-
-
-        if (
-          window.innerWidth <=
-          600
-        ) {
-
-          document.body.style.overflow =
-            '';
-
-        }
-
-      }
-    );
-
-
-    /* =======================================================
-       ESCAPE
-       ======================================================= */
-
-    document.addEventListener(
-      'keydown',
-      (e) => {
-
-        if (
-          e.key === 'Escape'
-        ) {
-
-          if (
-            stepsWrapper.style.display ===
-            'block'
-          ) {
-
-            closeStepsModal();
-
-          } else if (
-            reportModal.style.display ===
-            'block'
-          ) {
-
-            closeReportModal();
-
-          } else {
-
-            closeAllOverlays();
-
-            document.body.style.overflow =
-              '';
-
-          }
-
-        }
-
-      }
-    );
-
-
-    /* =======================================================
-       SCROLL
-       ======================================================= */
-
-    window.addEventListener(
-      'scroll',
-      () => {
-
-        closeAllOverlays();
-
-        if (
-          window.innerWidth <=
-          600
-        ) {
-
-          document.body.style.overflow =
-            '';
-
-        }
-
-      },
-      {
-        passive:true
-      }
-    );
-
-
-    /* =======================================================
-       REPORT SYSTEM
+       REPORT MODAL
        ======================================================= */
 
     function openReportModal() {
 
       closeAllOverlays();
 
+
       if (
         stepsWrapper.style.display ===
         'block'
       ) {
+
         closeStepsModal();
+
       }
+
+
+      reportError.style.display =
+        'none';
+
+      reportError.textContent =
+        '';
+
+      reportSuccess.style.display =
+        'none';
 
 
       reportModal.style.display =
@@ -2082,6 +2622,7 @@ document.addEventListener(
 
       reportBackdrop.style.display =
         'block';
+
 
       reportModal.setAttribute(
         'aria-hidden',
@@ -2093,6 +2634,12 @@ document.addEventListener(
         'false'
       );
 
+
+      /*
+       * Auf Mobilgeräten verhindern wir,
+       * dass die Seite hinter dem Formular
+       * mitscrollt.
+       */
       document.body.style.overflow =
         'hidden';
 
@@ -2100,12 +2647,12 @@ document.addEventListener(
       setTimeout(() => {
 
         if (
-          reportTitle &&
-          typeof reportTitle.focus ===
+          reportTeam &&
+          typeof reportTeam.focus ===
             'function'
         ) {
 
-          reportTitle.focus();
+          reportTeam.focus();
 
         }
 
@@ -2122,6 +2669,7 @@ document.addEventListener(
       reportBackdrop.style.display =
         'none';
 
+
       reportModal.setAttribute(
         'aria-hidden',
         'true'
@@ -2132,6 +2680,11 @@ document.addEventListener(
         'true'
       );
 
+
+      /*
+       * Nur beim tatsächlichen Schließen
+       * wird der Seiten-Scroll wieder freigegeben.
+       */
       document.body.style.overflow =
         '';
 
@@ -2201,24 +2754,49 @@ document.addEventListener(
 
 
     /*
-     * GitHub Issue vorbereiten.
-     *
-     * Wichtig:
-     * Es wird KEIN GitHub-Token verwendet.
-     *
-     * Die Werte werden per String-Verkettung
-     * erzeugt, damit es keine Konflikte mit dem
-     * äußeren Template-String dieses Generators gibt.
+     * Klicks innerhalb des Formulars
+     * dürfen das Modal NICHT schließen.
      */
+    if (reportModal) {
+
+      reportModal.addEventListener(
+        'click',
+        e => {
+
+          e.stopPropagation();
+
+        }
+      );
+
+    }
+
+
+    /* =======================================================
+       REPORT ABSENDEN
+       ======================================================= */
 
     if (reportForm) {
 
       reportForm.addEventListener(
         'submit',
-        (e) => {
+        async (e) => {
 
           e.preventDefault();
 
+          e.stopPropagation();
+
+
+          const team =
+            reportTeam
+              .options[
+                reportTeam.selectedIndex
+              ]
+              ?.textContent
+              .trim() ||
+            '';
+
+          const calendar =
+            reportCalendar.value.trim();
 
           const title =
             reportTitle.value.trim();
@@ -2228,101 +2806,310 @@ document.addEventListener(
 
 
           if (
+            !team ||
+            !calendar ||
             !title ||
             !description
           ) {
 
-            alert(
-              'Bitte fülle Titel und Beschreibung aus.'
-            );
+            reportError.textContent =
+              'Bitte fülle alle Felder aus.';
+
+            reportError.style.display =
+              'block';
 
             return;
 
           }
 
 
-          const now =
-            new Date();
+          /*
+           * Button während des Sendens sperren.
+           */
+          if (reportSubmitButton) {
+
+            reportSubmitButton.disabled =
+              true;
+
+            reportSubmitButton.textContent =
+              'Wird gesendet...';
+
+          }
 
 
-          const timestamp =
-            now.toLocaleString(
-              'de-DE',
-              {
-                timeZone:
-                  'Europe/Berlin'
-              }
+          reportError.style.display =
+            'none';
+
+          reportSuccess.style.display =
+            'none';
+
+
+          try {
+
+            const response =
+              await fetch(
+                'https://bbb-ics-report.raggelija.workers.dev',
+                {
+                  method:'POST',
+
+                  headers:{
+                    'Content-Type':
+                      'application/json'
+                  },
+
+                  body:JSON.stringify({
+                    team,
+                    calendar,
+                    title,
+                    description
+                  })
+                }
+              );
+
+
+            let result = null;
+
+
+            try {
+
+              result =
+                await response.json();
+
+            } catch (error) {
+
+              result =
+                null;
+
+            }
+
+
+            if (
+              !response.ok ||
+              !result?.success
+            ) {
+
+              throw new Error(
+                result?.error ||
+                'Die Fehlermeldung konnte nicht gesendet werden.'
+              );
+
+            }
+
+
+            /*
+             * Erfolgreich gespeichert.
+             */
+
+            reportForm.reset();
+
+            reportError.style.display =
+              'none';
+
+            reportSuccess.textContent =
+              'Vielen Dank! Deine Fehlermeldung wurde erfolgreich übermittelt.';
+
+            reportSuccess.style.display =
+              'block';
+
+
+            /*
+             * Formular nicht sofort schließen.
+             * Der Nutzer sieht die Erfolgsmeldung.
+             */
+
+            setTimeout(
+              () => {
+
+                closeReportModal();
+
+              },
+              1800
             );
 
 
-          const automaticInfo = [
-            '## Beschreibung',
-            '',
-            description,
-            '',
-            '---',
-            '',
-            '## Automatische Informationen',
-            '',
-            '- Datum/Uhrzeit: ' +
-              timestamp,
-            '- Seite: ' +
-              window.location.href,
-            '- Browser: ' +
-              navigator.userAgent,
-            '- Sprache: ' +
-              (
-                navigator.language ||
-                'unbekannt'
-              ),
-            '- Bildschirm: ' +
-              window.screen.width +
-              ' × ' +
-              window.screen.height,
-            '- Viewport: ' +
-              window.innerWidth +
-              ' × ' +
-              window.innerHeight,
-            '- Referrer: ' +
-              (
-                document.referrer ||
-                'Keiner'
-              )
-          ].join('\\n');
+          } catch (error) {
+
+            console.error(
+              'Fehler beim Senden des Reports:',
+              error
+            );
 
 
-          const githubIssueUrl =
-            'https://github.com/mragg/bbb-ics-generator/issues/new';
+            reportError.textContent =
+              'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
+
+            reportError.style.display =
+              'block';
 
 
-          const params =
-            new URLSearchParams();
+          } finally {
 
+            if (reportSubmitButton) {
 
-          params.set(
-            'title',
-            title
-          );
+              reportSubmitButton.disabled =
+                false;
 
-          params.set(
-            'body',
-            automaticInfo
-          );
+              reportSubmitButton.textContent =
+                'Meldung erstellen';
 
+            }
 
-          const finalUrl =
-            githubIssueUrl +
-            '?' +
-            params.toString();
-
-
-          window.location.href =
-            finalUrl;
+          }
 
         }
       );
 
     }
+
+
+    /* =======================================================
+       DOCUMENT CLICK
+       ======================================================= */
+
+    document.addEventListener(
+      'click',
+      (e) => {
+
+        const target =
+          e.target;
+
+        if (!target) return;
+
+
+        /*
+         * Wenn ein Modal geöffnet ist,
+         * soll ein Klick außerhalb nicht
+         * versehentlich andere Dinge schließen.
+         */
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          return;
+
+        }
+
+
+        if (
+          target.closest(
+            '#steps-wrapper'
+          ) ||
+          target.closest(
+            '#steps-backdrop'
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        closeAllOverlays();
+
+
+        if (
+          window.innerWidth <=
+          600
+        ) {
+
+          document.body.style.overflow =
+            '';
+
+        }
+
+      }
+    );
+
+
+    /* =======================================================
+       ESCAPE
+       ======================================================= */
+
+    document.addEventListener(
+      'keydown',
+      (e) => {
+
+        if (
+          e.key !==
+          'Escape'
+        ) {
+
+          return;
+
+        }
+
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          closeReportModal();
+
+          return;
+
+        }
+
+
+        if (
+          stepsWrapper.style.display ===
+          'block'
+        ) {
+
+          closeStepsModal();
+
+          return;
+
+        }
+
+
+        closeAllOverlays();
+
+
+        document.body.style.overflow =
+          '';
+
+      }
+    );
+
+
+    /* =======================================================
+       SCROLL
+       ======================================================= */
+
+    window.addEventListener(
+      'scroll',
+      () => {
+
+        /*
+         * Ganz wichtig:
+         * Ein geöffnetes Report-Modal darf
+         * durch Scrollen NICHT geschlossen werden.
+         */
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+         * Gleiches Verhalten wie bisher
+         * für Team-Popups.
+         */
+        closeAllOverlays();
+
+      },
+      {
+        passive:true
+      }
+    );
 
 
     /* =======================================================
@@ -2333,11 +3120,43 @@ document.addEventListener(
       'resize',
       () => {
 
+        /*
+         * WICHTIG:
+         * Report-Modal NICHT schließen.
+         *
+         * Gerade auf Smartphones können beim
+         * Öffnen/Schließen der Tastatur oder
+         * durch die Browser-UI resize events
+         * ausgelöst werden.
+         */
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          return;
+
+        }
+
+
         closeAllOverlays();
 
-        closeStepsModal();
 
-        closeReportModal();
+        /*
+         * Nur die Anleitung schließen,
+         * wenn wirklich die Fenstergröße
+         * geändert wird.
+         */
+        if (
+          stepsWrapper.style.display ===
+          'block'
+        ) {
+
+          closeStepsModal();
+
+        }
+
 
         document.body.style.overflow =
           '';
@@ -2350,6 +3169,7 @@ document.addEventListener(
 
   }
 );
+
 </script>
 
 </body>
