@@ -52,141 +52,182 @@ function icsEscape(text) {
 }
 
 /*
- * Prüft rekursiv, ob irgendwo in den API-Daten ein Hinweis
- * auf ein ausgefallenes / abgesagtes Spiel vorhanden ist.
+ * Prüft, ob ein Spiel abgesagt / ausgefallen ist.
  *
- * Das ist absichtlich etwas breiter gehalten, da wir bisher
- * noch nicht wissen, in welchem Feld die DBB-API den Ausfall liefert.
+ * Nach Analyse der echten DBB-API-Daten gilt ein Spiel
+ * insbesondere dann als ausgefallen, wenn:
+ *
+ * - match.abgesagt === true
+ * - match.verzicht === true
+ * - homeTeam.verzicht === true
+ * - guestTeam.verzicht === true
+ *
+ * Dasselbe wird zusätzlich in matchInfo geprüft.
  */
 function isCancelledMatch(match, matchInfo) {
-  const cancellationWords = [
-    'ausgefallen',
-    'ausfall',
-    'abgesagt',
-    'absage',
-    'entfallen',
-    'entfällt',
-    'cancelled',
-    'canceled',
-    'cancel',
-    'abgebrochen'
-  ];
-
-  const cancellationKeys = [
-    'cancelled',
-    'canceled',
-    'iscancelled',
-    'iscanceled',
-    'cancelledmatch',
-    'canceledmatch',
-    'cancelstatus',
-    'cancelstatusname',
-    'ausgefallen',
-    'abgesagt',
-    'entfallen'
-  ];
-
-  function checkValue(value, key = '') {
-    if (typeof value === 'boolean') {
-      return cancellationKeys.includes(
-        key.toLowerCase()
-      ) && value === true;
-    }
-
-    if (typeof value === 'number') {
-      return false;
-    }
-
-    if (typeof value === 'string') {
-      const normalized = value
-        .toLowerCase()
-        .trim();
-
-      const keyNormalized = key
-        .toLowerCase()
-        .replace(/[_\-\s]/g, '');
-
-      // Bekannte Status-/Textwerte
-      if (
-        cancellationWords.some(word =>
-          normalized.includes(word)
-        )
-      ) {
-        return true;
-      }
-
-      // Boolean-artige Felder als String
-      if (
-        ['true', 'yes', 'ja'].includes(normalized) &&
-        cancellationKeys.includes(keyNormalized)
-      ) {
-        return true;
-      }
-
-      return false;
-    }
-
-    if (Array.isArray(value)) {
-      return value.some(item =>
-        checkValue(item, key)
-      );
-    }
-
-    if (value && typeof value === 'object') {
-      return Object.entries(value).some(
-        ([childKey, childValue]) =>
-          checkValue(childValue, childKey)
-      );
-    }
-
+  if (!match && !matchInfo) {
     return false;
   }
 
-  return (
-    checkValue(match, '') ||
-    checkValue(matchInfo, '')
-  );
+  // Direkte Absage
+  if (
+    match?.abgesagt === true ||
+    matchInfo?.abgesagt === true
+  ) {
+    return true;
+  }
+
+  // Spiel / Mannschaft verzichtet
+  if (
+    match?.verzicht === true ||
+    matchInfo?.verzicht === true
+  ) {
+    return true;
+  }
+
+  // Heimteam verzichtet
+  if (
+    match?.homeTeam?.verzicht === true ||
+    matchInfo?.homeTeam?.verzicht === true
+  ) {
+    return true;
+  }
+
+  // Gastteam verzichtet
+  if (
+    match?.guestTeam?.verzicht === true ||
+    matchInfo?.guestTeam?.verzicht === true
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/*
+ * Gibt den Grund für den Ausfall zurück.
+ * Hilft bei den Logs und bei der Beschreibung.
+ */
+function getCancellationReason(match, matchInfo) {
+  const reasons = [];
+
+  if (
+    match?.abgesagt === true ||
+    matchInfo?.abgesagt === true
+  ) {
+    reasons.push('Spiel abgesagt');
+  }
+
+  if (
+    match?.verzicht === true ||
+    matchInfo?.verzicht === true
+  ) {
+    reasons.push('Verzicht');
+  }
+
+  if (
+    match?.homeTeam?.verzicht === true ||
+    matchInfo?.homeTeam?.verzicht === true
+  ) {
+    const homeName =
+      getTeamNameForDescription(
+        matchInfo?.homeTeam ||
+        match?.homeTeam ||
+        {}
+      );
+
+    reasons.push(`${homeName} hat verzichtet`);
+  }
+
+  if (
+    match?.guestTeam?.verzicht === true ||
+    matchInfo?.guestTeam?.verzicht === true
+  ) {
+    const guestName =
+      getTeamNameForDescription(
+        matchInfo?.guestTeam ||
+        match?.guestTeam ||
+        {}
+      );
+
+    reasons.push(`${guestName} hat verzichtet`);
+  }
+
+  if (!reasons.length) {
+    return 'Unbekannter Ausfallgrund';
+  }
+
+  return [...new Set(reasons)].join(', ');
 }
 
 function createHtmlDescription(descriptionLines, feld) {
+  const htmlLines = descriptionLines
+    .map(line => `<p>${line}</p>`)
+    .join('');
+
   const html = `<!DOCTYPE HTML>
 <HTML>
 <HEAD>
 <META CHARSET="UTF-8">
 </HEAD>
 <BODY>
-<p><strong>${descriptionLines[0]}</strong></p>
-<p>${descriptionLines[1]}</p>
-<p>${descriptionLines[2]}</p>
-<p>${descriptionLines[3]}<br>${descriptionLines[4]}</p>
-${feld.bezeichnung ? `<p><strong>Halle:</strong> ${feld.bezeichnung}</p>` : ''}
+${htmlLines}
+${feld.bezeichnung
+    ? `<p><strong>Halle:</strong> ${feld.bezeichnung}</p>`
+    : ''}
 ${feld.strasse && feld.ort
     ? `<p><strong>Adresse:</strong> ${feld.strasse}, ${feld.plz} ${feld.ort}</p>`
     : ''}
-<p><strong>${descriptionLines[descriptionLines.length - 2]}</strong></p>
-<p><em>${descriptionLines[descriptionLines.length - 1]}</em></p>
 </BODY>
 </HTML>`;
 
-  return icsEscape(html.replace(/\r?\n/g, ''));
+  return icsEscape(
+    html.replace(/\r?\n/g, '')
+  );
 }
 
-async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
-  const homeTeamObj = matchInfo?.homeTeam || match?.homeTeam || {};
-  const guestTeamObj = matchInfo?.guestTeam || match?.guestTeam || {};
+async function buildEvent(
+  match,
+  matchInfo,
+  teamId,
+  calendarType = 'all'
+) {
+  const homeTeamObj =
+    matchInfo?.homeTeam ||
+    match?.homeTeam ||
+    {};
 
-  const homeTeamId = Number(homeTeamObj.teamPermanentId);
-  const guestTeamId = Number(guestTeamObj.teamPermanentId);
-  const ownTeamId = Number(teamId);
+  const guestTeamObj =
+    matchInfo?.guestTeam ||
+    match?.guestTeam ||
+    {};
 
-  const homeNameSummary = getTeamNameForSummary(homeTeamObj);
-  const guestNameSummary = getTeamNameForSummary(guestTeamObj);
+  const homeTeamId =
+    Number(homeTeamObj.teamPermanentId);
 
-  const homeNameDesc = getTeamNameForDescription(homeTeamObj);
-  const guestNameDesc = getTeamNameForDescription(guestTeamObj);
+  const guestTeamId =
+    Number(guestTeamObj.teamPermanentId);
 
-  const isHome = homeTeamId === ownTeamId;
-  const isAway = guestTeamId === ownTeamId;
+  const ownTeamId =
+    Number(teamId);
+
+  const homeNameSummary =
+    getTeamNameForSummary(homeTeamObj);
+
+  const guestNameSummary =
+    getTeamNameForSummary(guestTeamObj);
+
+  const homeNameDesc =
+    getTeamNameForDescription(homeTeamObj);
+
+  const guestNameDesc =
+    getTeamNameForDescription(guestTeamObj);
+
+  const isHome =
+    homeTeamId === ownTeamId;
+
+  const isAway =
+    guestTeamId === ownTeamId;
 
   let prefix = '';
 
@@ -199,37 +240,49 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   }
 
   /*
-   * Prüfen, ob das Spiel ausgefallen / abgesagt ist.
+   * Prüfen, ob Spiel ausgefallen ist.
    */
-  const cancelled = isCancelledMatch(
-    match,
-    matchInfo
-  );
+  const cancelled =
+    isCancelledMatch(
+      match,
+      matchInfo
+    );
+
+  const cancellationReason =
+    cancelled
+      ? getCancellationReason(
+          match,
+          matchInfo
+        )
+      : '';
 
   const normalSummary =
     `${prefix}${homeNameSummary} vs. ${guestNameSummary}`;
 
+  /*
+   * Ausgefallene Spiele deutlich im Titel markieren.
+   */
   const summary = cancelled
     ? `❌ AUSGEFALLEN ❌ ${normalSummary}`
     : normalSummary;
 
   const cleanSummary = (text) =>
     typeof text === 'string'
-      ? text.replace(/[\r\n]+/g, ' ').trim()
+      ? text
+          .replace(/[\r\n]+/g, ' ')
+          .trim()
       : 'Untitled event';
 
-  const summaryClean = cleanSummary(summary);
+  const summaryClean =
+    cleanSummary(summary);
 
   /*
-   * WICHTIG:
-   * Die Uhrzeit wird direkt aus der API übernommen.
+   * Uhrzeit aus der API.
    *
-   * NICHT:
-   * new Date(...)
-   *
-   * Dadurch gibt es keine automatische Zeitzonenverschiebung.
+   * Für den Start KEIN new Date(...),
+   * damit keine automatische Zeitzonenverschiebung
+   * entsteht.
    */
-
   const dateStr =
     matchInfo?.kickoffDate ||
     match?.kickoffDate;
@@ -240,13 +293,12 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
 
   /*
    * Spiele zwischen 22:00 und 05:00 Uhr
-   * werden nicht generiert.
+   * werden NICHT in den Kalender aufgenommen.
    *
    * 22:00–23:59 -> überspringen
    * 00:00–04:59 -> überspringen
-   * 05:00        -> normal
+   * ab 05:00    -> normal
    */
-
   if (timeStr) {
     const [hour, minute] =
       timeStr.split(':').map(Number);
@@ -272,43 +324,65 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   );
 
   console.log(
-    `[CANCEL DEBUG] ${homeNameSummary} vs ${guestNameSummary}: cancelled = ${cancelled}`
+    `[CANCEL DEBUG] ${homeNameSummary} vs ${guestNameSummary}: cancelled = ${cancelled}${cancelled ? ` | Grund: ${cancellationReason}` : ''}`
   );
 
   /*
-   * EXAKT die API-Zeit
+   * EXAKT die API-Zeit.
    */
   const start =
-    kickoffToArr(dateStr, timeStr);
+    kickoffToArr(
+      dateStr,
+      timeStr
+    );
 
   /*
    * Ende: 2,5 Stunden nach Anpfiff.
-   * Hier benutzen wir bewusst eine lokale Zeitberechnung,
-   * aber NICHT für den Start.
+   *
+   * Hier lokale Berechnung, da nur das Ende
+   * berechnet werden muss.
    */
-
-  const [year, month, day] =
-    dateStr.split('-').map(Number);
-
-  const [hour, minute] =
-    timeStr.split(':').map(Number);
-
-  const kickoffForEnd = new Date(
+  const [
     year,
-    month - 1,
-    day,
+    month,
+    day
+  ] =
+    dateStr
+      .split('-')
+      .map(Number);
+
+  const [
     hour,
-    minute,
-    0,
-    0
-  );
+    minute
+  ] =
+    timeStr
+      .split(':')
+      .map(Number);
 
-  const endDate = new Date(
-    kickoffForEnd.getTime() +
-      2.5 * 60 * 60 * 1000
-  );
+  const kickoffForEnd =
+    new Date(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute,
+      0,
+      0
+    );
 
-  const end = dateToArr(endDate);
+  const endDate =
+    new Date(
+      kickoffForEnd.getTime() +
+        2.5 *
+        60 *
+        60 *
+        1000
+    );
+
+  const end =
+    dateToArr(
+      endDate
+    );
 
   const feld =
     matchInfo?.matchInfo?.spielfeld ||
@@ -322,49 +396,72 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
       ? `${feld.strasse}, ${feld.plz} ${feld.ort}, Deutschland`
       : 'Ort unbekannt';
 
-  const descriptionLines = [
-    ...(cancelled
-      ? [
-          '❌ DIESES SPIEL WURDE ABGESAGT / IST AUSGEFALLEN.'
-        ]
-      : []),
+  /*
+   * Beschreibung aufbauen.
+   */
+  const descriptionLines = [];
 
+  if (cancelled) {
+    descriptionLines.push(
+      '❌ DIESES SPIEL IST AUSGEFALLEN / ABGESAGT.'
+    );
+
+    descriptionLines.push(
+      `Grund: ${cancellationReason}`
+    );
+  }
+
+  descriptionLines.push(
     `Wettbewerb: ${
       matchInfo?.ligaData?.liganame ||
       match?.ligaData?.liganame ||
       'Unbekannt'
-    }`,
+    }`
+  );
 
+  descriptionLines.push(
     `Saison: ${
       matchInfo?.ligaData?.seasonName ||
       match?.ligaData?.seasonName ||
       'Unbekannt'
-    }`,
+    }`
+  );
 
-    `Heim: ${homeNameDesc || 'Unbekannt'}`,
+  descriptionLines.push(
+    `Heim: ${homeNameDesc || 'Unbekannt'}`
+  );
 
-    `Gast: ${guestNameDesc || 'Unbekannt'}`,
+  descriptionLines.push(
+    `Gast: ${guestNameDesc || 'Unbekannt'}`
+  );
 
-    feld.bezeichnung
-      ? `Halle: ${feld.bezeichnung}`
-      : '',
+  if (feld.bezeichnung) {
+    descriptionLines.push(
+      `Halle: ${feld.bezeichnung}`
+    );
+  }
 
-    feld.strasse && feld.ort
-      ? `${feld.strasse}, ${feld.plz} ${feld.ort}`
-      : '',
+  if (feld.strasse && feld.ort) {
+    descriptionLines.push(
+      `${feld.strasse}, ${feld.plz} ${feld.ort}`
+    );
+  }
 
+  descriptionLines.push(
     `Anpfiff: ${formatKickoff(
       dateStr,
       timeStr
-    )}`,
+    )}`
+  );
 
+  descriptionLines.push(
     `Update: ${new Date().toLocaleString(
       'de-DE',
       {
         timeZone: 'Europe/Berlin'
       }
-    )}`,
-  ].filter(Boolean);
+    )}`
+  );
 
   const description =
     descriptionLines.join('\n');
@@ -376,15 +473,18 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     );
 
   const alarmTriggerMinutes =
-    isHome ? 30 : 60;
+    isHome
+      ? 30
+      : 60;
 
   const event = {
-    uid: `${
-      match?.matchId ||
-      matchInfo?.matchId
-    }@basketball-bund.net`,
+    uid:
+      `${match?.matchId ||
+        matchInfo?.matchId
+      }@basketball-bund.net`,
 
-    title: summaryClean,
+    title:
+      summaryClean,
 
     description,
 
@@ -393,38 +493,53 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
      * Die Werte [Jahr, Monat, Tag, Stunde, Minute]
      * werden exakt als lokale Kalenderzeit verwendet.
      */
-
     start,
 
-    startInputType: 'local',
-    startOutputType: 'local',
+    startInputType:
+      'local',
+
+    startOutputType:
+      'local',
 
     end,
 
-    endInputType: 'local',
-    endOutputType: 'local',
+    endInputType:
+      'local',
+
+    endOutputType:
+      'local',
 
     location,
 
-    busyStatus: 'BUSY',
+    busyStatus:
+      'BUSY',
 
-    alarms: [
-      {
-        action: 'display',
+    /*
+     * Bei einem ausgefallenen Spiel möchten wir
+     * keine normale Erinnerungsbenachrichtigung
+     * bekommen.
+     */
+    alarms:
+      cancelled
+        ? []
+        : [
+            {
+              action:
+                'display',
 
-        description:
-          'Spiel beginnt bald',
+              description:
+                'Spiel beginnt bald',
 
-        trigger: {
-          minutes:
-            alarmTriggerMinutes,
+              trigger: {
+                minutes:
+                  alarmTriggerMinutes,
 
-          before: true
-        }
-      }
-    ],
+                before:
+                  true
+              }
+            }
+          ],
 
-    // Für späteres X-ALT-DESC
     htmlDescription,
   };
 
@@ -444,15 +559,17 @@ async function generateICS(
       details[match.matchId];
 
     /*
-     * Vollständiger Debug des Spiels.
+     * =====================================================
+     * VOLLSTÄNDIGER DEBUG
+     * =====================================================
      *
-     * Wichtig:
-     * Im GitHub-Action-Log kann man hier sehen,
-     * wie die DBB-API das Spiel tatsächlich liefert.
+     * Dieser Bereich bleibt absichtlich erhalten.
+     * Damit können wir bei zukünftigen Problemen
+     * direkt sehen, welche Daten die DBB-API liefert.
      */
 
     console.log(
-      `\n================ FULL MATCH DEBUG ================`
+      '\n================ FULL MATCH DEBUG ================'
     );
 
     console.log(
@@ -480,9 +597,12 @@ async function generateICS(
     );
 
     console.log(
-      `===================================================\n`
+      '===================================================\n'
     );
 
+    /*
+     * Event erzeugen.
+     */
     const event =
       await buildEvent(
         match,
@@ -492,25 +612,31 @@ async function generateICS(
       );
 
     /*
-     * Ausgefilterte Spiele (z.B. 00:00)
-     * nicht in events aufnehmen.
+     * Nur tatsächlich erzeugte Events hinzufügen.
+     *
+     * Spiele zwischen 22:00 und 05:00 Uhr
+     * liefern null und werden dadurch ignoriert.
      */
-
     if (event) {
       events.push(event);
     }
   }
 
+  /*
+   * Keine Events vorhanden.
+   */
   if (!events.length) {
     return null;
   }
 
-  events.forEach((e, i) => {
-    console.log(
-      `[DEBUG] Event ${i}: "${e.title}" Start:`,
-      e.start
-    );
-  });
+  events.forEach(
+    (e, i) => {
+      console.log(
+        `[DEBUG] Event ${i}: "${e.title}" Start:`,
+        e.start
+      );
+    }
+  );
 
   const teams =
     require('../teams.json');
@@ -536,6 +662,10 @@ async function generateICS(
   const calendarName =
     `${teamName}${typeLabel}`;
 
+  /*
+   * HTML-Beschreibungen sichern,
+   * bevor sie aus den Events entfernt werden.
+   */
   const htmlDescriptions =
     events.map(
       e => e.htmlDescription
@@ -559,11 +689,17 @@ async function generateICS(
           const lines =
             value.split('\r\n');
 
-          const modifiedLines = [];
+          const modifiedLines =
+            [];
 
-          let eventIndex = -1;
-          let inEvent = false;
-          let inAlarm = false;
+          let eventIndex =
+            -1;
+
+          let inEvent =
+            false;
+
+          let inAlarm =
+            false;
 
           for (
             let i = 0;
@@ -573,6 +709,9 @@ async function generateICS(
             const line =
               lines[i];
 
+            /*
+             * Kalenderkopf.
+             */
             if (
               line ===
               'BEGIN:VCALENDAR'
@@ -615,6 +754,10 @@ async function generateICS(
               continue;
             }
 
+            /*
+             * Diese Standardfelder werden
+             * durch unsere eigenen ersetzt.
+             */
             if (
               line.startsWith(
                 'VERSION:'
@@ -632,35 +775,56 @@ async function generateICS(
               continue;
             }
 
+            /*
+             * Event beginnt.
+             */
             if (
               line ===
               'BEGIN:VEVENT'
             ) {
-              inEvent = true;
+              inEvent =
+                true;
+
               eventIndex++;
             }
 
+            /*
+             * Event endet.
+             */
             if (
               line ===
               'END:VEVENT'
             ) {
-              inEvent = false;
+              inEvent =
+                false;
             }
 
+            /*
+             * Alarm beginnt.
+             */
             if (
               line ===
               'BEGIN:VALARM'
             ) {
-              inAlarm = true;
+              inAlarm =
+                true;
             }
 
+            /*
+             * Alarm endet.
+             */
             if (
               line ===
               'END:VALARM'
             ) {
-              inAlarm = false;
+              inAlarm =
+                false;
             }
 
+            /*
+             * Beschreibung finden und
+             * HTML-Version hinzufügen.
+             */
             if (
               inEvent &&
               !inAlarm &&
@@ -671,6 +835,10 @@ async function generateICS(
               const descriptionLines =
                 [line];
 
+              /*
+               * ICS kann die Beschreibung
+               * auf mehrere gefaltete Zeilen verteilen.
+               */
               while (
                 i + 1 <
                   lines.length &&
@@ -690,7 +858,9 @@ async function generateICS(
 
               descriptionLines.forEach(
                 l =>
-                  modifiedLines.push(l)
+                  modifiedLines.push(
+                    l
+                  )
               );
 
               if (
