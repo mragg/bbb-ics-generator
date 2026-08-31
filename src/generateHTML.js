@@ -2049,31 +2049,8 @@ footer{
       : null;
 
 
-  /*
-   * Zeitpunkt, an dem das Formular geöffnet wurde.
-   */
   var reportOpenedAt =
     0;
-
-
-  /*
-   * Verhindert parallele oder doppelte
-   * Submit-Anfragen.
-   */
-  var reportSubmitting =
-    false;
-
-
-  /*
-   * Clientseitiger Cooldown nach Erfolg.
-   *
-   * Dieser Schutz ist nur für normale Benutzer.
-   * Der eigentliche Anti-Spam-Schutz befindet sich
-   * im Worker.
-   */
-  var reportCooldownUntil =
-    0;
-
 
   var activeContent =
     null;
@@ -3114,21 +3091,6 @@ footer{
 
   function openReportModal() {
 
-    /*
-     * Öffnen während eines clientseitigen
-     * Cooldowns wird verhindert.
-     */
-
-    if (
-      Date.now() <
-      reportCooldownUntil
-    ) {
-
-      return;
-
-    }
-
-
     closeAllOverlays();
 
 
@@ -3175,10 +3137,7 @@ footer{
 
 
     /*
-     * Zeitpunkt des Öffnens speichern.
-     *
-     * Der Worker prüft serverseitig,
-     * ob mindestens 3 Sekunden vergangen sind.
+     * Startzeit des Formulars.
      */
 
     reportOpenedAt =
@@ -3186,39 +3145,9 @@ footer{
 
 
     /*
-     * Neuer Submit-Zyklus.
+     * Wichtig für Mobilgeräte:
+     * Die Seite hinter dem Modal wird gesperrt.
      */
-
-    reportSubmitting =
-      false;
-
-
-    if (
-      reportSubmitButton
-    ) {
-
-      reportSubmitButton.disabled =
-        false;
-
-      reportSubmitButton.textContent =
-        'Meldung erstellen';
-
-    }
-
-
-    /*
-     * Honeypot immer leer starten.
-     */
-
-    if (
-      reportWebsite
-    ) {
-
-      reportWebsite.value =
-        '';
-
-    }
-
 
     document.body.style.overflow =
       'hidden';
@@ -3227,15 +3156,7 @@ footer{
     setTimeout(
       function () {
 
-        if (
-          reportTeam &&
-          typeof reportTeam.focus ===
-            'function'
-        ) {
-
-          reportTeam.focus();
-
-        }
+        reportTeam.focus();
 
       },
       50
@@ -3274,10 +3195,6 @@ footer{
 
     reportOpenedAt =
       0;
-
-
-    reportSubmitting =
-      false;
 
   }
 
@@ -3352,52 +3269,6 @@ footer{
       event.stopPropagation();
 
 
-      /*
-       * Mehrfach-Submit verhindern.
-       *
-       * Sehr wichtig gegen Doppelklicks,
-       * Enter-Spam und parallele Requests.
-       */
-
-      if (
-        reportSubmitting
-      ) {
-
-        return;
-
-      }
-
-
-      /*
-       * Clientseitigen Cooldown beachten.
-       */
-
-      if (
-        Date.now() <
-        reportCooldownUntil
-      ) {
-
-        var remaining =
-          Math.ceil(
-            (
-              reportCooldownUntil -
-              Date.now()
-            ) / 1000
-          );
-
-        reportError.textContent =
-          'Bitte warte noch ' +
-          remaining +
-          ' Sekunden, bevor du eine weitere Meldung sendest.';
-
-        reportError.style.display =
-          'block';
-
-        return;
-
-      }
-
-
       var teamId =
         reportTeam.value.trim();
 
@@ -3417,8 +3288,8 @@ footer{
 
 
       /*
-       * Wenn kein Team ausgewählt wurde,
-       * leer senden.
+       * Wenn "Kein bestimmtes Team"
+       * ausgewählt wurde, kein Team senden.
        */
 
       if (!teamId) {
@@ -3451,7 +3322,8 @@ footer{
 
 
       /*
-       * Pflichtfelder.
+       * Nur Titel und Beschreibung
+       * sind Pflichtfelder.
        */
 
       if (
@@ -3473,10 +3345,7 @@ footer{
 
 
       /*
-       * Mindestzeit lokal prüfen.
-       *
-       * Der Worker prüft das zusätzlich
-       * serverseitig.
+       * 3-Sekunden-Schutz.
        */
 
       if (
@@ -3499,21 +3368,13 @@ footer{
       }
 
 
-      /*
-       * Submit-Lock AKTIVIEREN,
-       * bevor fetch() ausgeführt wird.
-       */
-
-      reportSubmitting =
-        true;
-
-
       if (
         reportSubmitButton
       ) {
 
         reportSubmitButton.disabled =
           true;
+
 
         reportSubmitButton.textContent =
           'Wird gesendet...';
@@ -3523,6 +3384,7 @@ footer{
 
       reportError.style.display =
         'none';
+
 
       reportSuccess.style.display =
         'none';
@@ -3565,11 +3427,6 @@ footer{
                   website:
                     website,
 
-                  /*
-                   * Worker benötigt diesen
-                   * Timestamp für den 3-Sekunden-Schutz.
-                   */
-
                   formOpenedAt:
                     reportOpenedAt
 
@@ -3596,118 +3453,6 @@ footer{
         }
 
 
-        /*
-         * =================================================
-         * RATE LIMIT
-         * =================================================
-         */
-
-        if (
-          response.status ===
-          429
-        ) {
-
-          var retryAfter =
-            result &&
-            Number(
-              result.retryAfter
-            );
-
-          if (
-            !Number.isFinite(
-              retryAfter
-            ) ||
-            retryAfter <
-            1
-          ) {
-
-            retryAfter =
-              3600;
-
-          }
-
-
-          reportError.textContent =
-            'Zu viele Fehlermeldungen. Bitte versuche es später erneut.';
-
-
-          reportError.style.display =
-            'block';
-
-
-          /*
-           * Nach einem serverseitigen Rate-Limit
-           * nicht sofort erneut versuchen.
-           */
-
-          reportCooldownUntil =
-            Date.now() +
-            retryAfter *
-            1000;
-
-
-          return;
-
-        }
-
-
-        /*
-         * =================================================
-         * DUPLIKAT
-         * =================================================
-         */
-
-        if (
-          response.status ===
-          409
-        ) {
-
-          reportError.textContent =
-            (
-              result &&
-              result.error
-            ) ||
-            'Diese Fehlermeldung wurde bereits vor kurzem gemeldet.';
-
-
-          reportError.style.display =
-            'block';
-
-
-          var duplicateRetry =
-            result &&
-            Number(
-              result.retryAfter
-            );
-
-
-          if (
-            Number.isFinite(
-              duplicateRetry
-            ) &&
-            duplicateRetry >
-            0
-          ) {
-
-            reportCooldownUntil =
-              Date.now() +
-              duplicateRetry *
-              1000;
-
-          }
-
-
-          return;
-
-        }
-
-
-        /*
-         * =================================================
-         * ALLE ANDEREN FEHLER
-         * =================================================
-         */
-
         if (
           !response.ok ||
           !result ||
@@ -3725,9 +3470,7 @@ footer{
 
 
         /*
-         * =================================================
-         * ERFOLG
-         * =================================================
+         * Erfolg
          */
 
         reportForm.reset();
@@ -3735,10 +3478,6 @@ footer{
 
         reportGameWrapper.style.display =
           'none';
-
-
-        reportGame.innerHTML =
-          '<option value="">Kein bestimmtes Spiel</option>';
 
 
         reportError.style.display =
@@ -3752,22 +3491,6 @@ footer{
         reportSuccess.style.display =
           'block';
 
-
-        /*
-         * Clientseitiger Cooldown nach Erfolg.
-         *
-         * Der Worker schützt zusätzlich serverseitig.
-         */
-
-        reportCooldownUntil =
-          Date.now() +
-          30000;
-
-
-        /*
-         * Erfolgszustand anzeigen
-         * und Modal danach schließen.
-         */
 
         setTimeout(
           function () {
@@ -3788,14 +3511,7 @@ footer{
 
 
         reportError.textContent =
-          (
-            error &&
-            error.message &&
-            error.message !==
-              'Failed to fetch'
-          )
-            ? error.message
-            : 'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
+          'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
 
 
         reportError.style.display =
@@ -3803,18 +3519,6 @@ footer{
 
 
       } finally {
-
-        /*
-         * Bei einem echten Sendefehler
-         * wieder freigeben.
-         *
-         * Bei Erfolg ist das Modal ohnehin
-         * zum Schließen vorgesehen.
-         */
-
-        reportSubmitting =
-          false;
-
 
         if (
           reportSubmitButton
