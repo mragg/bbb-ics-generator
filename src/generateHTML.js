@@ -1,28 +1,47 @@
 const fs = require('fs');
 const path = require('path');
 
+const BASE_URL =
+  'https://mragg.github.io/bbb-ics-generator/';
+
+const REPORT_WORKER_URL =
+  'https://bbb-ics-report.raggelija.workers.dev';
+
 function makeWebcalLink(filename) {
-  const baseUrl = 'https://mragg.github.io/bbb-ics-generator/';
-  return baseUrl + filename;
+  return BASE_URL + filename;
 }
 
 function safeReadJson(filePath) {
   try {
-    if (!fs.existsSync(filePath)) return null;
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
 
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw =
+      fs.readFileSync(
+        filePath,
+        'utf8'
+      );
+
     return JSON.parse(raw);
   } catch (err) {
     console.error(
       `Fehler beim Einlesen/Parsen von ${filePath}:`,
       err.message
     );
+
     return null;
   }
 }
 
 function normalizeId(value) {
-  if (value === undefined || value === null) return '';
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return '';
+  }
+
   return String(value).trim();
 }
 
@@ -36,140 +55,250 @@ function htmlEscape(value) {
 }
 
 function genHTML() {
-  const metaPath = path.resolve(
-    __dirname,
-    '../generated/metadata.json'
-  );
+  const metaPath =
+    path.resolve(
+      __dirname,
+      '../generated/metadata.json'
+    );
 
-  const teamsPath = path.resolve(
-    __dirname,
-    '../generated/teams.json'
-  );
+  const teamsPath =
+    path.resolve(
+      __dirname,
+      '../generated/teams.json'
+    );
 
-  const rawMeta = safeReadJson(metaPath) || [];
-  const rawTeams = safeReadJson(teamsPath) || [];
+  const rawMeta =
+    safeReadJson(metaPath) || [];
 
-  const metadataArray = Array.isArray(rawMeta)
-    ? rawMeta
-    : (rawMeta.teams || rawMeta.data || []);
+  const rawTeams =
+    safeReadJson(teamsPath) || [];
 
-  const teamsArray = Array.isArray(rawTeams)
-    ? rawTeams
-    : (rawTeams.teams || rawTeams.data || []);
+  const metadataArray =
+    Array.isArray(rawMeta)
+      ? rawMeta
+      : (
+          rawMeta.teams ||
+          rawMeta.data ||
+          []
+        );
+
+  const teamsArray =
+    Array.isArray(rawTeams)
+      ? rawTeams
+      : (
+          rawTeams.teams ||
+          rawTeams.data ||
+          []
+        );
 
   void teamsArray;
 
-  const teams = metadataArray.map((m) => {
-    const id = normalizeId(
-      m.teamId ??
-      m.id ??
-      m.idStr ??
-      m.identifier ??
-      ''
+  const teams =
+    metadataArray.map(
+      (m) => {
+
+        const id =
+          normalizeId(
+            m.teamId ??
+            m.id ??
+            m.idStr ??
+            m.identifier ??
+            ''
+          );
+
+        return {
+          teamId: id,
+
+          name:
+            m.teamName ??
+            m.name ??
+            m.title ??
+            'Unbenannt',
+
+          ageGroup:
+            m.ageGroup ?? '',
+
+          matchCount:
+            m.matchCount ??
+            m.matches ??
+            0,
+
+          homeMatchCount:
+            m.homeMatchCount ??
+            m.homeMatches ??
+            0,
+
+          awayMatchCount:
+            m.awayMatchCount ??
+            m.awayMatches ??
+            0
+        };
+
+      }
     );
 
-    return {
-      teamId: id,
-      name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
-      ageGroup: m.ageGroup ?? '',
-      matchCount: m.matchCount ?? m.matches ?? 0,
-      homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
-      awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0,
-    };
-  });
 
-  const teamCards = teams.map((t, index) => {
-    const safeName = htmlEscape(t.name);
-    const safeAge = htmlEscape(t.ageGroup);
+  const teamCards =
+    teams.map(
+      (team, index) => {
 
-    const teamAllFile = t.teamId
-      ? t.teamId + '_all.ics'
-      : encodeURIComponent(t.name) + '_all.ics';
+        const name =
+          htmlEscape(
+            team.name
+          );
 
-    const teamHomeFile = t.teamId
-      ? t.teamId + '_home.ics'
-      : encodeURIComponent(t.name) + '_home.ics';
+        const ageGroup =
+          htmlEscape(
+            team.ageGroup
+          );
 
-    const teamAwayFile = t.teamId
-      ? t.teamId + '_away.ics'
-      : encodeURIComponent(t.name) + '_away.ics';
+        const allFile =
+          team.teamId
+            ? team.teamId + '_all.ics'
+            : (
+                encodeURIComponent(
+                  team.name
+                ) +
+                '_all.ics'
+              );
 
-    return `
-      <div class="team-card">
+        const homeFile =
+          team.teamId
+            ? team.teamId + '_home.ics'
+            : (
+                encodeURIComponent(
+                  team.name
+                ) +
+                '_home.ics'
+              );
 
-        <div
-          class="team-header"
-          data-index="${index}"
-        >
-          ${safeName}
-          ${t.ageGroup ? ` (<strong>${safeAge}</strong>)` : ''}
-        </div>
+        const awayFile =
+          team.teamId
+            ? team.teamId + '_away.ics'
+            : (
+                encodeURIComponent(
+                  team.name
+                ) +
+                '_away.ics'
+              );
 
-        <div
-          class="team-content"
-          aria-hidden="true"
-        >
+        return `
+          <div class="team-card">
 
-          <button
-            class="overlay-close"
-            type="button"
-            aria-label="Schließen"
-          >
-            &times;
-          </button>
+            <div
+              class="team-header"
+              data-index="${index}"
+            >
+              ${name}${
+                team.ageGroup
+                  ? ` (<strong>${ageGroup}</strong>)`
+                  : ''
+              }
+            </div>
 
-          <div class="team-content-preview">
+            <div
+              class="team-content"
+              aria-hidden="true"
+            >
 
-            ${safeName}
-            ${t.ageGroup ? ` (<strong>${safeAge}</strong>)` : ''}
+              <button
+                type="button"
+                class="overlay-close"
+                aria-label="Schließen"
+              >
+                &times;
+              </button>
 
-            <p>
-              ${t.matchCount} Spiele,
-              Heim: ${t.homeMatchCount},
-              Auswärts: ${t.awayMatchCount}
-            </p>
+              <div class="team-content-preview">
+
+                <strong>
+                  ${name}
+                </strong>
+
+                ${
+                  team.ageGroup
+                    ? ` (<strong>${ageGroup}</strong>)`
+                    : ''
+                }
+
+                <p>
+                  ${team.matchCount} Spiele,
+                  Heim: ${team.homeMatchCount},
+                  Auswärts: ${team.awayMatchCount}
+                </p>
+
+              </div>
+
+              <div class="buttons">
+
+                <a
+                  href="${makeWebcalLink(allFile)}"
+                >
+                  Alle Spiele abonnieren
+                </a>
+
+                <a
+                  href="${makeWebcalLink(homeFile)}"
+                >
+                  Nur Heimspiele abonnieren
+                </a>
+
+                <a
+                  href="${makeWebcalLink(awayFile)}"
+                >
+                  Nur Auswärtsspiele abonnieren
+                </a>
+
+              </div>
+
+            </div>
 
           </div>
+        `;
+      }
+    ).join('');
 
-          <div class="buttons">
 
-            <a href="${makeWebcalLink(teamAllFile)}">
-              Alle Spiele abonnieren
-            </a>
+  const teamOptions =
+    teams.map(
+      (team) => {
 
-            <a href="${makeWebcalLink(teamHomeFile)}">
-              Nur Heimspiele abonnieren
-            </a>
+        const label =
+          htmlEscape(
+            team.name +
+            (
+              team.ageGroup
+                ? ` (${team.ageGroup})`
+                : ''
+            )
+          );
 
-            <a href="${makeWebcalLink(teamAwayFile)}">
-              Nur Auswärtsspiele abonnieren
-            </a>
+        const value =
+          htmlEscape(
+            team.teamId
+          );
 
-          </div>
+        return `
+          <option value="${value}">
+            ${label}
+          </option>
+        `;
+      }
+    ).join('');
 
-        </div>
 
-      </div>
-    `;
-  }).join('');
-
-  const reportTeamOptions = teams.map((t) => {
-    const label = htmlEscape(
-      t.name + (t.ageGroup ? ' (' + t.ageGroup + ')' : '')
+  const currentDate =
+    new Date().toLocaleString(
+      'de-DE',
+      {
+        timeZone:
+          'Europe/Berlin'
+      }
     );
 
-    const value = htmlEscape(t.teamId);
 
-    return (
-      '<option value="' +
-      value +
-      '">' +
-      label +
-      '</option>'
-    );
-  }).join('');
-
-  const content = `<!DOCTYPE html>
+  const content =
+`<!DOCTYPE html>
 <html lang="de">
 
 <head>
@@ -193,7 +322,7 @@ function genHTML() {
 <style>
 
 /* =========================================================
-   GRUNDLAYOUT
+   GLOBAL
    ========================================================= */
 
 :root{
@@ -249,6 +378,7 @@ body{
   -moz-osx-font-smoothing:grayscale;
 }
 
+
 /* =========================================================
    HEADER
    ========================================================= */
@@ -267,59 +397,87 @@ header{
   padding:18px 20px;
 
   box-shadow:
-    0 10px 30px rgba(255,122,24,.25);
+    0 10px 30px
+    rgba(255,122,24,.25);
 }
 
 .header-inner{
   display:flex;
+
   gap:16px;
+
   align-items:flex-start;
+
   flex-wrap:wrap;
+
   max-width:960px;
+
   margin:0 auto;
 }
 
 .logo{
   height:120px;
+
   flex-shrink:0;
 }
 
 .header-text{
   display:flex;
+
   flex-direction:column;
+
   justify-content:center;
+
   flex:1;
 }
 
 .header-text h1{
   font-family:'Oswald',sans-serif;
+
   font-size:1.9rem;
+
   margin:0;
+
   text-transform:uppercase;
 }
 
 .header-text p{
   margin-top:6px;
+
   font-weight:300;
+
   opacity:.95;
+
   font-size:.95rem;
 }
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.container{
+  max-width:960px;
+
+  margin:28px auto;
+
+  padding:0 16px;
+}
+
 
 /* =========================================================
    TEAMS
    ========================================================= */
 
-.container{
-  max-width:960px;
-  margin:28px auto;
-  padding:0 16px;
-}
-
 .teams-container{
   display:flex;
+
   flex-wrap:wrap;
+
   gap:12px;
+
   margin-top:14px;
+
   align-items:flex-start;
 }
 
@@ -331,13 +489,15 @@ header{
   border:1px solid var(--tvn-border);
 
   box-shadow:
-    0 4px 12px rgba(0,0,0,.08);
+    0 4px 12px
+    rgba(0,0,0,.08);
 
   flex:1 1 220px;
 
   min-width:220px;
 
   display:flex;
+
   flex-direction:column;
 
   position:relative;
@@ -359,17 +519,19 @@ header{
 
   color:#fff;
 
-  border-radius:14px 14px 0 0;
+  border-radius:
+    14px 14px 0 0;
 
   cursor:pointer;
 }
 
-.team-card .team-content-preview{
+.team-content-preview{
   padding:12px 14px;
 }
 
 .team-content-preview p{
   margin:10px 0 0;
+
   color:var(--tvn-muted);
 }
 
@@ -385,19 +547,25 @@ header{
   border-radius:10px;
 
   box-shadow:
-    0 18px 40px rgba(0,0,0,.25);
+    0 18px 40px
+    rgba(0,0,0,.25);
 
   z-index:12000;
 
   max-height:80vh;
 
   overflow:auto;
+
+  box-sizing:border-box;
 }
 
 .team-content .buttons{
   display:flex;
+
   flex-wrap:wrap;
+
   gap:10px;
+
   margin-top:12px;
 }
 
@@ -430,12 +598,41 @@ header{
 
 .team-content .buttons a:hover{
   filter:brightness(1.03);
+
   transform:translateY(-2px);
 }
+
 
 /* =========================================================
    ANLEITUNG
    ========================================================= */
+
+.guide-btn{
+  display:inline-block;
+
+  padding:12px 14px;
+
+  cursor:pointer;
+
+  font-weight:600;
+
+  font-family:'Oswald',sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--tvn-orange-dark),
+      var(--tvn-orange)
+    );
+
+  color:#fff;
+
+  border-radius:10px;
+
+  border:none;
+
+  margin-bottom:12px;
+}
 
 .step-box{
   background:var(--tvn-surface);
@@ -447,9 +644,12 @@ header{
   overflow:hidden;
 
   box-shadow:
-    0 3px 8px rgba(0,0,0,.06);
+    0 3px 8px
+    rgba(0,0,0,.06);
 
-  border:1px solid var(--tvn-border);
+  border:
+    1px solid
+    var(--tvn-border);
 }
 
 .step-header{
@@ -487,8 +687,7 @@ header{
   top:50%;
 
   transform:
-    translateY(-50%)
-    rotate(0deg);
+    translateY(-50%);
 
   transition:
     transform .18s ease;
@@ -514,33 +713,6 @@ header{
   background:#fffaf5;
 }
 
-.guide-btn{
-  display:inline-block;
-
-  padding:12px 14px;
-
-  cursor:pointer;
-
-  font-weight:600;
-
-  font-family:'Oswald',sans-serif;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--tvn-orange-dark),
-      var(--tvn-orange)
-    );
-
-  color:#fff;
-
-  border-radius:10px;
-
-  border:none;
-
-  margin-bottom:12px;
-}
-
 #steps-backdrop{
   display:none;
 
@@ -548,7 +720,8 @@ header{
 
   inset:0;
 
-  background:rgba(0,0,0,.45);
+  background:
+    rgba(0,0,0,.45);
 
   z-index:14000;
 }
@@ -559,6 +732,7 @@ header{
   position:fixed;
 
   top:50%;
+
   left:50%;
 
   transform:
@@ -579,7 +753,8 @@ header{
   border-radius:12px;
 
   box-shadow:
-    0 25px 60px rgba(0,0,0,.35);
+    0 25px 60px
+    rgba(0,0,0,.35);
 
   z-index:15000;
 }
@@ -588,6 +763,7 @@ header{
   position:absolute;
 
   top:12px;
+
   right:12px;
 
   background:transparent;
@@ -596,13 +772,18 @@ header{
 
   font-size:1.6rem;
 
+  line-height:1;
+
   cursor:pointer;
 
   color:#222;
+
+  padding:6px;
 }
 
+
 /* =========================================================
-   BOTTOM
+   POPUP CLOSE
    ========================================================= */
 
 .overlay-close{
@@ -611,6 +792,7 @@ header{
   position:absolute;
 
   right:12px;
+
   top:10px;
 
   background:transparent;
@@ -623,6 +805,11 @@ header{
 
   color:#222;
 }
+
+
+/* =========================================================
+   BOTTOM
+   ========================================================= */
 
 .page-bottom{
   max-width:960px;
@@ -649,7 +836,8 @@ header{
   border-radius:16px;
 
   box-shadow:
-    0 4px 12px rgba(0,0,0,.08);
+    0 4px 12px
+    rgba(0,0,0,.08);
 
   padding:18px;
 
@@ -679,10 +867,15 @@ header{
   border-radius:8px;
 
   font-weight:700;
+
+  box-shadow:
+    0 8px 18px
+    rgba(255,122,24,.18);
 }
 
+
 /* =========================================================
-   REPORT
+   REPORT BEREICH
    ========================================================= */
 
 .report-section{
@@ -710,7 +903,8 @@ header{
   border-radius:16px;
 
   box-shadow:
-    0 4px 12px rgba(0,0,0,.08);
+    0 4px 12px
+    rgba(0,0,0,.08);
 
   padding:20px;
 
@@ -769,11 +963,10 @@ header{
     rgba(255,122,24,.18);
 }
 
-.report-btn:hover{
-  filter:brightness(1.04);
 
-  transform:translateY(-2px);
-}
+/* =========================================================
+   REPORT MODAL
+   ========================================================= */
 
 #report-backdrop{
   display:none;
@@ -782,7 +975,8 @@ header{
 
   inset:0;
 
-  background:rgba(0,0,0,.5);
+  background:
+    rgba(0,0,0,.5);
 
   z-index:16000;
 }
@@ -950,10 +1144,6 @@ header{
   color:#222;
 }
 
-.report-cancel-btn:hover{
-  background:#e2e2e2;
-}
-
 .report-submit-btn{
   background:
     linear-gradient(
@@ -963,10 +1153,6 @@ header{
     );
 
   color:#fff;
-}
-
-.report-submit-btn:hover{
-  filter:brightness(1.04);
 }
 
 .report-submit-btn:disabled{
@@ -989,6 +1175,8 @@ header{
   color:#a00000;
 
   font-size:.9rem;
+
+  text-align:left;
 }
 
 .report-success{
@@ -1033,6 +1221,7 @@ header{
   color:var(--tvn-muted);
 }
 
+
 /* =========================================================
    FOOTER
    ========================================================= */
@@ -1049,11 +1238,12 @@ footer{
   font-size:.95rem;
 }
 
+
 /* =========================================================
    MOBILE
    ========================================================= */
 
-@media (max-width:600px){
+@media(max-width:600px){
 
   .teams-container{
     display:grid;
@@ -1086,10 +1276,6 @@ footer{
     padding:18px;
 
     overflow-y:auto;
-
-    box-shadow:
-      0 30px 60px
-      rgba(0,0,0,.35);
   }
 
   .overlay-close{
@@ -1141,14 +1327,6 @@ footer{
     text-align:center;
   }
 
-  .report-section{
-    margin-top:10px;
-  }
-
-  .report-card{
-    padding:18px;
-  }
-
   #report-modal{
     top:0;
 
@@ -1171,10 +1349,6 @@ footer{
     -webkit-overflow-scrolling:touch;
   }
 
-  .report-modal-header{
-    padding-top:4px;
-  }
-
   .report-actions{
     flex-direction:column;
   }
@@ -1189,6 +1363,7 @@ footer{
 </style>
 
 </head>
+
 
 <body>
 
@@ -1218,12 +1393,7 @@ footer{
         automatisch aktualisiert<br>
 
         Stand:
-        ${new Date().toLocaleString(
-          'de-DE',
-          {
-            timeZone:'Europe/Berlin'
-          }
-        )}
+        ${currentDate}
 
       </p>
 
@@ -1242,7 +1412,7 @@ footer{
 
 
   <!-- ===================================================
-       ANLEITUNG
+       ANLEITUNG BUTTON
        =================================================== -->
 
   <button
@@ -1250,7 +1420,6 @@ footer{
     class="guide-btn"
     type="button"
     aria-expanded="false"
-    aria-controls="steps-wrapper"
   >
     Anleitung anzeigen
   </button>
@@ -1258,7 +1427,6 @@ footer{
 
   <div
     id="steps-backdrop"
-    tabindex="-1"
     aria-hidden="true"
   ></div>
 
@@ -1267,6 +1435,7 @@ footer{
     id="steps-template"
     style="display:none;"
   >
+
 
     <div class="step-box">
 
@@ -1327,8 +1496,7 @@ footer{
           <strong>„Kalender hinzufügen“</strong>
           und dann
           <strong>„Aus dem Internet“</strong>
-          bzw.
-          <strong>„Per URL“</strong>.
+          bzw. <strong>„Per URL“</strong>.
         </p>
 
       </div>
@@ -1381,7 +1549,6 @@ footer{
     role="dialog"
     aria-modal="true"
     aria-hidden="true"
-    style="display:none;"
   ></div>
 
 
@@ -1440,7 +1607,7 @@ footer{
       class="report-btn"
       type="button"
     >
-      🐞 Fehler melden
+      Fehler melden
     </button>
 
   </div>
@@ -1470,6 +1637,7 @@ footer{
   aria-labelledby="report-modal-title"
 >
 
+
   <div class="report-modal-header">
 
     <h2 id="report-modal-title">
@@ -1491,7 +1659,9 @@ footer{
   <form id="report-form">
 
 
-    <!-- BOT HONEYPOT -->
+    <!-- =================================================
+         HONEYPOT
+         ================================================= -->
 
     <input
       type="text"
@@ -1511,12 +1681,16 @@ footer{
     >
 
 
-    <!-- TEAM -->
+    <!-- =================================================
+         TEAM
+         ================================================= -->
 
     <div class="report-form-group">
 
       <label for="report-team">
-        Betroffenes Team / Kalender
+
+        Betroffenes Team
+
         <span
           style="
             font-weight:400;
@@ -1525,6 +1699,7 @@ footer{
         >
           (optional)
         </span>
+
       </label>
 
 
@@ -1540,14 +1715,16 @@ footer{
           Kein bestimmtes Team
         </option>
 
-        ${reportTeamOptions}
+        ${teamOptions}
 
       </select>
 
     </div>
 
 
-    <!-- KALENDER -->
+    <!-- =================================================
+         KALENDER
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1596,7 +1773,9 @@ footer{
     </div>
 
 
-    <!-- SPIEL -->
+    <!-- =================================================
+         SPIEL
+         ================================================= -->
 
     <div
       id="report-game-wrapper"
@@ -1641,13 +1820,15 @@ footer{
       <div
         id="report-game-empty"
       >
-        Für dieses Team konnten keine Spiele geladen werden.
+        Keine Spiele gefunden.
       </div>
 
     </div>
 
 
-    <!-- TITEL -->
+    <!-- =================================================
+         TITEL
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1668,7 +1849,9 @@ footer{
     </div>
 
 
-    <!-- BESCHREIBUNG -->
+    <!-- =================================================
+         BESCHREIBUNG
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1694,23 +1877,17 @@ footer{
     </div>
 
 
-    <!-- FEHLER -->
-
     <div
       id="report-error"
       class="report-error"
     ></div>
 
 
-    <!-- ERFOLG -->
-
     <div
       id="report-success"
       class="report-success"
     ></div>
 
-
-    <!-- BUTTONS -->
 
     <div class="report-actions">
 
@@ -1732,10 +1909,15 @@ footer{
 
     </div>
 
+
   </form>
 
 </div>
 
+
+<!-- =====================================================
+     FOOTER
+     ===================================================== -->
 
 <footer>
   TVN Baskets – Offizielle Kalenderübersicht
@@ -1749,24 +1931,9 @@ footer{
   'use strict';
 
 
-  /* ========================================================
-     KONFIGURATION
-     ======================================================== */
-
-  var REPORT_WORKER_URL =
-    'https://bbb-ics-report.raggelija.workers.dev';
-
-
-  /*
-   * Basisadresse der erzeugten ICS-Dateien.
-   */
-  var GENERATED_CALENDAR_BASE_URL =
-    '${makeWebcalLink('')}';
-
-
-  /* ========================================================
+  /* =======================================================
      ELEMENTE
-     ======================================================== */
+     ======================================================= */
 
   var template =
     document.getElementById(
@@ -1889,18 +2056,26 @@ footer{
     null;
 
 
-  /* ========================================================
-     ANLEITUNG
-     ======================================================== */
+  /* =======================================================
+     ANLEITUNG ERZEUGEN
+     ======================================================= */
 
-  function bindStepHeadersInContainer(
-    container
+  if (
+    template &&
+    stepsWrapper
   ) {
 
-    if (!container) return;
+    stepsWrapper.innerHTML =
+      template.innerHTML;
 
 
-    container
+    stepsWrapper.insertAdjacentHTML(
+      'afterbegin',
+      '<button id="close-steps-btn" class="steps-close" type="button" aria-label="Schließen">&times;</button>'
+    );
+
+
+    stepsWrapper
       .querySelectorAll(
         '.step-header'
       )
@@ -1918,46 +2093,41 @@ footer{
                 header.nextElementSibling;
 
 
-              if (!content) return;
+              if (!content) {
+                return;
+              }
 
 
-              var isOpen =
+              var open =
                 window.getComputedStyle(
                   content
-                ).display === 'block';
+                ).display ===
+                'block';
 
 
-              container
+              stepsWrapper
                 .querySelectorAll(
                   '.step-content'
                 )
                 .forEach(
                   function (item) {
 
-                    if (
-                      item !== content
-                    ) {
+                    item.style.display =
+                      'none';
 
-                      item.style.display =
-                        'none';
+                    var h =
+                      item.previousElementSibling;
 
+                    if (h) {
 
-                      var previous =
-                        item.previousElementSibling;
+                      h.classList.remove(
+                        'open'
+                      );
 
-
-                      if (previous) {
-
-                        previous.classList.remove(
-                          'open'
-                        );
-
-                        previous.setAttribute(
-                          'aria-expanded',
-                          'false'
-                        );
-
-                      }
+                      h.setAttribute(
+                        'aria-expanded',
+                        'false'
+                      );
 
                     }
 
@@ -1965,7 +2135,7 @@ footer{
                 );
 
 
-              if (isOpen) {
+              if (open) {
 
                 content.style.display =
                   'none';
@@ -2023,31 +2193,9 @@ footer{
   }
 
 
-  if (
-    template &&
-    stepsWrapper
-  ) {
-
-    stepsWrapper.innerHTML =
-      template.innerHTML;
-
-
-    stepsWrapper.insertAdjacentHTML(
-      'afterbegin',
-      '<button id="close-steps-btn" class="steps-close" type="button" aria-label="Schließen">&times;</button>'
-    );
-
-
-    bindStepHeadersInContainer(
-      stepsWrapper
-    );
-
-  }
-
-
-  /* ========================================================
+  /* =======================================================
      OVERLAYS
-     ======================================================== */
+     ======================================================= */
 
   function closeAllOverlays() {
 
@@ -2076,9 +2224,9 @@ footer{
   }
 
 
-  /* ========================================================
-     ANLEITUNG ÖFFNEN
-     ======================================================== */
+  /* =======================================================
+     STEPS
+     ======================================================= */
 
   function openStepsModal() {
 
@@ -2098,16 +2246,13 @@ footer{
     stepsWrapper.style.display =
       'block';
 
-
     stepsWrapper.setAttribute(
       'aria-hidden',
       'false'
     );
 
-
     stepsBackdrop.style.display =
       'block';
-
 
     stepsBackdrop.setAttribute(
       'aria-hidden',
@@ -2124,84 +2269,26 @@ footer{
     document.body.style.overflow =
       'hidden';
 
-
-    var closeButton =
-      stepsWrapper.querySelector(
-        '#close-steps-btn'
-      );
-
-
-    if (
-      closeButton
-    ) {
-
-      closeButton.focus();
-
-    }
-
   }
 
 
-  /* ========================================================
-     ANLEITUNG SCHLIESSEN
-     ======================================================== */
-
   function closeStepsModal() {
-
-    if (!stepsWrapper) return;
-
-
-    stepsWrapper
-      .querySelectorAll(
-        '.step-content'
-      )
-      .forEach(
-        function (content) {
-
-          content.style.display =
-            'none';
-
-
-          var header =
-            content.previousElementSibling;
-
-
-          if (header) {
-
-            header.classList.remove(
-              'open'
-            );
-
-            header.setAttribute(
-              'aria-expanded',
-              'false'
-            );
-
-          }
-
-        }
-      );
-
 
     stepsWrapper.style.display =
       'none';
-
 
     stepsWrapper.setAttribute(
       'aria-hidden',
       'true'
     );
 
-
     stepsBackdrop.style.display =
       'none';
-
 
     stepsBackdrop.setAttribute(
       'aria-hidden',
       'true'
     );
-
 
     guideBtn.setAttribute(
       'aria-expanded',
@@ -2228,9 +2315,7 @@ footer{
     );
 
 
-  if (
-    closeStepsBtn
-  ) {
+  if (closeStepsBtn) {
 
     closeStepsBtn.addEventListener(
       'click',
@@ -2276,9 +2361,9 @@ footer{
   );
 
 
-  /* ========================================================
+  /* =======================================================
      TEAM POPUPS
-     ======================================================== */
+     ======================================================= */
 
   document
     .querySelectorAll(
@@ -2293,15 +2378,20 @@ footer{
           );
 
 
+        if (!card) {
+          return;
+        }
+
+
         var content =
-          card
-            ? card.querySelector(
-                '.team-content'
-              )
-            : null;
+          card.querySelector(
+            '.team-content'
+          );
 
 
-        if (!content) return;
+        if (!content) {
+          return;
+        }
 
 
         content.addEventListener(
@@ -2320,9 +2410,7 @@ footer{
           );
 
 
-        if (
-          closeButton
-        ) {
+        if (closeButton) {
 
           closeButton.addEventListener(
             'click',
@@ -2375,16 +2463,13 @@ footer{
               content.style.display =
                 'none';
 
-
               content.setAttribute(
                 'aria-hidden',
                 'true'
               );
 
-
               activeContent =
                 null;
-
 
               return;
 
@@ -2412,9 +2497,7 @@ footer{
               600;
 
 
-            if (
-              isMobile
-            ) {
+            if (isMobile) {
 
               content.style.position =
                 'fixed';
@@ -2473,10 +2556,6 @@ footer{
               0.95;
 
 
-            var margin =
-              28;
-
-
             if (
               desiredWidth >
               maxWidth
@@ -2486,6 +2565,10 @@ footer{
                 maxWidth;
 
             }
+
+
+            var margin =
+              28;
 
 
             var leftPos =
@@ -2581,7 +2664,6 @@ footer{
               topPos +
               'px';
 
-
             content.style.left =
               leftPos +
               'px';
@@ -2597,9 +2679,50 @@ footer{
     );
 
 
-  /* ========================================================
-     ICS PARSER
-     ======================================================== */
+  /* =======================================================
+     ICS HILFSFUNKTIONEN
+     ======================================================= */
+
+  function unfoldICS(
+    text
+  ) {
+
+    return String(
+      text || ''
+    ).replace(
+      /\r?\n[ \t]/g,
+      ''
+    );
+
+  }
+
+
+  function getICSProperty(
+    block,
+    property
+  ) {
+
+    var regex =
+      new RegExp(
+        '(?:^|\\n)' +
+        property +
+        '(?:;[^:]*)?:(.*)',
+        'i'
+      );
+
+
+    var match =
+      block.match(
+        regex
+      );
+
+
+    return match
+      ? match[1].trim()
+      : '';
+
+  }
+
 
   function icsUnescape(
     value
@@ -2624,47 +2747,6 @@ footer{
         /\\n/g,
         ' '
       );
-
-  }
-
-
-  function unfoldICS(
-    text
-  ) {
-
-    return String(
-      text || ''
-    ).replace(
-      /\r?\n[ \t]/g,
-      ''
-    );
-
-  }
-
-
-  function getICSProperty(
-    block,
-    propertyName
-  ) {
-
-    var regex =
-      new RegExp(
-        '(?:^|\\n)' +
-        propertyName +
-        '(?:;[^:]*)?:(.*)',
-        'i'
-      );
-
-
-    var match =
-      block.match(
-        regex
-      );
-
-
-    return match
-      ? match[1].trim()
-      : '';
 
   }
 
@@ -2729,24 +2811,17 @@ footer{
       12
     ) {
 
-      var hour =
+      result +=
+        ' ' +
         clean.slice(
           8,
           10
-        );
-
-      var minute =
+        ) +
+        ':' +
         clean.slice(
           10,
           12
         );
-
-
-      result +=
-        ' ' +
-        hour +
-        ':' +
-        minute;
 
     }
 
@@ -2756,12 +2831,13 @@ footer{
   }
 
 
-  function parseICSForGames(
+  function parseGames(
     icsText
   ) {
 
-    var events =
+    var games =
       [];
+
 
     var unfolded =
       unfoldICS(
@@ -2805,7 +2881,7 @@ footer{
           );
 
 
-        var startValue =
+        var start =
           getICSProperty(
             eventBlock,
             'DTSTART'
@@ -2814,7 +2890,7 @@ footer{
 
         if (
           !summary ||
-          !startValue
+          !start
         ) {
 
           return;
@@ -2822,29 +2898,29 @@ footer{
         }
 
 
-        var dateText =
-          formatICSDate(
-            startValue
-          );
+        games.push({
 
+          label:
+            formatICSDate(
+              start
+            ) +
+            ' – ' +
+            summary,
 
-        events.push({
           value:
             summary +
             ' | ' +
-            dateText,
+            formatICSDate(
+              start
+            )
 
-          label:
-            dateText +
-            ' – ' +
-            summary
         });
 
       }
     );
 
 
-    events.sort(
+    games.sort(
       function (a, b) {
 
         return a.label.localeCompare(
@@ -2856,28 +2932,18 @@ footer{
     );
 
 
-    return events;
+    return games;
 
   }
 
 
-  /* ========================================================
-     SPIELE EINES TEAMS LADEN
-     ======================================================== */
+  /* =======================================================
+     SPIELE LADEN
+     ======================================================= */
 
   async function loadGamesForTeam(
     teamId
   ) {
-
-    if (
-      !reportGameWrapper ||
-      !reportGame
-    ) {
-
-      return;
-
-    }
-
 
     reportGame.innerHTML =
       '<option value="">Kein bestimmtes Spiel</option>';
@@ -2912,7 +2978,7 @@ footer{
     try {
 
       var url =
-        GENERATED_CALENDAR_BASE_URL +
+        '${BASE_URL}' +
         encodeURIComponent(
           teamId
         ) +
@@ -2942,15 +3008,13 @@ footer{
         await response.text();
 
 
-      var events =
-        parseICSForGames(
+      var games =
+        parseGames(
           icsText
         );
 
 
-      if (
-        !events.length
-      ) {
+      if (!games.length) {
 
         reportGameEmpty.style.display =
           'block';
@@ -2960,7 +3024,7 @@ footer{
       }
 
 
-      events.forEach(
+      games.forEach(
         function (game) {
 
           var option =
@@ -3021,9 +3085,9 @@ footer{
   );
 
 
-  /* ========================================================
+  /* =======================================================
      REPORT ÖFFNEN
-     ======================================================== */
+     ======================================================= */
 
   function openReportModal() {
 
@@ -3066,7 +3130,6 @@ footer{
       'false'
     );
 
-
     reportBackdrop.setAttribute(
       'aria-hidden',
       'false'
@@ -3074,12 +3137,17 @@ footer{
 
 
     /*
-     * Startzeit für den Bot-Schutz.
+     * Startzeit des Formulars.
      */
 
     reportOpenedAt =
       Date.now();
 
+
+    /*
+     * Wichtig für Mobilgeräte:
+     * Die Seite hinter dem Modal wird gesperrt.
+     */
 
     document.body.style.overflow =
       'hidden';
@@ -3088,9 +3156,7 @@ footer{
     setTimeout(
       function () {
 
-        if (reportTeam) {
-          reportTeam.focus();
-        }
+        reportTeam.focus();
 
       },
       50
@@ -3099,15 +3165,14 @@ footer{
   }
 
 
-  /* ========================================================
+  /* =======================================================
      REPORT SCHLIESSEN
-     ======================================================== */
+     ======================================================= */
 
   function closeReportModal() {
 
     reportModal.style.display =
       'none';
-
 
     reportBackdrop.style.display =
       'none';
@@ -3117,7 +3182,6 @@ footer{
       'aria-hidden',
       'true'
     );
-
 
     reportBackdrop.setAttribute(
       'aria-hidden',
@@ -3177,6 +3241,11 @@ footer{
   );
 
 
+  /*
+   * Klick INNERHALB des Formulars
+   * darf es nicht schließen.
+   */
+
   reportModal.addEventListener(
     'click',
     function (event) {
@@ -3187,15 +3256,16 @@ footer{
   );
 
 
-  /* ========================================================
+  /* =======================================================
      REPORT SENDEN
-     ======================================================== */
+     ======================================================= */
 
   reportForm.addEventListener(
     'submit',
     async function (event) {
 
       event.preventDefault();
+
       event.stopPropagation();
 
 
@@ -3203,14 +3273,30 @@ footer{
         reportTeam.value.trim();
 
 
-      var teamLabel =
-        reportTeam.options[
-          reportTeam.selectedIndex
-        ]
-          ? reportTeam.options[
-              reportTeam.selectedIndex
-            ].textContent.trim()
+      var team =
+        reportTeam
+          .options[
+            reportTeam.selectedIndex
+          ]
+          ? reportTeam
+              .options[
+                reportTeam.selectedIndex
+              ]
+              .textContent
+              .trim()
           : '';
+
+
+      /*
+       * Wenn "Kein bestimmtes Team"
+       * ausgewählt wurde, kein Team senden.
+       */
+
+      if (!teamId) {
+
+        team = '';
+
+      }
 
 
       var calendar =
@@ -3229,15 +3315,15 @@ footer{
         reportDescription.value.trim();
 
 
-      var honeypot =
+      var website =
         reportWebsite
           ? reportWebsite.value.trim()
           : '';
 
 
       /*
-       * Nur Titel und Beschreibung sind Pflicht.
-       * Team, Kalender und Spiel sind optional.
+       * Nur Titel und Beschreibung
+       * sind Pflichtfelder.
        */
 
       if (
@@ -3248,8 +3334,10 @@ footer{
         reportError.textContent =
           'Bitte fülle Titel und Beschreibung aus.';
 
+
         reportError.style.display =
           'block';
+
 
         return;
 
@@ -3257,7 +3345,7 @@ footer{
 
 
       /*
-       * Drei Sekunden Mindestzeit.
+       * 3-Sekunden-Schutz.
        */
 
       if (
@@ -3270,8 +3358,10 @@ footer{
         reportError.textContent =
           'Bitte fülle das Formular vollständig aus und versuche es erneut.';
 
+
         reportError.style.display =
           'block';
+
 
         return;
 
@@ -3284,6 +3374,7 @@ footer{
 
         reportSubmitButton.disabled =
           true;
+
 
         reportSubmitButton.textContent =
           'Wird gesendet...';
@@ -3314,22 +3405,33 @@ footer{
 
               body:
                 JSON.stringify({
-                  team: teamLabel,
-                  teamId: teamId,
-                  calendar: calendar,
-                  game: game,
-                  title: title,
-                  description: description,
 
-                  /*
-                   * Bot-Schutz
-                   */
+                  team:
+                    team,
 
-                  website: honeypot,
+                  teamId:
+                    teamId,
+
+                  calendar:
+                    calendar,
+
+                  game:
+                    game,
+
+                  title:
+                    title,
+
+                  description:
+                    description,
+
+                  website:
+                    website,
 
                   formOpenedAt:
                     reportOpenedAt
+
                 })
+
             }
           );
 
@@ -3368,7 +3470,7 @@ footer{
 
 
         /*
-         * Erfolgreich.
+         * Erfolg
          */
 
         reportForm.reset();
@@ -3415,6 +3517,7 @@ footer{
         reportError.style.display =
           'block';
 
+
       } finally {
 
         if (
@@ -3435,9 +3538,9 @@ footer{
   );
 
 
-  /* ========================================================
-     DOCUMENT CLICK
-     ======================================================== */
+  /* =======================================================
+     GLOBAL CLICK
+     ======================================================= */
 
   document.addEventListener(
     'click',
@@ -3447,12 +3550,14 @@ footer{
         event.target;
 
 
-      if (!target) return;
+      if (!target) {
+        return;
+      }
 
 
       /*
-       * Report darf nicht versehentlich durch
-       * einen Dokument-Click geschlossen werden.
+       * Wenn das Report-Modal offen ist,
+       * nichts anderes schließen.
        */
 
       if (
@@ -3485,9 +3590,9 @@ footer{
   );
 
 
-  /* ========================================================
-     ESC
-     ======================================================== */
+  /* =======================================================
+     ESCAPE
+     ======================================================= */
 
   document.addEventListener(
     'keydown',
@@ -3529,6 +3634,7 @@ footer{
 
       closeAllOverlays();
 
+
       document.body.style.overflow =
         '';
 
@@ -3536,16 +3642,16 @@ footer{
   );
 
 
-  /* ========================================================
+  /* =======================================================
      SCROLL
-     ======================================================== */
+     ======================================================= */
 
   window.addEventListener(
     'scroll',
     function () {
 
       /*
-       * Report-Modal bleibt offen.
+       * Report bleibt offen.
        */
 
       if (
@@ -3567,21 +3673,21 @@ footer{
   );
 
 
-  /* ========================================================
+  /* =======================================================
      RESIZE
-     ======================================================== */
+     ======================================================= */
 
   window.addEventListener(
     'resize',
     function () {
 
       /*
-       * WICHTIG:
+       * Ganz wichtig:
        *
-       * Auf Smartphones können Tastatur,
-       * Browser-UI usw. resize events auslösen.
+       * Auf Smartphones kann resize z. B.
+       * beim Öffnen der Tastatur ausgelöst werden.
        *
-       * Das Report-Formular darf deshalb
+       * Das Report-Modal darf dabei
        * NICHT geschlossen werden.
        */
 
@@ -3622,7 +3728,9 @@ footer{
 </script>
 
 </body>
+
 </html>`;
+
 
   fs.writeFileSync(
     path.resolve(
