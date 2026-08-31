@@ -1,4 +1,4 @@
-// complete generator script — ersetzt deine alte Datei komplett
+// complete generator script
 const fs = require('fs');
 const path = require('path');
 
@@ -11,30 +11,19 @@ function safeReadJson(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
 
-    const raw = fs.readFileSync(
-      filePath,
-      'utf8'
-    );
-
+    const raw = fs.readFileSync(filePath, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
     console.error(
       `Fehler beim Einlesen/Parsen von ${filePath}:`,
       err.message
     );
-
     return null;
   }
 }
 
 function normalizeId(value) {
-  if (
-    value === undefined ||
-    value === null
-  ) {
-    return '';
-  }
-
+  if (value === undefined || value === null) return '';
   return String(value).trim();
 }
 
@@ -49,31 +38,17 @@ function genHTML() {
     '../generated/teams.json'
   );
 
-  const rawMeta =
-    safeReadJson(metaPath) || [];
+  const rawMeta = safeReadJson(metaPath) || [];
+  const rawTeams = safeReadJson(teamsPath) || [];
 
-  const rawTeams =
-    safeReadJson(teamsPath) || [];
+  const metadataArray = Array.isArray(rawMeta)
+    ? rawMeta
+    : (rawMeta.teams || rawMeta.data || []);
 
-  const metadataArray =
-    Array.isArray(rawMeta)
-      ? rawMeta
-      : (
-          rawMeta.teams ||
-          rawMeta.data ||
-          []
-        );
+  const teamsArray = Array.isArray(rawTeams)
+    ? rawTeams
+    : (rawTeams.teams || rawTeams.data || []);
 
-  const teamsArray =
-    Array.isArray(rawTeams)
-      ? rawTeams
-      : (
-          rawTeams.teams ||
-          rawTeams.data ||
-          []
-        );
-
-  // Finales, sauberes Team-Array für das Template
   const teams = metadataArray.map(m => {
     const id = normalizeId(
       m.teamId ??
@@ -85,30 +60,11 @@ function genHTML() {
 
     return {
       teamId: id,
-
-      name:
-        m.teamName ??
-        m.name ??
-        m.title ??
-        'Unbenannt',
-
-      ageGroup:
-        m.ageGroup ?? '',
-
-      matchCount:
-        m.matchCount ??
-        m.matches ??
-        0,
-
-      homeMatchCount:
-        m.homeMatchCount ??
-        m.homeMatches ??
-        0,
-
-      awayMatchCount:
-        m.awayMatchCount ??
-        m.awayMatches ??
-        0
+      name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
+      ageGroup: m.ageGroup ?? '',
+      matchCount: m.matchCount ?? m.matches ?? 0,
+      homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
+      awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0,
     };
   });
 
@@ -146,9 +102,9 @@ function genHTML() {
   --tvn-border:rgba(255,122,24,.18);
 }
 
-/* =========================================================
+/* =========================
    RESET / GLOBAL
-   ========================================================= */
+   ========================= */
 
 *{
   box-sizing:border-box;
@@ -191,9 +147,9 @@ body{
   -moz-osx-font-smoothing:grayscale;
 }
 
-/* =========================================================
+/* =========================
    HEADER
-   ========================================================= */
+   ========================= */
 
 header{
   background:
@@ -214,81 +170,60 @@ header{
 
 .header-inner{
   display:flex;
-
   gap:16px;
-
   align-items:flex-start;
-
   flex-wrap:wrap;
-
   max-width:960px;
-
   margin:0 auto;
 }
 
 .logo{
   height:120px;
-
   flex-shrink:0;
 }
 
 .header-text{
   display:flex;
-
   flex-direction:column;
-
   justify-content:center;
-
   flex:1;
 }
 
 .header-text h1{
   font-family:'Oswald',sans-serif;
-
   font-size:1.9rem;
-
   margin:0;
-
   text-transform:uppercase;
 }
 
 .header-text p{
   margin-top:6px;
-
   font-weight:300;
-
   opacity:0.95;
-
   font-size:0.95rem;
 }
 
-/* =========================================================
+/* =========================
    LAYOUT
-   ========================================================= */
+   ========================= */
 
 .container{
   max-width:960px;
-
   margin:28px auto;
-
   padding:0 16px;
 }
 
 .teams-container{
   display:flex;
-
   flex-wrap:wrap;
-
   gap:12px;
-
   margin-top:14px;
-
   align-items:flex-start;
 }
 
-/* =========================================================
+/* =========================
    TEAM CARD
-   ========================================================= */
+   ========================= */
 
 .team-card{
   background:var(--tvn-surface);
@@ -301,11 +236,9 @@ header{
     0 4px 12px rgba(0,0,0,0.08);
 
   flex:1 1 220px;
-
   min-width:220px;
 
   display:flex;
-
   flex-direction:column;
 
   position:relative;
@@ -338,17 +271,15 @@ header{
 
 .team-content-preview p{
   margin:10px 0 0;
-
   color:var(--tvn-muted);
 }
 
-/* =========================================================
+/* =========================
    TEAM POPUP
-   ========================================================= */
+   ========================= */
 
 .team-content{
   position:fixed;
-
   display:none;
 
   background:#fff;
@@ -369,19 +300,15 @@ header{
   box-sizing:border-box;
 }
 
-/* =========================================================
+/* =========================
    TEAM BUTTONS
-   ========================================================= */
+   ========================= */
 
 .team-content .buttons{
   display:flex;
-
   flex-wrap:wrap;
-
   gap:10px;
-
   margin-top:12px;
-
   align-items:flex-start;
 }
 
@@ -404,7 +331,6 @@ header{
   border-radius:6px;
 
   font-weight:600;
-
   font-size:0.9rem;
 
   transition:
@@ -414,13 +340,12 @@ header{
 
 .team-content .buttons a:hover{
   filter:brightness(1.03);
-
   transform:translateY(-2px);
 }
 
-/* =========================================================
+/* =========================
    STEPS
-   ========================================================= */
+   ========================= */
 
 .step-box{
   background:var(--tvn-surface);
@@ -504,9 +429,9 @@ header{
   background:#fffaf5;
 }
 
-/* =========================================================
-   ANLEITUNG BUTTON
-   ========================================================= */
+/* =========================
+   GUIDE BUTTON
+   ========================= */
 
 .guide-btn{
   display:inline-block;
@@ -535,9 +460,9 @@ header{
   margin-bottom:12px;
 }
 
-/* =========================================================
+/* =========================
    STEPS MODAL
-   ========================================================= */
+   ========================= */
 
 #steps-backdrop{
   display:none;
@@ -607,9 +532,9 @@ header{
   padding:6px;
 }
 
-/* =========================================================
+/* =========================
    TEAM POPUP CLOSE
-   ========================================================= */
+   ========================= */
 
 .overlay-close{
   display:none;
@@ -631,9 +556,9 @@ header{
   color:#222;
 }
 
-/* =========================================================
+/* =========================
    BOTTOM LINK
-   ========================================================= */
+   ========================= */
 
 .page-bottom{
   max-width:960px;
@@ -691,9 +616,9 @@ header{
     0 8px 18px rgba(255,122,24,.18);
 }
 
-/* =========================================================
-   FEHLER MELDEN
-   ========================================================= */
+/* =========================
+   REPORT
+   ========================= */
 
 .report-section{
   max-width:960px;
@@ -777,13 +702,12 @@ header{
 
 .report-btn:hover{
   filter:brightness(1.04);
-
   transform:translateY(-2px);
 }
 
-/* =========================================================
+/* =========================
    REPORT MODAL
-   ========================================================= */
+   ========================= */
 
 #report-backdrop{
   display:none;
@@ -884,7 +808,9 @@ header{
 .report-form-group textarea{
   width:100%;
 
-  border:1px solid rgba(36,22,15,.18);
+  border:
+    1px solid
+    rgba(36,22,15,.18);
 
   border-radius:8px;
 
@@ -905,7 +831,8 @@ header{
   border-color:var(--tvn-orange);
 
   box-shadow:
-    0 0 0 3px rgba(255,122,24,.12);
+    0 0 0 3px
+    rgba(255,122,24,.12);
 }
 
 .report-form-group textarea{
@@ -1000,10 +927,6 @@ header{
   text-align:left;
 }
 
-/* =========================================================
-   SUCCESS MESSAGE
-   ========================================================= */
-
 .report-success{
   display:none;
 
@@ -1022,9 +945,9 @@ header{
   line-height:1.4;
 }
 
-/* =========================================================
+/* =========================
    FOOTER
-   ========================================================= */
+   ========================= */
 
 footer{
   padding:18px 16px 28px;
@@ -1036,9 +959,9 @@ footer{
   font-size:0.95rem;
 }
 
-/* =========================================================
+/* =========================
    MOBILE
-   ========================================================= */
+   ========================= */
 
 @media (max-width:600px){
 
@@ -1074,7 +997,8 @@ footer{
     overflow-y:auto;
 
     box-shadow:
-      0 30px 60px rgba(0,0,0,0.35);
+      0 30px 60px
+      rgba(0,0,0,0.35);
   }
 
   .overlay-close{
@@ -1123,13 +1047,11 @@ footer{
 
   .steps-close{
     top:12px;
-
     right:12px;
   }
 
   .back-link{
     width:100%;
-
     text-align:center;
   }
 
@@ -1142,10 +1064,13 @@ footer{
   }
 
   /*
-   * Wichtig:
-   * Das Report-Modal ist auf Mobilgeräten
-   * ein echtes Vollbild-Modal.
+   * Report Modal:
+   * echtes Vollbild auf Mobilgeräten.
+   *
+   * Dadurch bleibt das Formular auch beim
+   * Öffnen der Tastatur geöffnet.
    */
+
   #report-modal{
     top:0;
 
@@ -1161,8 +1086,7 @@ footer{
 
     border-radius:0;
 
-    padding:
-      18px;
+    padding:18px;
 
     overflow-y:auto;
 
@@ -1181,18 +1105,17 @@ footer{
   .report-submit-btn{
     width:100%;
   }
-
 }
-
-/* =========================================================
-   SCRIPT
-   ========================================================= */
 
 </style>
 
 </head>
 
 <body>
+
+<!-- =====================================================
+     HEADER
+     ===================================================== -->
 
 <header>
 
@@ -1212,7 +1135,6 @@ footer{
 
       <p>
         Kalender Übersicht – automatisch aktualisiert<br>
-
         Stand:
         ${new Date().toLocaleString(
           'de-DE',
@@ -1221,7 +1143,6 @@ footer{
               'Europe/Berlin'
           }
         )}
-
       </p>
 
     </div>
@@ -1230,11 +1151,13 @@ footer{
 
 </header>
 
+<!-- =====================================================
+     TEAMS
+     ===================================================== -->
+
 <div class="container">
 
-  <!-- =====================================================
-       ANLEITUNG
-       ===================================================== -->
+  <!-- Anleitung -->
 
   <button
     id="show-steps-btn"
@@ -1256,6 +1179,8 @@ footer{
     id="steps-template"
     style="display:none;"
   >
+
+    <!-- Schritt 1 -->
 
     <div class="step-box">
 
@@ -1293,6 +1218,8 @@ footer{
     </div>
 
 
+    <!-- Schritt 2 -->
+
     <div class="step-box">
 
       <div
@@ -1323,6 +1250,8 @@ footer{
 
     </div>
 
+
+    <!-- Schritt 3 -->
 
     <div class="step-box">
 
@@ -1373,9 +1302,9 @@ footer{
   ></div>
 
 
-  <!-- =====================================================
-       TEAMS
-       ===================================================== -->
+  <!-- ===================================================
+       TEAM LISTE
+       =================================================== -->
 
   <div class="teams-container">
 
@@ -1423,15 +1352,9 @@ footer{
             }
 
             <p>
-
               ${t.matchCount} Spiele,
-
-              Heim:
-              ${t.homeMatchCount},
-
-              Auswärts:
-              ${t.awayMatchCount}
-
+              Heim: ${t.homeMatchCount},
+              Auswärts: ${t.awayMatchCount}
             </p>
 
           </div>
@@ -1442,16 +1365,8 @@ footer{
             <a
               href="${makeWebcalLink(
                 t.teamId
-                  ? (
-                      t.teamId +
-                      '_all.ics'
-                    )
-                  : (
-                      encodeURIComponent(
-                        t.name
-                      ) +
-                      '_all.ics'
-                    )
+                  ? t.teamId + '_all.ics'
+                  : encodeURIComponent(t.name) + '_all.ics'
               )}"
             >
               Alle Spiele abonnieren
@@ -1461,16 +1376,8 @@ footer{
             <a
               href="${makeWebcalLink(
                 t.teamId
-                  ? (
-                      t.teamId +
-                      '_home.ics'
-                    )
-                  : (
-                      encodeURIComponent(
-                        t.name
-                      ) +
-                      '_home.ics'
-                    )
+                  ? t.teamId + '_home.ics'
+                  : encodeURIComponent(t.name) + '_home.ics'
               )}"
             >
               Nur Heimspiele abonnieren
@@ -1480,16 +1387,8 @@ footer{
             <a
               href="${makeWebcalLink(
                 t.teamId
-                  ? (
-                      t.teamId +
-                      '_away.ics'
-                    )
-                  : (
-                      encodeURIComponent(
-                        t.name
-                      ) +
-                      '_away.ics'
-                    )
+                  ? t.teamId + '_away.ics'
+                  : encodeURIComponent(t.name) + '_away.ics'
               )}"
             >
               Nur Auswärtsspiele abonnieren
@@ -1508,9 +1407,9 @@ footer{
 </div>
 
 
-<!-- =========================================================
+<!-- =====================================================
      ZURÜCK ZU DEN TEAMS
-     ========================================================= -->
+     ===================================================== -->
 
 <div class="page-bottom">
 
@@ -1528,9 +1427,9 @@ footer{
 </div>
 
 
-<!-- =========================================================
+<!-- =====================================================
      FEHLER MELDEN
-     ========================================================= -->
+     ===================================================== -->
 
 <div class="report-section">
 
@@ -1558,7 +1457,9 @@ footer{
 </div>
 
 
-<!-- Report Backdrop -->
+<!-- =====================================================
+     REPORT BACKDROP
+     ===================================================== -->
 
 <div
   id="report-backdrop"
@@ -1566,7 +1467,9 @@ footer{
 ></div>
 
 
-<!-- Report Modal -->
+<!-- =====================================================
+     REPORT MODAL
+     ===================================================== -->
 
 <div
   id="report-modal"
@@ -1596,7 +1499,31 @@ footer{
 
   <form id="report-form">
 
-    <!-- Team -->
+    <!-- =================================================
+         HONEYPOT
+         ================================================= -->
+
+    <input
+      type="text"
+      id="report-website"
+      name="website"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+      style="
+        position:absolute;
+        left:-10000px;
+        top:auto;
+        width:1px;
+        height:1px;
+        overflow:hidden;
+      "
+    >
+
+
+    <!-- =================================================
+         TEAM
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1637,7 +1564,9 @@ footer{
     </div>
 
 
-    <!-- Kalender -->
+    <!-- =================================================
+         KALENDER
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1676,7 +1605,9 @@ footer{
     </div>
 
 
-    <!-- Titel -->
+    <!-- =================================================
+         TITEL
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1696,7 +1627,9 @@ footer{
     </div>
 
 
-    <!-- Beschreibung -->
+    <!-- =================================================
+         BESCHREIBUNG
+         ================================================= -->
 
     <div class="report-form-group">
 
@@ -1720,7 +1653,9 @@ footer{
     </div>
 
 
-    <!-- Fehleranzeige -->
+    <!-- =================================================
+         FEHLER
+         ================================================= -->
 
     <div
       id="report-error"
@@ -1728,7 +1663,9 @@ footer{
     ></div>
 
 
-    <!-- Erfolg -->
+    <!-- =================================================
+         ERFOLG
+         ================================================= -->
 
     <div
       id="report-success"
@@ -1739,7 +1676,9 @@ footer{
     </div>
 
 
-    <!-- Buttons -->
+    <!-- =================================================
+         BUTTONS
+         ================================================= -->
 
     <div class="report-actions">
 
@@ -1765,6 +1704,10 @@ footer{
 </div>
 
 
+<!-- =====================================================
+     FOOTER
+     ===================================================== -->
+
 <footer>
   TVN Baskets – Offizielle Kalenderübersicht
 </footer>
@@ -1780,6 +1723,7 @@ function bindStepHeadersInContainer(container) {
 
   if (!container) return;
 
+
   container
     .querySelectorAll('.step-header')
     .forEach(h => {
@@ -1787,7 +1731,10 @@ function bindStepHeadersInContainer(container) {
       const newH =
         h.cloneNode(true);
 
-      if (!newH.hasAttribute('role')) {
+
+      if (
+        !newH.hasAttribute('role')
+      ) {
 
         newH.setAttribute(
           'role',
@@ -1796,7 +1743,10 @@ function bindStepHeadersInContainer(container) {
 
       }
 
-      if (!newH.hasAttribute('tabindex')) {
+
+      if (
+        !newH.hasAttribute('tabindex')
+      ) {
 
         newH.setAttribute(
           'tabindex',
@@ -1805,10 +1755,12 @@ function bindStepHeadersInContainer(container) {
 
       }
 
+
       newH.setAttribute(
         'aria-expanded',
         'false'
       );
+
 
       h.parentNode.replaceChild(
         newH,
@@ -1828,10 +1780,13 @@ function bindStepHeadersInContainer(container) {
 
           e.stopPropagation();
 
+
           const c =
             h.nextElementSibling;
 
+
           if (!c) return;
+
 
           const isOpen =
             window.getComputedStyle(c)
@@ -1840,18 +1795,20 @@ function bindStepHeadersInContainer(container) {
 
 
           container
-            .querySelectorAll(
-              '.step-content'
-            )
+            .querySelectorAll('.step-content')
             .forEach(cc => {
 
-              if (cc !== c) {
+              if (
+                cc !== c
+              ) {
 
                 cc.style.display =
                   'none';
 
+
                 const hh =
                   cc.previousElementSibling;
+
 
                 if (
                   hh &&
@@ -1863,6 +1820,7 @@ function bindStepHeadersInContainer(container) {
                   );
 
                 }
+
 
                 if (
                   hh &&
@@ -1967,6 +1925,10 @@ document.addEventListener(
       );
 
 
+    /* =======================================================
+       REPORT ELEMENTE
+       ======================================================= */
+
     const reportBtn =
       document.getElementById(
         'open-report-btn'
@@ -2027,6 +1989,11 @@ document.addEventListener(
         'report-success'
       );
 
+    const reportWebsite =
+      document.getElementById(
+        'report-website'
+      );
+
     const reportSubmitButton =
       reportForm
         ? reportForm.querySelector(
@@ -2035,8 +2002,16 @@ document.addEventListener(
         : null;
 
 
+    /*
+     * Zeitpunkt des Öffnens.
+     *
+     * Wird für den 3-Sekunden-Schutz benötigt.
+     */
+    let reportOpenedAt = 0;
+
+
     /* =======================================================
-       ANLEITUNG INITIALISIEREN
+       ANLEITUNG AUFBAUEN
        ======================================================= */
 
     if (
@@ -2047,10 +2022,12 @@ document.addEventListener(
       stepsWrapper.innerHTML =
         template.innerHTML;
 
+
       stepsWrapper.insertAdjacentHTML(
         'afterbegin',
         '<button id="close-steps-btn" class="steps-close" aria-label="Schließen">&times;</button>'
       );
+
 
       bindStepHeadersInContainer(
         stepsWrapper
@@ -2085,6 +2062,7 @@ document.addEventListener(
 
         });
 
+
       activeContent =
         null;
 
@@ -2097,28 +2075,39 @@ document.addEventListener(
 
     function openStepsModal() {
 
+      /*
+       * Report nicht öffnen lassen,
+       * wenn die Anleitung aktiv ist.
+       */
+
       closeAllOverlays();
+
 
       stepsWrapper.style.display =
         'block';
+
 
       stepsWrapper.setAttribute(
         'aria-hidden',
         'false'
       );
 
+
       backdrop.style.display =
         'block';
+
 
       backdrop.setAttribute(
         'aria-hidden',
         'false'
       );
 
+
       guideBtn.setAttribute(
         'aria-expanded',
         'true'
       );
+
 
       document.body.style.overflow =
         'hidden';
@@ -2128,6 +2117,7 @@ document.addEventListener(
         stepsWrapper.querySelector(
           '#close-steps-btn'
         );
+
 
       if (
         closeBtn &&
@@ -2150,6 +2140,7 @@ document.addEventListener(
 
       if (!stepsWrapper) return;
 
+
       stepsWrapper
         .querySelectorAll(
           '.step-content'
@@ -2159,8 +2150,10 @@ document.addEventListener(
           c.style.display =
             'none';
 
+
           const hh =
             c.previousElementSibling;
+
 
           if (
             hh &&
@@ -2172,6 +2165,7 @@ document.addEventListener(
             );
 
           }
+
 
           if (
             hh &&
@@ -2191,28 +2185,34 @@ document.addEventListener(
       stepsWrapper.style.display =
         'none';
 
+
       stepsWrapper.setAttribute(
         'aria-hidden',
         'true'
       );
 
+
       backdrop.style.display =
         'none';
+
 
       backdrop.setAttribute(
         'aria-hidden',
         'true'
       );
 
+
       guideBtn.setAttribute(
         'aria-expanded',
         'false'
       );
 
+
       /*
-       * Nur dann Scrollen wieder erlauben,
-       * wenn kein anderes Modal offen ist.
+       * Wenn das Report-Modal offen ist,
+       * darf Scrollen nicht wieder aktiviert werden.
        */
+
       if (
         reportModal.style.display !==
         'block'
@@ -2226,12 +2226,19 @@ document.addEventListener(
     }
 
 
+    /* =======================================================
+       ANLEITUNG CLOSE BUTTON
+       ======================================================= */
+
     const modalCloseBtn =
       document.getElementById(
         'close-steps-btn'
       );
 
-    if (modalCloseBtn) {
+
+    if (
+      modalCloseBtn
+    ) {
 
       modalCloseBtn.addEventListener(
         'click',
@@ -2253,9 +2260,11 @@ document.addEventListener(
 
         e.stopPropagation();
 
+
         const isOpen =
           stepsWrapper.style.display ===
           'block';
+
 
         if (isOpen) {
 
@@ -2299,6 +2308,7 @@ document.addEventListener(
             '.team-card'
           );
 
+
         const content =
           card.querySelector(
             '.team-content'
@@ -2323,6 +2333,7 @@ document.addEventListener(
               '.overlay-close'
             );
 
+
           if (closeBtn) {
 
             closeBtn.addEventListener(
@@ -2331,13 +2342,16 @@ document.addEventListener(
 
                 e.stopPropagation();
 
+
                 content.style.display =
                   'none';
+
 
                 content.setAttribute(
                   'aria-hidden',
                   'true'
                 );
+
 
                 activeContent =
                   null;
@@ -2355,6 +2369,7 @@ document.addEventListener(
           e => {
 
             e.stopPropagation();
+
 
             if (!content) return;
 
@@ -2377,13 +2392,16 @@ document.addEventListener(
               content.style.display =
                 'none';
 
+
               content.setAttribute(
                 'aria-hidden',
                 'true'
               );
 
+
               activeContent =
                 null;
+
 
               return;
 
@@ -2447,6 +2465,7 @@ document.addEventListener(
 
               activeContent =
                 content;
+
 
               return;
 
@@ -2517,17 +2536,22 @@ document.addEventListener(
             content.style.position =
               'fixed';
 
+
             content.style.display =
               'block';
+
 
             content.style.zIndex =
               12000;
 
+
             content.style.width =
               desiredWidth + 'px';
 
+
             content.style.maxHeight =
               '80vh';
+
 
             content.setAttribute(
               'aria-hidden',
@@ -2541,6 +2565,7 @@ document.addEventListener(
 
             const contentHeight =
               content.offsetHeight;
+
 
             const viewportHeight =
               window.innerHeight;
@@ -2574,6 +2599,7 @@ document.addEventListener(
             content.style.top =
               topPos + 'px';
 
+
             content.style.left =
               leftPos + 'px';
 
@@ -2589,13 +2615,21 @@ document.addEventListener(
 
 
     /* =======================================================
-       REPORT MODAL
+       REPORT MODAL ÖFFNEN
        ======================================================= */
 
     function openReportModal() {
 
+      /*
+       * Team-Popup schließen.
+       */
+
       closeAllOverlays();
 
+
+      /*
+       * Anleitung schließen.
+       */
 
       if (
         stepsWrapper.style.display ===
@@ -2607,18 +2641,28 @@ document.addEventListener(
       }
 
 
+      /*
+       * Alte Meldungen löschen.
+       */
+
       reportError.style.display =
         'none';
 
       reportError.textContent =
         '';
 
+
       reportSuccess.style.display =
         'none';
 
 
+      /*
+       * Report öffnen.
+       */
+
       reportModal.style.display =
         'block';
+
 
       reportBackdrop.style.display =
         'block';
@@ -2629,6 +2673,7 @@ document.addEventListener(
         'false'
       );
 
+
       reportBackdrop.setAttribute(
         'aria-hidden',
         'false'
@@ -2636,36 +2681,57 @@ document.addEventListener(
 
 
       /*
-       * Auf Mobilgeräten verhindern wir,
-       * dass die Seite hinter dem Formular
-       * mitscrollt.
+       * Zeitpunkt speichern.
+       *
+       * Wichtig für den Bot-Schutz.
        */
+
+      reportOpenedAt =
+        Date.now();
+
+
+      /*
+       * Hintergrundseite sperren.
+       */
+
       document.body.style.overflow =
         'hidden';
 
 
-      setTimeout(() => {
+      /*
+       * Fokus auf Team-Auswahl.
+       */
 
-        if (
-          reportTeam &&
-          typeof reportTeam.focus ===
-            'function'
-        ) {
+      setTimeout(
+        () => {
 
-          reportTeam.focus();
+          if (
+            reportTeam &&
+            typeof reportTeam.focus ===
+              'function'
+          ) {
 
-        }
+            reportTeam.focus();
 
-      }, 50);
+          }
+
+        },
+        50
+      );
 
     }
 
+
+    /* =======================================================
+       REPORT MODAL SCHLIESSEN
+       ======================================================= */
 
     function closeReportModal() {
 
       reportModal.style.display =
         'none';
 
+
       reportBackdrop.style.display =
         'none';
 
@@ -2675,21 +2741,30 @@ document.addEventListener(
         'true'
       );
 
+
       reportBackdrop.setAttribute(
         'aria-hidden',
         'true'
       );
 
 
-      /*
-       * Nur beim tatsächlichen Schließen
-       * wird der Seiten-Scroll wieder freigegeben.
-       */
       document.body.style.overflow =
         '';
 
+
+      /*
+       * Zeitpunkt zurücksetzen.
+       */
+
+      reportOpenedAt =
+        0;
+
     }
 
+
+    /* =======================================================
+       REPORT BUTTON
+       ======================================================= */
 
     if (reportBtn) {
 
@@ -2706,6 +2781,10 @@ document.addEventListener(
 
     }
 
+
+    /* =======================================================
+       REPORT SCHLIESSEN
+       ======================================================= */
 
     if (closeReportBtn) {
 
@@ -2754,9 +2833,10 @@ document.addEventListener(
 
 
     /*
-     * Klicks innerhalb des Formulars
-     * dürfen das Modal NICHT schließen.
+     * Klicks IM Report-Modal dürfen
+     * das Modal nicht schließen.
      */
+
     if (reportModal) {
 
       reportModal.addEventListener(
@@ -2795,15 +2875,28 @@ document.addEventListener(
               .trim() ||
             '';
 
+
           const calendar =
             reportCalendar.value.trim();
+
 
           const title =
             reportTitle.value.trim();
 
+
           const description =
             reportDescription.value.trim();
 
+
+          const honeypot =
+            reportWebsite
+              ? reportWebsite.value.trim()
+              : '';
+
+
+          /* ===============================================
+             Pflichtfelder
+             =============================================== */
 
           if (
             !team ||
@@ -2823,10 +2916,38 @@ document.addEventListener(
           }
 
 
-          /*
-           * Button während des Sendens sperren.
-           */
-          if (reportSubmitButton) {
+          /* ===============================================
+             Mindestzeit
+             =============================================== */
+
+          const elapsed =
+            Date.now() -
+            reportOpenedAt;
+
+
+          if (
+            !reportOpenedAt ||
+            elapsed < 3000
+          ) {
+
+            reportError.textContent =
+              'Bitte fülle das Formular vollständig aus und versuche es erneut.';
+
+            reportError.style.display =
+              'block';
+
+            return;
+
+          }
+
+
+          /* ===============================================
+             Button deaktivieren
+             =============================================== */
+
+          if (
+            reportSubmitButton
+          ) {
 
             reportSubmitButton.disabled =
               true;
@@ -2857,17 +2978,31 @@ document.addEventListener(
                       'application/json'
                   },
 
-                  body:JSON.stringify({
-                    team,
-                    calendar,
-                    title,
-                    description
-                  })
+                  body:
+                    JSON.stringify({
+                      team,
+                      calendar,
+                      title,
+                      description,
+
+                      /*
+                       * Honeypot
+                       */
+                      website:
+                        honeypot,
+
+                      /*
+                       * Zeitpunkt des Öffnens
+                       */
+                      formOpenedAt:
+                        reportOpenedAt
+                    })
                 }
               );
 
 
-            let result = null;
+            let result =
+              null;
 
 
             try {
@@ -2896,25 +3031,28 @@ document.addEventListener(
             }
 
 
-            /*
-             * Erfolgreich gespeichert.
-             */
+            /* =========================================
+               ERFOLG
+               ========================================= */
 
             reportForm.reset();
+
 
             reportError.style.display =
               'none';
 
+
             reportSuccess.textContent =
               'Vielen Dank! Deine Fehlermeldung wurde erfolgreich übermittelt.';
+
 
             reportSuccess.style.display =
               'block';
 
 
             /*
-             * Formular nicht sofort schließen.
-             * Der Nutzer sieht die Erfolgsmeldung.
+             * Kurz die Erfolgsmeldung anzeigen,
+             * dann das Modal schließen.
              */
 
             setTimeout(
@@ -2938,13 +3076,16 @@ document.addEventListener(
             reportError.textContent =
               'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
 
+
             reportError.style.display =
               'block';
 
 
           } finally {
 
-            if (reportSubmitButton) {
+            if (
+              reportSubmitButton
+            ) {
 
               reportSubmitButton.disabled =
                 false;
@@ -2973,13 +3114,13 @@ document.addEventListener(
         const target =
           e.target;
 
+
         if (!target) return;
 
 
         /*
-         * Wenn ein Modal geöffnet ist,
-         * soll ein Klick außerhalb nicht
-         * versehentlich andere Dinge schließen.
+         * Report offen:
+         * nichts automatisch schließen.
          */
 
         if (
@@ -2991,6 +3132,10 @@ document.addEventListener(
 
         }
 
+
+        /*
+         * Anleitung offen.
+         */
 
         if (
           target.closest(
@@ -3041,6 +3186,10 @@ document.addEventListener(
         }
 
 
+        /*
+         * Report zuerst schließen.
+         */
+
         if (
           reportModal.style.display ===
           'block'
@@ -3052,6 +3201,10 @@ document.addEventListener(
 
         }
 
+
+        /*
+         * Danach Anleitung schließen.
+         */
 
         if (
           stepsWrapper.style.display ===
@@ -3065,8 +3218,11 @@ document.addEventListener(
         }
 
 
-        closeAllOverlays();
+        /*
+         * Sonst Team-Popup schließen.
+         */
 
+        closeAllOverlays();
 
         document.body.style.overflow =
           '';
@@ -3084,9 +3240,8 @@ document.addEventListener(
       () => {
 
         /*
-         * Ganz wichtig:
-         * Ein geöffnetes Report-Modal darf
-         * durch Scrollen NICHT geschlossen werden.
+         * Das Report-Modal darf durch Scrollen
+         * NICHT geschlossen werden.
          */
 
         if (
@@ -3100,9 +3255,9 @@ document.addEventListener(
 
 
         /*
-         * Gleiches Verhalten wie bisher
-         * für Team-Popups.
+         * Team-Popups wie bisher schließen.
          */
+
         closeAllOverlays();
 
       },
@@ -3121,13 +3276,13 @@ document.addEventListener(
       () => {
 
         /*
-         * WICHTIG:
-         * Report-Modal NICHT schließen.
+         * Sehr wichtig:
          *
-         * Gerade auf Smartphones können beim
-         * Öffnen/Schließen der Tastatur oder
-         * durch die Browser-UI resize events
-         * ausgelöst werden.
+         * Auf Smartphones kann resize ausgelöst werden,
+         * wenn die Tastatur geöffnet/geschlossen wird.
+         *
+         * Das Report-Modal darf deshalb NICHT
+         * automatisch geschlossen werden.
          */
 
         if (
@@ -3144,10 +3299,10 @@ document.addEventListener(
 
 
         /*
-         * Nur die Anleitung schließen,
-         * wenn wirklich die Fenstergröße
-         * geändert wird.
+         * Anleitung schließen bei echtem
+         * Fenstergrößenwechsel.
          */
+
         if (
           stepsWrapper.style.display ===
           'block'
@@ -3168,21 +3323,6 @@ document.addEventListener(
     );
 
   }
-);
-
-</script>
-
-</body>
-</html>`;
-
-  fs.writeFileSync(
-    path.resolve(
-      __dirname,
-      '../generated/index.html'
-    ),
-    content,
-    'utf8'
-  );
 }
 
 genHTML();
