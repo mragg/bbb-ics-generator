@@ -1,3 +1,4 @@
+// complete generator script — ersetzt deine alte Datei komplett
 const fs = require('fs');
 const path = require('path');
 
@@ -10,30 +11,31 @@ function safeReadJson(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
 
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = fs.readFileSync(
+      filePath,
+      'utf8'
+    );
+
     return JSON.parse(raw);
   } catch (err) {
     console.error(
       `Fehler beim Einlesen/Parsen von ${filePath}:`,
       err.message
     );
+
     return null;
   }
 }
 
 function normalizeId(value) {
-  if (value === undefined || value === null) return '';
-  // Nur sichere Zeichen für IDs/Dateinamen zulassen (verhindert kaputtes HTML)
-  return String(value).trim().replace(/[^a-zA-Z0-9_-]/g, '');
-}
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return '';
+  }
 
-function htmlEscape(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value).trim();
 }
 
 function genHTML() {
@@ -47,20 +49,32 @@ function genHTML() {
     '../generated/teams.json'
   );
 
-  const rawMeta = safeReadJson(metaPath) || [];
-  const rawTeams = safeReadJson(teamsPath) || [];
+  const rawMeta =
+    safeReadJson(metaPath) || [];
 
-  const metadataArray = Array.isArray(rawMeta)
-    ? rawMeta
-    : (rawMeta.teams || rawMeta.data || []);
+  const rawTeams =
+    safeReadJson(teamsPath) || [];
 
-  const teamsArray = Array.isArray(rawTeams)
-    ? rawTeams
-    : (rawTeams.teams || rawTeams.data || []);
+  const metadataArray =
+    Array.isArray(rawMeta)
+      ? rawMeta
+      : (
+          rawMeta.teams ||
+          rawMeta.data ||
+          []
+        );
 
-  void teamsArray;
+  const teamsArray =
+    Array.isArray(rawTeams)
+      ? rawTeams
+      : (
+          rawTeams.teams ||
+          rawTeams.data ||
+          []
+        );
 
-  const teams = metadataArray.map((m) => {
+  // Finales, sauberes Team-Array für das Template
+  const teams = metadataArray.map(m => {
     const id = normalizeId(
       m.teamId ??
       m.id ??
@@ -71,93 +85,37 @@ function genHTML() {
 
     return {
       teamId: id,
-      name: m.teamName ?? m.name ?? m.title ?? 'Unbenannt',
-      ageGroup: m.ageGroup ?? '',
-      matchCount: m.matchCount ?? m.matches ?? 0,
-      homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
-      awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
+
+      name:
+        m.teamName ??
+        m.name ??
+        m.title ??
+        'Unbenannt',
+
+      ageGroup:
+        m.ageGroup ?? '',
+
+      matchCount:
+        m.matchCount ??
+        m.matches ??
+        0,
+
+      homeMatchCount:
+        m.homeMatchCount ??
+        m.homeMatches ??
+        0,
+
+      awayMatchCount:
+        m.awayMatchCount ??
+        m.awayMatches ??
+        0
     };
-  });
-
-  const teamCards = teams.map((t, index) => {
-    const name = htmlEscape(t.name);
-    const ageGroup = htmlEscape(t.ageGroup);
-    const safeTeamId = htmlEscape(t.teamId);
-    const matchCount = htmlEscape(t.matchCount);
-    const homeMatchCount = htmlEscape(t.homeMatchCount);
-    const awayMatchCount = htmlEscape(t.awayMatchCount);
-
-    const allFile = t.teamId
-      ? safeTeamId + '_all.ics'
-      : encodeURIComponent(t.name) + '_all.ics';
-
-    const homeFile = t.teamId
-      ? safeTeamId + '_home.ics'
-      : encodeURIComponent(t.name) + '_home.ics';
-
-    const awayFile = t.teamId
-      ? safeTeamId + '_away.ics'
-      : encodeURIComponent(t.name) + '_away.ics';
-
-    return `
-      <div class="team-card">
-        <div class="team-header" data-index="${index}">
-          ${name}${t.ageGroup ? ` (<strong>${ageGroup}</strong>)` : ''}
-        </div>
-
-        <div class="team-content" aria-hidden="true">
-          <button
-            class="overlay-close"
-            type="button"
-            aria-label="Schließen"
-          >
-            &times;
-          </button>
-
-          <div class="team-content-preview">
-            ${name}${t.ageGroup ? ` (<strong>${ageGroup}</strong>)` : ''}
-            <p>
-              ${matchCount} Spiele,
-              Heim: ${homeMatchCount},
-              Auswärts: ${awayMatchCount}
-            </p>
-          </div>
-
-          <div class="buttons">
-            <a href="${makeWebcalLink(allFile)}">
-              Alle Spiele abonnieren
-            </a>
-
-            <a href="${makeWebcalLink(homeFile)}">
-              Nur Heimspiele abonnieren
-            </a>
-
-            <a href="${makeWebcalLink(awayFile)}">
-              Nur Auswärtsspiele abonnieren
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const teamOptions = teams.map((t) => {
-    const label = htmlEscape(
-      t.name + (t.ageGroup ? ` (${t.ageGroup})` : '')
-    );
-
-    const value = htmlEscape(t.teamId);
-
-    return `<option value="${value}">${label}</option>`;
-  }).join('');
-
-  const generatedAt = new Date().toLocaleString('de-DE', {
-    timeZone: 'Europe/Berlin'
   });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
 <head>
+
 <meta charset="UTF-8">
 
 <meta
@@ -187,6 +145,10 @@ function genHTML() {
   --tvn-muted:#6d5a50;
   --tvn-border:rgba(255,122,24,.18);
 }
+
+/* =========================================================
+   RESET / GLOBAL
+   ========================================================= */
 
 *{
   box-sizing:border-box;
@@ -229,7 +191,9 @@ body{
   -moz-osx-font-smoothing:grayscale;
 }
 
-/* Header */
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 header{
   background:
@@ -298,7 +262,9 @@ header{
   font-size:0.95rem;
 }
 
-/* Layout */
+/* =========================================================
+   LAYOUT
+   ========================================================= */
 
 .container{
   max-width:960px;
@@ -320,7 +286,9 @@ header{
   align-items:flex-start;
 }
 
-/* Team card */
+/* =========================================================
+   TEAM CARD
+   ========================================================= */
 
 .team-card{
   background:var(--tvn-surface);
@@ -374,7 +342,9 @@ header{
   color:var(--tvn-muted);
 }
 
-/* Overlay */
+/* =========================================================
+   TEAM POPUP
+   ========================================================= */
 
 .team-content{
   position:fixed;
@@ -398,6 +368,10 @@ header{
 
   box-sizing:border-box;
 }
+
+/* =========================================================
+   TEAM BUTTONS
+   ========================================================= */
 
 .team-content .buttons{
   display:flex;
@@ -444,7 +418,9 @@ header{
   transform:translateY(-2px);
 }
 
-/* Steps */
+/* =========================================================
+   STEPS
+   ========================================================= */
 
 .step-box{
   background:var(--tvn-surface);
@@ -528,7 +504,9 @@ header{
   background:#fffaf5;
 }
 
-/* Anleitung */
+/* =========================================================
+   ANLEITUNG BUTTON
+   ========================================================= */
 
 .guide-btn{
   display:inline-block;
@@ -556,6 +534,10 @@ header{
 
   margin-bottom:12px;
 }
+
+/* =========================================================
+   STEPS MODAL
+   ========================================================= */
 
 #steps-backdrop{
   display:none;
@@ -625,7 +607,9 @@ header{
   padding:6px;
 }
 
-/* Popup close */
+/* =========================================================
+   TEAM POPUP CLOSE
+   ========================================================= */
 
 .overlay-close{
   display:none;
@@ -647,7 +631,9 @@ header{
   color:#222;
 }
 
-/* Bottom link */
+/* =========================================================
+   BOTTOM LINK
+   ========================================================= */
 
 .page-bottom{
   max-width:960px;
@@ -706,7 +692,7 @@ header{
 }
 
 /* =========================================================
-   REPORT
+   FEHLER MELDEN
    ========================================================= */
 
 .report-section{
@@ -755,7 +741,7 @@ header{
   max-width:650px;
 }
 
-.report-open-btn{
+.report-btn{
   display:inline-block;
 
   padding:12px 20px;
@@ -789,13 +775,15 @@ header{
     filter .12s;
 }
 
-.report-open-btn:hover{
+.report-btn:hover{
   filter:brightness(1.04);
 
   transform:translateY(-2px);
 }
 
-/* Report modal */
+/* =========================================================
+   REPORT MODAL
+   ========================================================= */
 
 #report-backdrop{
   display:none;
@@ -825,7 +813,7 @@ header{
 
   max-width:680px;
 
-  max-height:90vh;
+  max-height:88vh;
 
   overflow-y:auto;
 
@@ -896,9 +884,7 @@ header{
 .report-form-group textarea{
   width:100%;
 
-  border:
-    1px solid
-    rgba(36,22,15,.18);
+  border:1px solid rgba(36,22,15,.18);
 
   border-radius:8px;
 
@@ -923,7 +909,7 @@ header{
 }
 
 .report-form-group textarea{
-  min-height:150px;
+  min-height:160px;
 
   resize:vertical;
 }
@@ -992,6 +978,8 @@ header{
   opacity:.65;
 
   cursor:wait;
+
+  transform:none;
 }
 
 .report-error{
@@ -1012,6 +1000,10 @@ header{
   text-align:left;
 }
 
+/* =========================================================
+   SUCCESS MESSAGE
+   ========================================================= */
+
 .report-success{
   display:none;
 
@@ -1030,22 +1022,9 @@ header{
   line-height:1.4;
 }
 
-#report-game-wrapper{
-  display:none;
-}
-
-#report-game-loading,
-#report-game-empty{
-  display:none;
-
-  margin-top:6px;
-
-  font-size:.86rem;
-
-  color:var(--tvn-muted);
-}
-
-/* Footer */
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 footer{
   padding:18px 16px 28px;
@@ -1054,10 +1033,12 @@ footer{
 
   color:var(--tvn-muted);
 
-  font-size:.95rem;
+  font-size:0.95rem;
 }
 
-/* MOBILE */
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
 @media (max-width:600px){
 
@@ -1093,8 +1074,7 @@ footer{
     overflow-y:auto;
 
     box-shadow:
-      0 30px 60px
-      rgba(0,0,0,.35);
+      0 30px 60px rgba(0,0,0,0.35);
   }
 
   .overlay-close{
@@ -1134,7 +1114,17 @@ footer{
 
     border-radius:0;
 
-    padding:48px 18px 18px 18px;
+    padding:
+      48px
+      18px
+      18px
+      18px;
+  }
+
+  .steps-close{
+    top:12px;
+
+    right:12px;
   }
 
   .back-link{
@@ -1143,10 +1133,19 @@ footer{
     text-align:center;
   }
 
-  .report-open-btn{
-    width:100%;
+  .report-section{
+    margin-top:10px;
   }
 
+  .report-card{
+    padding:18px;
+  }
+
+  /*
+   * Wichtig:
+   * Das Report-Modal ist auf Mobilgeräten
+   * ein echtes Vollbild-Modal.
+   */
   #report-modal{
     top:0;
 
@@ -1162,11 +1161,16 @@ footer{
 
     border-radius:0;
 
-    padding:18px;
+    padding:
+      18px;
 
     overflow-y:auto;
 
     -webkit-overflow-scrolling:touch;
+  }
+
+  .report-modal-header{
+    padding-top:4px;
   }
 
   .report-actions{
@@ -1180,12 +1184,15 @@ footer{
 
 }
 
+/* =========================================================
+   SCRIPT
+   ========================================================= */
+
 </style>
 
 </head>
 
 <body>
-
 
 <header>
 
@@ -1204,9 +1211,17 @@ footer{
       </h1>
 
       <p>
-        Kalender Übersicht –
-        automatisch aktualisiert<br>
-        Stand: ${generatedAt}
+        Kalender Übersicht – automatisch aktualisiert<br>
+
+        Stand:
+        ${new Date().toLocaleString(
+          'de-DE',
+          {
+            timeZone:
+              'Europe/Berlin'
+          }
+        )}
+
       </p>
 
     </div>
@@ -1215,23 +1230,20 @@ footer{
 
 </header>
 
-
 <div class="container">
 
-
-  <!-- ===================================================
+  <!-- =====================================================
        ANLEITUNG
-       =================================================== -->
+       ===================================================== -->
 
   <button
     id="show-steps-btn"
     class="guide-btn"
-    type="button"
     aria-expanded="false"
+    aria-controls="steps-wrapper"
   >
     Anleitung anzeigen
   </button>
-
 
   <div
     id="steps-backdrop"
@@ -1264,9 +1276,10 @@ footer{
         </p>
 
         <p>
-          Auf Smartphones oder Tablets geschieht dies
-          durch langes Drücken auf den Link und Auswahl
-          von <strong>„Link kopieren“</strong>.
+          Auf Smartphones oder Tablets geschieht
+          dies durch langes Drücken auf den Link
+          und Auswahl von
+          <strong>„Link kopieren“</strong>.
         </p>
 
         <p>
@@ -1325,12 +1338,13 @@ footer{
       <div class="step-content">
 
         <p>
-          Fügen Sie den kopierten Link in das
-          vorgesehene Feld ein.
+          Fügen Sie den kopierten Link in
+          das vorgesehene Feld ein.
         </p>
 
         <p>
-          Bestätigen Sie anschließend das Abonnement.
+          Bestätigen Sie anschließend das
+          Abonnement.
         </p>
 
         <p>
@@ -1339,8 +1353,8 @@ footer{
         </p>
 
         <p>
-          Änderungen werden selbstständig übernommen,
-          sobald sie auftreten.
+          Änderungen werden selbstständig
+          übernommen, sobald sie auftreten.
         </p>
 
       </div>
@@ -1355,31 +1369,154 @@ footer{
     role="dialog"
     aria-modal="true"
     aria-hidden="true"
+    style="display:none;"
   ></div>
 
 
-  <!-- ===================================================
+  <!-- =====================================================
        TEAMS
-       =================================================== -->
+       ===================================================== -->
 
   <div class="teams-container">
 
-    ${teamCards}
+    ${teams.map((t, index) => `
+
+      <div class="team-card">
+
+        <div
+          class="team-header"
+          data-index="${index}"
+        >
+
+          ${t.name}
+
+          ${
+            t.ageGroup
+              ? ` (<strong>${t.ageGroup}</strong>)`
+              : ''
+          }
+
+        </div>
+
+
+        <div
+          class="team-content"
+          aria-hidden="true"
+        >
+
+          <button
+            class="overlay-close"
+            aria-label="Schließen"
+          >
+            &times;
+          </button>
+
+
+          <div class="team-content-preview">
+
+            ${t.name}
+
+            ${
+              t.ageGroup
+                ? ` (<strong>${t.ageGroup}</strong>)`
+                : ''
+            }
+
+            <p>
+
+              ${t.matchCount} Spiele,
+
+              Heim:
+              ${t.homeMatchCount},
+
+              Auswärts:
+              ${t.awayMatchCount}
+
+            </p>
+
+          </div>
+
+
+          <div class="buttons">
+
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_all.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_all.ics'
+                    )
+              )}"
+            >
+              Alle Spiele abonnieren
+            </a>
+
+
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_home.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_home.ics'
+                    )
+              )}"
+            >
+              Nur Heimspiele abonnieren
+            </a>
+
+
+            <a
+              href="${makeWebcalLink(
+                t.teamId
+                  ? (
+                      t.teamId +
+                      '_away.ics'
+                    )
+                  : (
+                      encodeURIComponent(
+                        t.name
+                      ) +
+                      '_away.ics'
+                    )
+              )}"
+            >
+              Nur Auswärtsspiele abonnieren
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    `).join('')}
 
   </div>
 
 </div>
 
 
-<!-- =====================================================
-     ZURÜCK
-     ===================================================== -->
+<!-- =========================================================
+     ZURÜCK ZU DEN TEAMS
+     ========================================================= -->
 
 <div class="page-bottom">
 
   <div class="bottom-card">
 
-    
+    <a
       class="back-link"
       href="https://www.tvn-baskets.de/teams/"
     >
@@ -1391,9 +1528,9 @@ footer{
 </div>
 
 
-<!-- =====================================================
+<!-- =========================================================
      FEHLER MELDEN
-     ===================================================== -->
+     ========================================================= -->
 
 <div class="report-section">
 
@@ -1410,10 +1547,10 @@ footer{
 
     <button
       id="open-report-btn"
-      class="report-open-btn"
+      class="report-btn"
       type="button"
     >
-      Fehler melden
+      🐞 Fehler melden
     </button>
 
   </div>
@@ -1421,9 +1558,7 @@ footer{
 </div>
 
 
-<!-- =====================================================
-     REPORT BACKDROP
-     ===================================================== -->
+<!-- Report Backdrop -->
 
 <div
   id="report-backdrop"
@@ -1431,21 +1566,19 @@ footer{
 ></div>
 
 
-<!-- =====================================================
-     REPORT MODAL
-     ===================================================== -->
+<!-- Report Modal -->
 
 <div
   id="report-modal"
   role="dialog"
   aria-modal="true"
   aria-hidden="true"
-  aria-labelledby="report-title-heading"
+  aria-labelledby="report-modal-title"
 >
 
   <div class="report-modal-header">
 
-    <h2 id="report-title-heading">
+    <h2 id="report-modal-title">
       Fehler melden
     </h2>
 
@@ -1463,96 +1596,67 @@ footer{
 
   <form id="report-form">
 
-
-    <!-- HONEYPOT -->
-
-    <input
-      type="text"
-      id="report-website"
-      name="website"
-      tabindex="-1"
-      autocomplete="off"
-      aria-hidden="true"
-      style="
-        position:absolute;
-        left:-10000px;
-        top:auto;
-        width:1px;
-        height:1px;
-        overflow:hidden;
-      "
-    >
-
-
-    <!-- TEAM -->
+    <!-- Team -->
 
     <div class="report-form-group">
 
       <label for="report-team">
-
-        Betroffenes Team
-
-        <span
-          style="
-            font-weight:400;
-            color:var(--tvn-muted);
-          "
-        >
-          (optional)
-        </span>
-
+        Betroffenes Team / Kalender
       </label>
-
 
       <select
         id="report-team"
         name="team"
+        required
       >
 
         <option
           value=""
           selected
+          disabled
         >
-          Kein bestimmtes Team
+          Bitte Team auswählen
         </option>
 
-        ${teamOptions}
+        ${teams.map(t => `
+
+          <option
+            value="${t.teamId}"
+          >
+            ${t.name}${
+              t.ageGroup
+                ? ` (${t.ageGroup})`
+                : ''
+            }
+          </option>
+
+        `).join('')}
 
       </select>
 
     </div>
 
 
-    <!-- KALENDER -->
+    <!-- Kalender -->
 
     <div class="report-form-group">
 
       <label for="report-calendar">
-
         Betroffener Kalender
-
-        <span
-          style="
-            font-weight:400;
-            color:var(--tvn-muted);
-          "
-        >
-          (optional)
-        </span>
-
       </label>
-
 
       <select
         id="report-calendar"
         name="calendar"
+        required
       >
 
         <option
           value=""
           selected
+          disabled
         >
-          Kein bestimmter Kalender
+          Bitte Kalender auswählen
         </option>
 
         <option value="Alle Spiele">
@@ -1572,65 +1676,13 @@ footer{
     </div>
 
 
-    <!-- SPIEL -->
-
-    <div
-      id="report-game-wrapper"
-      class="report-form-group"
-    >
-
-      <label for="report-game">
-
-        Betroffenes Spiel
-
-        <span
-          style="
-            font-weight:400;
-            color:var(--tvn-muted);
-          "
-        >
-          (optional)
-        </span>
-
-      </label>
-
-
-      <select
-        id="report-game"
-        name="game"
-      >
-
-        <option value="">
-          Kein bestimmtes Spiel
-        </option>
-
-      </select>
-
-
-      <div
-        id="report-game-loading"
-      >
-        Spiele werden geladen...
-      </div>
-
-
-      <div
-        id="report-game-empty"
-      >
-        Keine Spiele konnten geladen werden.
-      </div>
-
-    </div>
-
-
-    <!-- TITEL -->
+    <!-- Titel -->
 
     <div class="report-form-group">
 
       <label for="report-title">
         Titel
       </label>
-
 
       <input
         id="report-title"
@@ -1644,14 +1696,13 @@ footer{
     </div>
 
 
-    <!-- BESCHREIBUNG -->
+    <!-- Beschreibung -->
 
     <div class="report-form-group">
 
       <label for="report-description">
         Beschreibung
       </label>
-
 
       <textarea
         id="report-description"
@@ -1661,7 +1712,6 @@ footer{
         required
       ></textarea>
 
-
       <div class="report-help">
         Je genauer die Beschreibung ist,
         desto leichter kann der Fehler gefunden werden.
@@ -1670,17 +1720,26 @@ footer{
     </div>
 
 
+    <!-- Fehleranzeige -->
+
     <div
       id="report-error"
       class="report-error"
     ></div>
 
 
+    <!-- Erfolg -->
+
     <div
       id="report-success"
       class="report-success"
-    ></div>
+    >
+      Deine Fehlermeldung wurde erfolgreich
+      übermittelt.
+    </div>
 
+
+    <!-- Buttons -->
 
     <div class="report-actions">
 
@@ -1692,7 +1751,6 @@ footer{
         Abbrechen
       </button>
 
-
       <button
         type="submit"
         class="report-submit-btn"
@@ -1701,7 +1759,6 @@ footer{
       </button>
 
     </div>
-
 
   </form>
 
@@ -1715,546 +1772,591 @@ footer{
 
 <script>
 
-(function () {
+/* =========================================================
+   ANLEITUNG
+   ========================================================= */
 
-  'use strict';
+function bindStepHeadersInContainer(container) {
 
+  if (!container) return;
 
-  /* ========================================================
-     ELEMENTE
-     ======================================================== */
+  container
+    .querySelectorAll('.step-header')
+    .forEach(h => {
 
-  var template =
-    document.getElementById(
-      'steps-template'
-    );
+      const newH =
+        h.cloneNode(true);
 
-  var stepsWrapper =
-    document.getElementById(
-      'steps-wrapper'
-    );
+      if (!newH.hasAttribute('role')) {
 
-  var stepsBackdrop =
-    document.getElementById(
-      'steps-backdrop'
-    );
+        newH.setAttribute(
+          'role',
+          'button'
+        );
 
-  var guideButton =
-    document.getElementById(
-      'show-steps-btn'
-    );
+      }
 
-  var reportButton =
-    document.getElementById(
-      'open-report-btn'
-    );
+      if (!newH.hasAttribute('tabindex')) {
 
-  var reportModal =
-    document.getElementById(
-      'report-modal'
-    );
+        newH.setAttribute(
+          'tabindex',
+          '0'
+        );
 
-  var reportBackdrop =
-    document.getElementById(
-      'report-backdrop'
-    );
+      }
 
-  var closeReportButton =
-    document.getElementById(
-      'close-report-btn'
-    );
+      newH.setAttribute(
+        'aria-expanded',
+        'false'
+      );
 
-  var cancelReportButton =
-    document.getElementById(
-      'cancel-report-btn'
-    );
+      h.parentNode.replaceChild(
+        newH,
+        h
+      );
 
-  var reportForm =
-    document.getElementById(
-      'report-form'
-    );
-
-  var reportTeam =
-    document.getElementById(
-      'report-team'
-    );
-
-  var reportCalendar =
-    document.getElementById(
-      'report-calendar'
-    );
-
-  var reportGameWrapper =
-    document.getElementById(
-      'report-game-wrapper'
-    );
-
-  var reportGame =
-    document.getElementById(
-      'report-game'
-    );
-
-  var reportGameLoading =
-    document.getElementById(
-      'report-game-loading'
-    );
-
-  var reportGameEmpty =
-    document.getElementById(
-      'report-game-empty'
-    );
-
-  var reportTitle =
-    document.getElementById(
-      'report-title'
-    );
-
-  var reportDescription =
-    document.getElementById(
-      'report-description'
-    );
-
-  var reportWebsite =
-    document.getElementById(
-      'report-website'
-    );
-
-  var reportError =
-    document.getElementById(
-      'report-error'
-    );
-
-  var reportSuccess =
-    document.getElementById(
-      'report-success'
-    );
-
-  var reportSubmitButton =
-    reportForm
-      ? reportForm.querySelector(
-          '.report-submit-btn'
-        )
-      : null;
+    });
 
 
-  var activeContent =
-    null;
+  container
+    .querySelectorAll('.step-header')
+    .forEach(h => {
 
-  var reportOpenedAt =
-    0;
+      h.addEventListener(
+        'click',
+        (e) => {
 
+          e.stopPropagation();
 
-  /* ========================================================
-     ANLEITUNG
-     ======================================================== */
+          const c =
+            h.nextElementSibling;
 
-  if (
-    template &&
-    stepsWrapper
-  ) {
+          if (!c) return;
 
-    stepsWrapper.innerHTML =
-      template.innerHTML;
-
-
-    stepsWrapper.insertAdjacentHTML(
-      'afterbegin',
-      '<button id="close-steps-btn" class="steps-close" type="button" aria-label="Schließen">&times;</button>'
-    );
+          const isOpen =
+            window.getComputedStyle(c)
+              .display ===
+            'block';
 
 
-    stepsWrapper
-      .querySelectorAll(
-        '.step-header'
-      )
-      .forEach(
-        function (header) {
+          container
+            .querySelectorAll(
+              '.step-content'
+            )
+            .forEach(cc => {
 
-          header.addEventListener(
-            'click',
-            function (event) {
+              if (cc !== c) {
 
-              event.stopPropagation();
-
-
-              var content =
-                header.nextElementSibling;
-
-
-              if (!content) {
-                return;
-              }
-
-
-              var isOpen =
-                window.getComputedStyle(
-                  content
-                ).display ===
-                'block';
-
-
-              stepsWrapper
-                .querySelectorAll(
-                  '.step-content'
-                )
-                .forEach(
-                  function (item) {
-
-                    if (
-                      item !== content
-                    ) {
-
-                      item.style.display =
-                        'none';
-
-
-                      var oldHeader =
-                        item.previousElementSibling;
-
-
-                      if (oldHeader) {
-
-                        oldHeader.classList.remove(
-                          'open'
-                        );
-
-                        oldHeader.setAttribute(
-                          'aria-expanded',
-                          'false'
-                        );
-
-                      }
-
-                    }
-
-                  }
-                );
-
-
-              if (isOpen) {
-
-                content.style.display =
+                cc.style.display =
                   'none';
 
+                const hh =
+                  cc.previousElementSibling;
 
-                header.classList.remove(
-                  'open'
-                );
+                if (
+                  hh &&
+                  hh.classList
+                ) {
 
+                  hh.classList.remove(
+                    'open'
+                  );
 
-                header.setAttribute(
-                  'aria-expanded',
-                  'false'
-                );
+                }
 
-              } else {
+                if (
+                  hh &&
+                  hh.setAttribute
+                ) {
 
-                content.style.display =
-                  'block';
+                  hh.setAttribute(
+                    'aria-expanded',
+                    'false'
+                  );
 
-
-                header.classList.add(
-                  'open'
-                );
-
-
-                header.setAttribute(
-                  'aria-expanded',
-                  'true'
-                );
-
-              }
-
-            }
-          );
-
-
-          header.addEventListener(
-            'keydown',
-            function (event) {
-
-              if (
-                event.key === 'Enter' ||
-                event.key === ' '
-              ) {
-
-                event.preventDefault();
-
-                header.click();
+                }
 
               }
 
-            }
-          );
+            });
+
+
+          if (isOpen) {
+
+            c.style.display =
+              'none';
+
+            h.classList.remove(
+              'open'
+            );
+
+            h.setAttribute(
+              'aria-expanded',
+              'false'
+            );
+
+          } else {
+
+            c.style.display =
+              'block';
+
+            h.classList.add(
+              'open'
+            );
+
+            h.setAttribute(
+              'aria-expanded',
+              'true'
+            );
+
+          }
 
         }
       );
 
-  }
+
+      h.addEventListener(
+        'keydown',
+        (e) => {
+
+          if (
+            e.key === 'Enter' ||
+            e.key === ' '
+          ) {
+
+            e.preventDefault();
+
+            h.click();
+
+          }
+
+        }
+      );
+
+    });
+
+}
 
 
-  /* ========================================================
-     OVERLAYS
-     ======================================================== */
+/* =========================================================
+   DOM INITIALISIERUNG
+   ========================================================= */
 
-  function closeAllOverlays() {
+document.addEventListener(
+  'DOMContentLoaded',
+  () => {
 
-    document
-      .querySelectorAll(
-        '.team-content'
-      )
-      .forEach(
-        function (content) {
+    const template =
+      document.getElementById(
+        'steps-template'
+      );
 
-          content.style.display =
+    const stepsWrapper =
+      document.getElementById(
+        'steps-wrapper'
+      );
+
+    const backdrop =
+      document.getElementById(
+        'steps-backdrop'
+      );
+
+    const guideBtn =
+      document.getElementById(
+        'show-steps-btn'
+      );
+
+
+    const reportBtn =
+      document.getElementById(
+        'open-report-btn'
+      );
+
+    const reportModal =
+      document.getElementById(
+        'report-modal'
+      );
+
+    const reportBackdrop =
+      document.getElementById(
+        'report-backdrop'
+      );
+
+    const closeReportBtn =
+      document.getElementById(
+        'close-report-btn'
+      );
+
+    const cancelReportBtn =
+      document.getElementById(
+        'cancel-report-btn'
+      );
+
+    const reportForm =
+      document.getElementById(
+        'report-form'
+      );
+
+    const reportTitle =
+      document.getElementById(
+        'report-title'
+      );
+
+    const reportDescription =
+      document.getElementById(
+        'report-description'
+      );
+
+    const reportTeam =
+      document.getElementById(
+        'report-team'
+      );
+
+    const reportCalendar =
+      document.getElementById(
+        'report-calendar'
+      );
+
+    const reportError =
+      document.getElementById(
+        'report-error'
+      );
+
+    const reportSuccess =
+      document.getElementById(
+        'report-success'
+      );
+
+    const reportSubmitButton =
+      reportForm
+        ? reportForm.querySelector(
+            '.report-submit-btn'
+          )
+        : null;
+
+
+    /* =======================================================
+       ANLEITUNG INITIALISIEREN
+       ======================================================= */
+
+    if (
+      template &&
+      stepsWrapper
+    ) {
+
+      stepsWrapper.innerHTML =
+        template.innerHTML;
+
+      stepsWrapper.insertAdjacentHTML(
+        'afterbegin',
+        '<button id="close-steps-btn" class="steps-close" aria-label="Schließen">&times;</button>'
+      );
+
+      bindStepHeadersInContainer(
+        stepsWrapper
+      );
+
+    }
+
+
+    let activeContent =
+      null;
+
+
+    /* =======================================================
+       TEAM OVERLAYS SCHLIESSEN
+       ======================================================= */
+
+    function closeAllOverlays() {
+
+      document
+        .querySelectorAll(
+          '.team-content'
+        )
+        .forEach(c => {
+
+          c.style.display =
             'none';
 
-
-          content.setAttribute(
+          c.setAttribute(
             'aria-hidden',
             'true'
           );
 
-        }
+        });
+
+      activeContent =
+        null;
+
+    }
+
+
+    /* =======================================================
+       ANLEITUNG ÖFFNEN
+       ======================================================= */
+
+    function openStepsModal() {
+
+      closeAllOverlays();
+
+      stepsWrapper.style.display =
+        'block';
+
+      stepsWrapper.setAttribute(
+        'aria-hidden',
+        'false'
       );
 
+      backdrop.style.display =
+        'block';
 
-    activeContent =
-      null;
+      backdrop.setAttribute(
+        'aria-hidden',
+        'false'
+      );
 
-  }
-
-
-  /* ========================================================
-     ANLEITUNG ÖFFNEN
-     ======================================================== */
-
-  function openStepsModal() {
-
-    closeAllOverlays();
-
-
-    if (
-      reportModal.style.display ===
-      'block'
-    ) {
-
-      closeReportModal();
-
-    }
-
-
-    stepsWrapper.style.display =
-      'block';
-
-
-    stepsWrapper.setAttribute(
-      'aria-hidden',
-      'false'
-    );
-
-
-    stepsBackdrop.style.display =
-      'block';
-
-
-    stepsBackdrop.setAttribute(
-      'aria-hidden',
-      'false'
-    );
-
-
-    guideButton.setAttribute(
-      'aria-expanded',
-      'true'
-    );
-
-
-    document.body.style.overflow =
-      'hidden';
-
-  }
-
-
-  /* ========================================================
-     ANLEITUNG SCHLIESSEN
-     ======================================================== */
-
-  function closeStepsModal() {
-
-    stepsWrapper.style.display =
-      'none';
-
-
-    stepsWrapper.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-
-
-    stepsBackdrop.style.display =
-      'none';
-
-
-    stepsBackdrop.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-
-
-    guideButton.setAttribute(
-      'aria-expanded',
-      'false'
-    );
-
-
-    if (
-      reportModal.style.display !==
-      'block'
-    ) {
+      guideBtn.setAttribute(
+        'aria-expanded',
+        'true'
+      );
 
       document.body.style.overflow =
-        '';
+        'hidden';
+
+
+      const closeBtn =
+        stepsWrapper.querySelector(
+          '#close-steps-btn'
+        );
+
+      if (
+        closeBtn &&
+        typeof closeBtn.focus ===
+          'function'
+      ) {
+
+        closeBtn.focus();
+
+      }
 
     }
 
-  }
+
+    /* =======================================================
+       ANLEITUNG SCHLIESSEN
+       ======================================================= */
+
+    function closeStepsModal() {
+
+      if (!stepsWrapper) return;
+
+      stepsWrapper
+        .querySelectorAll(
+          '.step-content'
+        )
+        .forEach(c => {
+
+          c.style.display =
+            'none';
+
+          const hh =
+            c.previousElementSibling;
+
+          if (
+            hh &&
+            hh.classList
+          ) {
+
+            hh.classList.remove(
+              'open'
+            );
+
+          }
+
+          if (
+            hh &&
+            hh.setAttribute
+          ) {
+
+            hh.setAttribute(
+              'aria-expanded',
+              'false'
+            );
+
+          }
+
+        });
 
 
-  var closeStepsButton =
-    document.getElementById(
-      'close-steps-btn'
-    );
+      stepsWrapper.style.display =
+        'none';
 
+      stepsWrapper.setAttribute(
+        'aria-hidden',
+        'true'
+      );
 
-  if (closeStepsButton) {
+      backdrop.style.display =
+        'none';
 
-    closeStepsButton.addEventListener(
-      'click',
-      function (event) {
+      backdrop.setAttribute(
+        'aria-hidden',
+        'true'
+      );
 
-        event.stopPropagation();
+      guideBtn.setAttribute(
+        'aria-expanded',
+        'false'
+      );
 
-        closeStepsModal();
-
-      }
-    );
-
-  }
-
-
-  guideButton.addEventListener(
-    'click',
-    function (event) {
-
-      event.stopPropagation();
-
-
+      /*
+       * Nur dann Scrollen wieder erlauben,
+       * wenn kein anderes Modal offen ist.
+       */
       if (
-        stepsWrapper.style.display ===
+        reportModal.style.display !==
         'block'
       ) {
 
-        closeStepsModal();
-
-      } else {
-
-        openStepsModal();
+        document.body.style.overflow =
+          '';
 
       }
 
     }
-  );
 
 
-  stepsBackdrop.addEventListener(
-    'click',
-    closeStepsModal
-  );
+    const modalCloseBtn =
+      document.getElementById(
+        'close-steps-btn'
+      );
+
+    if (modalCloseBtn) {
+
+      modalCloseBtn.addEventListener(
+        'click',
+        (e) => {
+
+          e.stopPropagation();
+
+          closeStepsModal();
+
+        }
+      );
+
+    }
 
 
-  /* ========================================================
-     TEAM POPUPS
-     ======================================================== */
+    guideBtn.addEventListener(
+      'click',
+      (e) => {
 
-  document
-    .querySelectorAll(
-      '.team-header'
-    )
-    .forEach(
-      function (header) {
+        e.stopPropagation();
 
-        var card =
+        const isOpen =
+          stepsWrapper.style.display ===
+          'block';
+
+        if (isOpen) {
+
+          closeStepsModal();
+
+        } else {
+
+          openStepsModal();
+
+        }
+
+      }
+    );
+
+
+    backdrop.addEventListener(
+      'click',
+      () => {
+
+        closeStepsModal();
+
+      }
+    );
+
+
+    /* =======================================================
+       TEAM POPUPS
+       ======================================================= */
+
+    const teamHeaders =
+      document.querySelectorAll(
+        '.team-header'
+      );
+
+
+    teamHeaders.forEach(
+      (header) => {
+
+        const card =
           header.closest(
             '.team-card'
           );
 
-
-        if (!card) {
-          return;
-        }
-
-
-        var content =
+        const content =
           card.querySelector(
             '.team-content'
           );
 
 
-        if (!content) {
-          return;
+        if (content) {
+
+          content.addEventListener(
+            'click',
+            e =>
+              e.stopPropagation()
+          );
+
         }
 
 
-        content.addEventListener(
-          'click',
-          function (event) {
+        if (content) {
 
-            event.stopPropagation();
+          const closeBtn =
+            content.querySelector(
+              '.overlay-close'
+            );
+
+          if (closeBtn) {
+
+            closeBtn.addEventListener(
+              'click',
+              e => {
+
+                e.stopPropagation();
+
+                content.style.display =
+                  'none';
+
+                content.setAttribute(
+                  'aria-hidden',
+                  'true'
+                );
+
+                activeContent =
+                  null;
+
+              }
+            );
 
           }
-        );
-
-
-        var closeButton =
-          content.querySelector(
-            '.overlay-close'
-          );
-
-
-        if (closeButton) {
-
-          closeButton.addEventListener(
-            'click',
-            function (event) {
-
-              event.stopPropagation();
-
-
-              content.style.display =
-                'none';
-
-
-              content.setAttribute(
-                'aria-hidden',
-                'true'
-              );
-
-
-              activeContent =
-                null;
-
-            }
-          );
 
         }
 
 
         header.addEventListener(
           'click',
-          function (event) {
+          e => {
 
-            event.stopPropagation();
+            e.stopPropagation();
+
+            if (!content) return;
 
 
             if (
@@ -2275,16 +2377,13 @@ footer{
               content.style.display =
                 'none';
 
-
               content.setAttribute(
                 'aria-hidden',
                 'true'
               );
 
-
               activeContent =
                 null;
-
 
               return;
 
@@ -2307,7 +2406,7 @@ footer{
             }
 
 
-            var isMobile =
+            const isMobile =
               window.innerWidth <=
               600;
 
@@ -2317,66 +2416,55 @@ footer{
               content.style.position =
                 'fixed';
 
-
               content.style.left =
                 '0px';
-
 
               content.style.top =
                 '0px';
 
-
               content.style.width =
                 '100vw';
-
 
               content.style.height =
                 '100vh';
 
-
               content.style.maxHeight =
                 'none';
-
 
               content.style.display =
                 'block';
 
-
               content.style.zIndex =
-                '12000';
-
+                12000;
 
               content.setAttribute(
                 'aria-hidden',
                 'false'
               );
 
-
               content.scrollTop =
                 0;
 
-
               activeContent =
                 content;
-
 
               return;
 
             }
 
 
-            var rect =
+            const rect =
               header.getBoundingClientRect();
 
 
-            var desiredWidth =
+            let desiredWidth =
               Math.max(
                 rect.width * 2.2,
                 360
               );
 
 
-            var maxWidth =
+            const maxWidth =
               window.innerWidth *
               0.95;
 
@@ -2392,11 +2480,11 @@ footer{
             }
 
 
-            var margin =
+            const margin =
               28;
 
 
-            var leftPos =
+            let leftPos =
               rect.left;
 
 
@@ -2416,7 +2504,7 @@ footer{
 
 
             if (
-              leftPos 
+              leftPos <
               margin
             ) {
 
@@ -2429,23 +2517,17 @@ footer{
             content.style.position =
               'fixed';
 
-
             content.style.display =
               'block';
 
-
             content.style.zIndex =
-              '12000';
-
+              12000;
 
             content.style.width =
-              desiredWidth +
-              'px';
-
+              desiredWidth + 'px';
 
             content.style.maxHeight =
               '80vh';
-
 
             content.setAttribute(
               'aria-hidden',
@@ -2453,15 +2535,14 @@ footer{
             );
 
 
-            var topPos =
+            let topPos =
               rect.bottom;
 
 
-            var contentHeight =
+            const contentHeight =
               content.offsetHeight;
 
-
-            var viewportHeight =
+            const viewportHeight =
               window.innerHeight;
 
 
@@ -2480,7 +2561,7 @@ footer{
 
 
             if (
-              topPos 
+              topPos <
               20
             ) {
 
@@ -2491,726 +2572,37 @@ footer{
 
 
             content.style.top =
-              topPos +
-              'px';
-
+              topPos + 'px';
 
             content.style.left =
-              leftPos +
-              'px';
+              leftPos + 'px';
 
 
             activeContent =
               content;
 
           }
+
         );
 
-      }
-    );
+      });
 
 
-  /* ========================================================
-     ICS SPIEL-LISTE
-     ======================================================== */
+    /* =======================================================
+       REPORT MODAL
+       ======================================================= */
 
-  function unfoldICS(
-    text
-  ) {
+    function openReportModal() {
 
-    return String(
-      text || ''
-    ).replace(
-      /\r?\n[ \t]/g,
-      ''
-    );
-
-  }
-
-
-  function getICSProperty(
-    block,
-    property
-  ) {
-
-    var regex =
-      new RegExp(
-        '(?:^|\\n)' +
-        property +
-        '(?:;[^:]*)?:(.*)',
-        'i'
-      );
-
-
-    var match =
-      block.match(
-        regex
-      );
-
-
-    return match
-      ? match[1].trim()
-      : '';
-
-  }
-
-
-  function unescapeICS(
-    value
-  ) {
-
-    return String(
-      value || ''
-    )
-      .replace(
-        /\\\\/g,
-        '\\'
-      )
-      .replace(
-        /\\,/g,
-        ','
-      )
-      .replace(
-        /\\;/g,
-        ';'
-      )
-      .replace(
-        /\\n/g,
-        ' '
-      );
-
-  }
-
-
-  function formatICSDate(
-    value
-  ) {
-
-    var clean =
-      String(
-        value || ''
-      )
-        .replace(
-          /^TZID=[^:;]+:/i,
-          ''
-        )
-        .replace(
-          /Z$/i,
-          ''
-        );
-
-
-    if (
-      clean.length 
-      8
-    ) {
-
-      return clean;
-
-    }
-
-
-    var year =
-      clean.slice(
-        0,
-        4
-      );
-
-    var month =
-      clean.slice(
-        4,
-        6
-      );
-
-    var day =
-      clean.slice(
-        6,
-        8
-      );
-
-
-    var result =
-      day +
-      '.' +
-      month +
-      '.' +
-      year;
-
-
-    if (
-      clean.length >=
-      12
-    ) {
-
-      result +=
-        ' ' +
-        clean.slice(
-          8,
-          10
-        ) +
-        ':' +
-        clean.slice(
-          10,
-          12
-        );
-
-    }
-
-
-    return result;
-
-  }
-
-
-  function parseGames(
-    icsText
-  ) {
-
-    var games = [];
-
-
-    var unfolded =
-      unfoldICS(
-        icsText
-      );
-
-
-    var blocks =
-      unfolded.split(
-        'BEGIN:VEVENT'
-      );
-
-
-    blocks.shift();
-
-
-    blocks.forEach(
-      function (block) {
-
-        var endIndex =
-          block.indexOf(
-            'END:VEVENT'
-          );
-
-
-        var eventBlock =
-          endIndex >= 0
-            ? block.slice(
-                0,
-                endIndex
-              )
-            : block;
-
-
-        var summary =
-          unescapeICS(
-            getICSProperty(
-              eventBlock,
-              'SUMMARY'
-            )
-          );
-
-
-        var start =
-          getICSProperty(
-            eventBlock,
-            'DTSTART'
-          );
-
-
-        if (
-          !summary ||
-          !start
-        ) {
-
-          return;
-
-        }
-
-
-        games.push({
-
-          label:
-            formatICSDate(
-              start
-            ) +
-            ' – ' +
-            summary,
-
-          value:
-            summary +
-            ' | ' +
-            formatICSDate(
-              start
-            )
-
-        });
-
-      }
-    );
-
-
-    games.sort(
-      function (a, b) {
-
-        return a.label.localeCompare(
-          b.label,
-          'de'
-        );
-
-      }
-    );
-
-
-    return games;
-
-  }
-
-
-  /* ========================================================
-     SPIELE LADEN
-     ======================================================== */
-
-  async function loadGamesForTeam(
-    teamId
-  ) {
-
-    reportGame.innerHTML =
-      '<option value="">Kein bestimmtes Spiel</option>';
-
-
-    reportGameLoading.style.display =
-      'none';
-
-
-    reportGameEmpty.style.display =
-      'none';
-
-
-    if (!teamId) {
-
-      reportGameWrapper.style.display =
-        'none';
-
-
-      return;
-
-    }
-
-
-    reportGameWrapper.style.display =
-      'block';
-
-
-    reportGameLoading.style.display =
-      'block';
-
-
-    try {
-
-      var url =
-        '${makeWebcalLink('')}' +
-        encodeURIComponent(
-          teamId
-        ) +
-        '_all.ics';
-
-
-      var response =
-        await fetch(
-          url,
-          {
-            cache:
-              'no-store'
-          }
-        );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          'ICS konnte nicht geladen werden.'
-        );
-
-      }
-
-
-      var text =
-        await response.text();
-
-
-      var games =
-        parseGames(
-          text
-        );
+      closeAllOverlays();
 
 
       if (
-        !games.length
+        stepsWrapper.style.display ===
+        'block'
       ) {
 
-        reportGameEmpty.style.display =
-          'block';
-
-
-        return;
-
-      }
-
-
-      games.forEach(
-        function (game) {
-
-          var option =
-            document.createElement(
-              'option'
-            );
-
-
-          option.value =
-            game.value;
-
-
-          option.textContent =
-            game.label;
-
-
-          reportGame.appendChild(
-            option
-          );
-
-        }
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        'Fehler beim Laden der Spiele:',
-        error
-      );
-
-
-      reportGameEmpty.textContent =
-        'Die Spiele konnten nicht geladen werden.';
-
-
-      reportGameEmpty.style.display =
-        'block';
-
-
-    } finally {
-
-      reportGameLoading.style.display =
-        'none';
-
-    }
-
-  }
-
-
-  reportTeam.addEventListener(
-    'change',
-    function () {
-
-      loadGamesForTeam(
-        reportTeam.value
-      );
-
-    }
-  );
-
-
-  /* ========================================================
-     REPORT ÖFFNEN
-     ======================================================== */
-
-  function openReportModal() {
-
-    closeAllOverlays();
-
-
-    if (
-      stepsWrapper.style.display ===
-      'block'
-    ) {
-
-      closeStepsModal();
-
-    }
-
-
-    reportError.style.display =
-      'none';
-
-
-    reportError.textContent =
-      '';
-
-
-    reportSuccess.style.display =
-      'none';
-
-
-    reportSuccess.textContent =
-      '';
-
-
-    reportOpenedAt =
-      Date.now();
-
-
-    reportModal.style.display =
-      'block';
-
-
-    reportBackdrop.style.display =
-      'block';
-
-
-    reportModal.setAttribute(
-      'aria-hidden',
-      'false'
-    );
-
-
-    reportBackdrop.setAttribute(
-      'aria-hidden',
-      'false'
-    );
-
-
-    /*
-     * Wichtig auf Mobilgeräten:
-     * resize darf das Modal nicht schließen.
-     */
-
-    document.body.style.overflow =
-      'hidden';
-
-
-    setTimeout(
-      function () {
-
-        reportTeam.focus();
-
-      },
-      50
-    );
-
-  }
-
-
-  /* ========================================================
-     REPORT SCHLIESSEN
-     ======================================================== */
-
-  function closeReportModal() {
-
-    reportModal.style.display =
-      'none';
-
-
-    reportBackdrop.style.display =
-      'none';
-
-
-    reportModal.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-
-
-    reportBackdrop.setAttribute(
-      'aria-hidden',
-      'true'
-    );
-
-
-    document.body.style.overflow =
-      '';
-
-
-    reportOpenedAt =
-      0;
-
-  }
-
-
-  reportButton.addEventListener(
-    'click',
-    function (event) {
-
-      event.stopPropagation();
-
-      openReportModal();
-
-    }
-  );
-
-
-  closeReportButton.addEventListener(
-    'click',
-    function (event) {
-
-      event.stopPropagation();
-
-      closeReportModal();
-
-    }
-  );
-
-
-  cancelReportButton.addEventListener(
-    'click',
-    function (event) {
-
-      event.stopPropagation();
-
-      closeReportModal();
-
-    }
-  );
-
-
-  reportBackdrop.addEventListener(
-    'click',
-    closeReportModal
-  );
-
-
-  reportModal.addEventListener(
-    'click',
-    function (event) {
-
-      event.stopPropagation();
-
-    }
-  );
-
-
-  /* ========================================================
-     REPORT SENDEN
-     ======================================================== */
-
-  reportForm.addEventListener(
-    'submit',
-    async function (event) {
-
-      event.preventDefault();
-
-      event.stopPropagation();
-
-
-      var teamId =
-        reportTeam.value.trim();
-
-
-      var team =
-        '';
-
-
-      if (
-        teamId &&
-        reportTeam.selectedIndex >=
-        0
-      ) {
-
-        var selectedOption =
-          reportTeam.options[
-            reportTeam.selectedIndex
-          ];
-
-
-        if (selectedOption) {
-
-          team =
-            selectedOption.textContent.trim();
-
-        }
-
-      }
-
-
-      var calendar =
-        reportCalendar.value.trim();
-
-
-      var game =
-        reportGame.value.trim();
-
-
-      var title =
-        reportTitle.value.trim();
-
-
-      var description =
-        reportDescription.value.trim();
-
-
-      var website =
-        reportWebsite
-          ? reportWebsite.value.trim()
-          : '';
-
-
-      /*
-       * Nur Titel und Beschreibung
-       * sind Pflicht.
-       */
-
-      if (
-        !title ||
-        !description
-      ) {
-
-        reportError.textContent =
-          'Bitte fülle Titel und Beschreibung aus.';
-
-
-        reportError.style.display =
-          'block';
-
-
-        return;
-
-      }
-
-
-      /*
-       * 3-Sekunden-Schutz.
-       */
-
-      if (
-        !reportOpenedAt ||
-        Date.now() -
-          reportOpenedAt 
-          3000
-      ) {
-
-        reportError.textContent =
-          'Bitte fülle das Formular vollständig aus und versuche es erneut.';
-
-
-        reportError.style.display =
-          'block';
-
-
-        return;
-
-      }
-
-
-      if (
-        reportSubmitButton
-      ) {
-
-        reportSubmitButton.disabled =
-          true;
-
-
-        reportSubmitButton.textContent =
-          'Wird gesendet...';
+        closeStepsModal();
 
       }
 
@@ -3218,339 +2610,565 @@ footer{
       reportError.style.display =
         'none';
 
+      reportError.textContent =
+        '';
 
       reportSuccess.style.display =
         'none';
 
 
-      try {
+      reportModal.style.display =
+        'block';
 
-        var response =
-          await fetch(
-            'https://bbb-ics-report.raggelija.workers.dev',
-            {
-              method:'POST',
+      reportBackdrop.style.display =
+        'block';
 
-              headers:{
-                'Content-Type':
-                  'application/json'
-              },
 
-              body:
-                JSON.stringify({
-                  team:
+      reportModal.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+      reportBackdrop.setAttribute(
+        'aria-hidden',
+        'false'
+      );
+
+
+      /*
+       * Auf Mobilgeräten verhindern wir,
+       * dass die Seite hinter dem Formular
+       * mitscrollt.
+       */
+      document.body.style.overflow =
+        'hidden';
+
+
+      setTimeout(() => {
+
+        if (
+          reportTeam &&
+          typeof reportTeam.focus ===
+            'function'
+        ) {
+
+          reportTeam.focus();
+
+        }
+
+      }, 50);
+
+    }
+
+
+    function closeReportModal() {
+
+      reportModal.style.display =
+        'none';
+
+      reportBackdrop.style.display =
+        'none';
+
+
+      reportModal.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      reportBackdrop.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+
+      /*
+       * Nur beim tatsächlichen Schließen
+       * wird der Seiten-Scroll wieder freigegeben.
+       */
+      document.body.style.overflow =
+        '';
+
+    }
+
+
+    if (reportBtn) {
+
+      reportBtn.addEventListener(
+        'click',
+        (e) => {
+
+          e.stopPropagation();
+
+          openReportModal();
+
+        }
+      );
+
+    }
+
+
+    if (closeReportBtn) {
+
+      closeReportBtn.addEventListener(
+        'click',
+        (e) => {
+
+          e.stopPropagation();
+
+          closeReportModal();
+
+        }
+      );
+
+    }
+
+
+    if (cancelReportBtn) {
+
+      cancelReportBtn.addEventListener(
+        'click',
+        (e) => {
+
+          e.stopPropagation();
+
+          closeReportModal();
+
+        }
+      );
+
+    }
+
+
+    if (reportBackdrop) {
+
+      reportBackdrop.addEventListener(
+        'click',
+        () => {
+
+          closeReportModal();
+
+        }
+      );
+
+    }
+
+
+    /*
+     * Klicks innerhalb des Formulars
+     * dürfen das Modal NICHT schließen.
+     */
+    if (reportModal) {
+
+      reportModal.addEventListener(
+        'click',
+        e => {
+
+          e.stopPropagation();
+
+        }
+      );
+
+    }
+
+
+    /* =======================================================
+       REPORT ABSENDEN
+       ======================================================= */
+
+    if (reportForm) {
+
+      reportForm.addEventListener(
+        'submit',
+        async (e) => {
+
+          e.preventDefault();
+
+          e.stopPropagation();
+
+
+          const team =
+            reportTeam
+              .options[
+                reportTeam.selectedIndex
+              ]
+              ?.textContent
+              .trim() ||
+            '';
+
+          const calendar =
+            reportCalendar.value.trim();
+
+          const title =
+            reportTitle.value.trim();
+
+          const description =
+            reportDescription.value.trim();
+
+
+          if (
+            !team ||
+            !calendar ||
+            !title ||
+            !description
+          ) {
+
+            reportError.textContent =
+              'Bitte fülle alle Felder aus.';
+
+            reportError.style.display =
+              'block';
+
+            return;
+
+          }
+
+
+          /*
+           * Button während des Sendens sperren.
+           */
+          if (reportSubmitButton) {
+
+            reportSubmitButton.disabled =
+              true;
+
+            reportSubmitButton.textContent =
+              'Wird gesendet...';
+
+          }
+
+
+          reportError.style.display =
+            'none';
+
+          reportSuccess.style.display =
+            'none';
+
+
+          try {
+
+            const response =
+              await fetch(
+                'https://bbb-ics-report.raggelija.workers.dev',
+                {
+                  method:'POST',
+
+                  headers:{
+                    'Content-Type':
+                      'application/json'
+                  },
+
+                  body:JSON.stringify({
                     team,
-
-                  teamId:
-                    teamId,
-
-                  calendar:
                     calendar,
-
-                  game:
-                    game,
-
-                  title:
                     title,
+                    description
+                  })
+                }
+              );
 
-                  description:
-                    description,
 
-                  website:
-                    website,
+            let result = null;
 
-                  formOpenedAt:
-                    reportOpenedAt
-                })
+
+            try {
+
+              result =
+                await response.json();
+
+            } catch (error) {
+
+              result =
+                null;
+
             }
-          );
 
 
-        var result =
-          null;
+            if (
+              !response.ok ||
+              !result?.success
+            ) {
+
+              throw new Error(
+                result?.error ||
+                'Die Fehlermeldung konnte nicht gesendet werden.'
+              );
+
+            }
 
 
-        try {
+            /*
+             * Erfolgreich gespeichert.
+             */
 
-          result =
-            await response.json();
+            reportForm.reset();
 
-        } catch (error) {
+            reportError.style.display =
+              'none';
 
-          result =
-            null;
+            reportSuccess.textContent =
+              'Vielen Dank! Deine Fehlermeldung wurde erfolgreich übermittelt.';
+
+            reportSuccess.style.display =
+              'block';
+
+
+            /*
+             * Formular nicht sofort schließen.
+             * Der Nutzer sieht die Erfolgsmeldung.
+             */
+
+            setTimeout(
+              () => {
+
+                closeReportModal();
+
+              },
+              1800
+            );
+
+
+          } catch (error) {
+
+            console.error(
+              'Fehler beim Senden des Reports:',
+              error
+            );
+
+
+            reportError.textContent =
+              'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
+
+            reportError.style.display =
+              'block';
+
+
+          } finally {
+
+            if (reportSubmitButton) {
+
+              reportSubmitButton.disabled =
+                false;
+
+              reportSubmitButton.textContent =
+                'Meldung erstellen';
+
+            }
+
+          }
+
+        }
+      );
+
+    }
+
+
+    /* =======================================================
+       DOCUMENT CLICK
+       ======================================================= */
+
+    document.addEventListener(
+      'click',
+      (e) => {
+
+        const target =
+          e.target;
+
+        if (!target) return;
+
+
+        /*
+         * Wenn ein Modal geöffnet ist,
+         * soll ein Klick außerhalb nicht
+         * versehentlich andere Dinge schließen.
+         */
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          return;
 
         }
 
 
         if (
-          !response.ok ||
-          !result ||
-          !result.success
+          target.closest(
+            '#steps-wrapper'
+          ) ||
+          target.closest(
+            '#steps-backdrop'
+          )
         ) {
 
-          throw new Error(
-            result &&
-            result.error
-              ? result.error
-              : 'Die Fehlermeldung konnte nicht gesendet werden.'
-          );
+          return;
+
+        }
+
+
+        closeAllOverlays();
+
+
+        if (
+          window.innerWidth <=
+          600
+        ) {
+
+          document.body.style.overflow =
+            '';
+
+        }
+
+      }
+    );
+
+
+    /* =======================================================
+       ESCAPE
+       ======================================================= */
+
+    document.addEventListener(
+      'keydown',
+      (e) => {
+
+        if (
+          e.key !==
+          'Escape'
+        ) {
+
+          return;
+
+        }
+
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          closeReportModal();
+
+          return;
+
+        }
+
+
+        if (
+          stepsWrapper.style.display ===
+          'block'
+        ) {
+
+          closeStepsModal();
+
+          return;
+
+        }
+
+
+        closeAllOverlays();
+
+
+        document.body.style.overflow =
+          '';
+
+      }
+    );
+
+
+    /* =======================================================
+       SCROLL
+       ======================================================= */
+
+    window.addEventListener(
+      'scroll',
+      () => {
+
+        /*
+         * Ganz wichtig:
+         * Ein geöffnetes Report-Modal darf
+         * durch Scrollen NICHT geschlossen werden.
+         */
+
+        if (
+          reportModal.style.display ===
+          'block'
+        ) {
+
+          return;
 
         }
 
 
         /*
-         * Erfolg
+         * Gleiches Verhalten wie bisher
+         * für Team-Popups.
+         */
+        closeAllOverlays();
+
+      },
+      {
+        passive:true
+      }
+    );
+
+
+    /* =======================================================
+       RESIZE
+       ======================================================= */
+
+    window.addEventListener(
+      'resize',
+      () => {
+
+        /*
+         * WICHTIG:
+         * Report-Modal NICHT schließen.
+         *
+         * Gerade auf Smartphones können beim
+         * Öffnen/Schließen der Tastatur oder
+         * durch die Browser-UI resize events
+         * ausgelöst werden.
          */
 
-        reportForm.reset();
-
-
-        reportGameWrapper.style.display =
-          'none';
-
-
-        reportError.style.display =
-          'none';
-
-
-        reportSuccess.textContent =
-          'Vielen Dank! Deine Fehlermeldung wurde erfolgreich übermittelt.';
-
-
-        reportSuccess.style.display =
-          'block';
-
-
-        setTimeout(
-          function () {
-
-            closeReportModal();
-
-          },
-          1800
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          'Fehler beim Senden des Reports:',
-          error
-        );
-
-
-        reportError.textContent =
-          'Die Fehlermeldung konnte leider nicht gesendet werden. Bitte versuche es später erneut.';
-
-
-        reportError.style.display =
-          'block';
-
-
-      } finally {
-
         if (
-          reportSubmitButton
+          reportModal.style.display ===
+          'block'
         ) {
 
-          reportSubmitButton.disabled =
-            false;
-
-
-          reportSubmitButton.textContent =
-            'Meldung erstellen';
+          return;
 
         }
 
+
+        closeAllOverlays();
+
+
+        /*
+         * Nur die Anleitung schließen,
+         * wenn wirklich die Fenstergröße
+         * geändert wird.
+         */
+        if (
+          stepsWrapper.style.display ===
+          'block'
+        ) {
+
+          closeStepsModal();
+
+        }
+
+
+        document.body.style.overflow =
+          '';
+
+      },
+      {
+        passive:true
       }
+    );
 
-    }
-  );
-
-
-  /* ========================================================
-     GLOBAL CLICK
-     ======================================================== */
-
-  document.addEventListener(
-    'click',
-    function (event) {
-
-      var target =
-        event.target;
-
-
-      if (!target) {
-        return;
-      }
-
-
-      /*
-       * Report bleibt offen.
-       */
-
-      if (
-        reportModal.style.display ===
-        'block'
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        target.closest(
-          '#steps-wrapper'
-        ) ||
-        target.closest(
-          '#steps-backdrop'
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      closeAllOverlays();
-
-    }
-  );
-
-
-  /* ========================================================
-     ESCAPE
-     ======================================================== */
-
-  document.addEventListener(
-    'keydown',
-    function (event) {
-
-      if (
-        event.key !==
-        'Escape'
-      ) {
-
-        return;
-
-      }
-
-
-      if (
-        reportModal.style.display ===
-        'block'
-      ) {
-
-        closeReportModal();
-
-        return;
-
-      }
-
-
-      if (
-        stepsWrapper.style.display ===
-        'block'
-      ) {
-
-        closeStepsModal();
-
-        return;
-
-      }
-
-
-      closeAllOverlays();
-
-
-      document.body.style.overflow =
-        '';
-
-    }
-  );
-
-
-  /* ========================================================
-     SCROLL
-     ======================================================== */
-
-  window.addEventListener(
-    'scroll',
-    function () {
-
-      /*
-       * Report niemals durch Scrollen schließen.
-       */
-
-      if (
-        reportModal.style.display ===
-        'block'
-      ) {
-
-        return;
-
-      }
-
-
-      closeAllOverlays();
-
-    },
-    {
-      passive:true
-    }
-  );
-
-
-  /* ========================================================
-     RESIZE
-     ======================================================== */
-
-  window.addEventListener(
-    'resize',
-    function () {
-
-      /*
-       * Auf Smartphones kann resize durch
-       * Tastatur oder Browser-UI ausgelöst werden.
-       *
-       * Report darf deswegen NICHT geschlossen werden.
-       */
-
-      if (
-        reportModal.style.display ===
-        'block'
-      ) {
-
-        return;
-
-      }
-
-
-      closeAllOverlays();
-
-
-      if (
-        stepsWrapper.style.display ===
-        'block'
-      ) {
-
-        closeStepsModal();
-
-      }
-
-
-      document.body.style.overflow =
-        '';
-
-    },
-    {
-      passive:true
-    }
-  );
-
-})();
+  }
+);
 
 </script>
 
