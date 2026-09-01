@@ -14,3 +14,16 @@
     "node-cron": "^3.0.3"
   }
 }
+{
+  "scripts": {
+    "update": "node src/generateICS.js",
+    "generate-html": "node src/generateHTML.js",
+    "generate-export": "node src/generateMasterExport.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "ical": "^0.8.0",
+    "node-fetch": "^2.7.0",
+    "pdfkit": "^0.15.0"
+  }
+}
