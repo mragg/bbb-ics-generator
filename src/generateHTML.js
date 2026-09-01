@@ -1,4 +1,4 @@
-// complete generator script — mit Animationen, Schnellzugriff, Tastatur-Navigation & mehr
+// complete generator script — mit Download-Sektion für Gesamt-Spielplan
 const fs = require('fs');
 const path = require('path');
 
@@ -38,6 +38,10 @@ function genHTML() {
     homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
+
+  // Prüfen ob Export-Dateien existieren
+  const excelExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.xlsx'));
+  const pdfExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.pdf'));
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -111,7 +115,6 @@ body {
 
 .container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-/* FEATURE 5: SCHNELLZUGRIFF-LEISTE */
 .quick-access {
   position: sticky; top: 0; z-index: 100; background: var(--color-surface);
   border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem;
@@ -147,7 +150,6 @@ body {
 .team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
 .team-card.keyboard-focus { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 
-/* FEATURE 3: FAVORIT-ANIMATION */
 .favorite-btn {
   position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;
   background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
@@ -178,8 +180,6 @@ body {
 .stat { text-align: center; transition: var(--transition); cursor: default; }
 .stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }
 .stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }
-
-/* FEATURE 4: STATISTIK-HOVER-EFFEKT */
 .team-stats:hover .stat { opacity: 0.4; }
 .team-stats .stat:hover { opacity: 1; transform: scale(1.1); }
 .team-stats .stat:hover .stat-val { font-size: 1.8rem; }
@@ -198,12 +198,38 @@ body {
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
 
+/* DOWNLOAD-SEKTION */
+.download-section {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-radius: var(--radius-lg); padding: 2.5rem; text-align: center;
+  margin-bottom: 3rem; position: relative; overflow: hidden;
+}
+.download-section::before {
+  content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,107,0,0.15) 0%, transparent 70%); border-radius: 50%;
+}
+.download-section h2 { font-family: 'Oswald', sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem; position: relative; }
+.download-section p { color: #94A3B8; max-width: 500px; margin: 0 auto 1.5rem; position: relative; }
+.download-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+.download-btn {
+  display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem;
+  border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; text-decoration: none;
+  transition: var(--transition); border: none; cursor: pointer;
+}
+.download-btn-excel { background: #217346; color: white; }
+.download-btn-excel:hover { background: #1a5c38; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(33,115,70,0.3); }
+.download-btn-pdf { background: #D32F2F; color: white; }
+.download-btn-pdf:hover { background: #b71c1c; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(211,47,47,0.3); }
+.download-btn i { width: 20px; height: 20px; }
+.download-btn-text { text-align: left; }
+.download-btn-label { font-size: 0.75rem; opacity: 0.8; display: block; }
+.download-btn-name { font-size: 1rem; font-weight: 700; display: block; }
+
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
 .toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 #konfetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
 
-/* FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON */
 .scroll-top-btn {
   position: fixed; bottom: 2rem; right: 2rem; width: 48px; height: 48px;
   background: var(--color-primary); color: white; border: none; border-radius: 50%;
@@ -215,7 +241,6 @@ body {
 .scroll-top-btn:hover { background: var(--color-primary-hover); transform: translateY(-4px); }
 .scroll-top-btn i { width: 24px; height: 24px; }
 
-/* FEATURE 7: KONTEXT-MENÜ */
 .context-menu {
   position: fixed; background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 0.5rem 0;
@@ -240,6 +265,8 @@ body {
   .link-row .btn-copy { width: 100%; }
   .quick-access-inner { justify-content: center; }
   .scroll-top-btn { bottom: 1rem; right: 1rem; width: 44px; height: 44px; }
+  .download-buttons { flex-direction: column; align-items: stretch; }
+  .download-btn { justify-content: center; }
 }
 </style>
 </head>
@@ -268,7 +295,6 @@ body {
   </div>
 </header>
 
-<!-- FEATURE 5: SCHNELLZUGRIFF-LEISTE -->
 <div class="quick-access" id="quick-access">
   <div class="quick-access-inner">
     <span class="quick-access-label">⭐ Deine Favoriten:</span>
@@ -336,39 +362,47 @@ body {
       '</div>';
     }).join('')}
   </div>
+
+  ${excelExists || pdfExists ? `
+  <div class="download-section">
+    <i data-lucide="download" style="width:40px;height:40px;color:var(--color-primary);margin-bottom:0.5rem;position:relative;"></i>
+    <h2>Gesamt-Spielplan herunterladen</h2>
+    <p>Alle Spiele aller Mannschaften chronologisch sortiert in einer Datei.</p>
+    <div class="download-buttons">
+      ${excelExists ? `
+      <a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel">
+        <i data-lucide="table"></i>
+        <div class="download-btn-text">
+          <span class="download-btn-label">Excel-Datei</span>
+          <span class="download-btn-name">Gesamt-Spielplan.xlsx</span>
+        </div>
+      </a>` : ''}
+      ${pdfExists ? `
+      <a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf">
+        <i data-lucide="file-text"></i>
+        <div class="download-btn-text">
+          <span class="download-btn-label">PDF-Datei</span>
+          <span class="download-btn-name">Gesamt-Spielplan.pdf</span>
+        </div>
+      </a>` : ''}
+    </div>
+  </div>` : ''}
 </main>
 
 <footer class="footer" id="main-footer" style="display:none;">
   <p>© ${new Date().getFullYear()} TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p>
 </footer>
 
-<!-- FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON -->
 <button class="scroll-top-btn" id="scroll-top-btn" aria-label="Nach oben scrollen">
   <i data-lucide="arrow-up"></i>
 </button>
 
-<!-- FEATURE 7: KONTEXT-MENÜ -->
 <div class="context-menu" id="context-menu">
-  <div class="context-menu-item" data-action="expand">
-    <i data-lucide="chevron-down"></i>
-    <span>Aufklappen</span>
-  </div>
-  <div class="context-menu-item" data-action="favorite">
-    <i data-lucide="heart"></i>
-    <span>Als Favorit markieren</span>
-  </div>
-  <div class="context-menu-item" data-action="copy-all">
-    <i data-lucide="copy"></i>
-    <span>Alle Spiele Link kopieren</span>
-  </div>
-  <div class="context-menu-item" data-action="copy-home">
-    <i data-lucide="home"></i>
-    <span>Heimspiele Link kopieren</span>
-  </div>
-  <div class="context-menu-item" data-action="copy-away">
-    <i data-lucide="map-pin"></i>
-    <span>Auswärts Link kopieren</span>
-  </div>
+  <div class="context-menu-item" data-action="expand"><i data-lucide="chevron-down"></i><span>Aufklappen</span></div>
+  <div class="context-menu-item" data-action="favorite"><i data-lucide="heart"></i><span>Als Favorit markieren</span></div>
+  <div class="context-menu-item" data-action="copy-all"><i data-lucide="copy"></i><span>Alle Spiele Link kopieren</span></div>
+  <div class="context-menu-item" data-action="copy-home"><i data-lucide="home"></i><span>Heimspiele Link kopieren</span></div>
+  <div class="context-menu-item" data-action="copy-away"><i data-lucide="map-pin"></i><span>Auswärts Link kopieren</span></div>
 </div>
 
 <div class="toast" id="toast">
@@ -395,9 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
   let currentKeyboardIndex = -1;
 
-  // ========================================
-  // FAVORITEN-SYSTEM MIT ANIMATION & VIBRATION
-  // ========================================
   document.querySelectorAll('.team-card').forEach(card => {
     const teamId = card.getAttribute('data-team-id');
     if (favorites.includes(teamId)) {
@@ -414,19 +445,11 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       const card = btn.closest('.team-card');
       const teamId = card.getAttribute('data-team-id');
-      
-      // FEATURE 3: Animation
       btn.classList.add('animating');
       setTimeout(() => btn.classList.remove('animating'), 400);
-      
       card.classList.toggle('favorite');
       btn.classList.toggle('active');
-      
-      // FEATURE 10: Vibration
-      if (navigator.vibrate) {
-        navigator.vibrate(50);
-      }
-      
+      if (navigator.vibrate) navigator.vibrate(50);
       const currentFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
       if (card.classList.contains('favorite')) {
         if (!currentFavs.includes(teamId)) currentFavs.push(teamId);
@@ -435,7 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (idx > -1) currentFavs.splice(idx, 1);
       }
       localStorage.setItem('favorites', JSON.stringify(currentFavs));
-      
       sortCards();
       updateQuickAccess();
     });
@@ -447,33 +469,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const aFav = a.classList.contains('favorite') ? 0 : 1;
       const bFav = b.classList.contains('favorite') ? 0 : 1;
       if (aFav !== bFav) return aFav - bFav;
-      const aIdx = parseInt(a.getAttribute('data-original-index'));
-      const bIdx = parseInt(b.getAttribute('data-original-index'));
-      return aIdx - bIdx;
+      return parseInt(a.getAttribute('data-original-index')) - parseInt(b.getAttribute('data-original-index'));
     });
     cards.forEach(card => grid.appendChild(card));
   }
 
-  // ========================================
-  // FEATURE 5: SCHNELLZUGRIFF-LEISTE
-  // ========================================
   function updateQuickAccess() {
     const quickAccess = document.getElementById('quick-access');
     const pillsContainer = document.getElementById('quick-access-pills');
     const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
-    
-    if (favs.length === 0) {
-      quickAccess.classList.remove('active');
-      return;
-    }
-    
+    if (favs.length === 0) { quickAccess.classList.remove('active'); return; }
     quickAccess.classList.add('active');
     pillsContainer.innerHTML = '';
-    
     favs.forEach(teamId => {
       const card = grid.querySelector('[data-team-id="' + teamId + '"]');
       if (!card) return;
-      
       const teamName = card.querySelector('.team-name').textContent;
       const pill = document.createElement('button');
       pill.className = 'quick-access-pill';
@@ -481,47 +491,21 @@ document.addEventListener('DOMContentLoaded', () => {
       pill.addEventListener('click', () => {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         card.classList.add('expanded');
-        setTimeout(() => {
-          document.querySelectorAll('.team-card').forEach(c => {
-            if (c !== card) c.classList.remove('expanded');
-          });
-        }, 500);
+        setTimeout(() => { document.querySelectorAll('.team-card').forEach(c => { if (c !== card) c.classList.remove('expanded'); }); }, 500);
       });
       pillsContainer.appendChild(pill);
     });
-    
     lucide.createIcons();
   }
 
-  // ========================================
-  // FEATURE 6: TASTATUR-NAVIGATION
-  // ========================================
   document.addEventListener('keydown', (e) => {
     const cards = Array.from(grid.querySelectorAll('.team-card:not(.hidden)'));
     if (cards.length === 0) return;
-    
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      currentKeyboardIndex = Math.min(currentKeyboardIndex + 1, cards.length - 1);
-      updateKeyboardFocus(cards);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      currentKeyboardIndex = Math.max(currentKeyboardIndex - 1, 0);
-      updateKeyboardFocus(cards);
-    } else if (e.key === 'Enter' && currentKeyboardIndex >= 0) {
-      e.preventDefault();
-      const card = cards[currentKeyboardIndex];
-      card.classList.toggle('expanded');
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else if (e.key === 'f' && currentKeyboardIndex >= 0) {
-      e.preventDefault();
-      const card = cards[currentKeyboardIndex];
-      const btn = card.querySelector('.favorite-btn');
-      btn.click();
-    } else if (e.key === 'Escape') {
-      document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded', 'keyboard-focus'));
-      currentKeyboardIndex = -1;
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); currentKeyboardIndex = Math.min(currentKeyboardIndex + 1, cards.length - 1); updateKeyboardFocus(cards); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); currentKeyboardIndex = Math.max(currentKeyboardIndex - 1, 0); updateKeyboardFocus(cards); }
+    else if (e.key === 'Enter' && currentKeyboardIndex >= 0) { e.preventDefault(); cards[currentKeyboardIndex].classList.toggle('expanded'); cards[currentKeyboardIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    else if (e.key === 'f' && currentKeyboardIndex >= 0) { e.preventDefault(); cards[currentKeyboardIndex].querySelector('.favorite-btn').click(); }
+    else if (e.key === 'Escape') { document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded', 'keyboard-focus')); currentKeyboardIndex = -1; }
   });
 
   function updateKeyboardFocus(cards) {
@@ -532,180 +516,83 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ========================================
-  // FEATURE 7: KONTEXT-MENÜ
-  // ========================================
   const contextMenu = document.getElementById('context-menu');
   let contextCard = null;
-
   document.querySelectorAll('.team-card').forEach(card => {
     card.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      contextCard = card;
-      
-      const x = e.clientX;
-      const y = e.clientY;
-      
-      contextMenu.style.left = x + 'px';
-      contextMenu.style.top = y + 'px';
+      e.preventDefault(); contextCard = card;
+      contextMenu.style.left = e.clientX + 'px'; contextMenu.style.top = e.clientY + 'px';
       contextMenu.classList.add('active');
-      
-      // Menü-Texte anpassen
       const isExpanded = card.classList.contains('expanded');
       const isFavorite = card.classList.contains('favorite');
       contextMenu.querySelector('[data-action="expand"] span').textContent = isExpanded ? 'Zuklappen' : 'Aufklappen';
       contextMenu.querySelector('[data-action="favorite"] span').textContent = isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren';
-      
       lucide.createIcons();
     });
   });
-
-  document.addEventListener('click', () => {
-    contextMenu.classList.remove('active');
-  });
-
+  document.addEventListener('click', () => contextMenu.classList.remove('active'));
   contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
     item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (!contextCard) return;
-      
+      e.stopPropagation(); if (!contextCard) return;
       const action = item.getAttribute('data-action');
-      
-      if (action === 'expand') {
-        contextCard.classList.toggle('expanded');
-      } else if (action === 'favorite') {
-        contextCard.querySelector('.favorite-btn').click();
-      } else if (action === 'copy-all' || action === 'copy-home' || action === 'copy-away') {
+      if (action === 'expand') contextCard.classList.toggle('expanded');
+      else if (action === 'favorite') contextCard.querySelector('.favorite-btn').click();
+      else if (action === 'copy-all' || action === 'copy-home' || action === 'copy-away') {
         const btns = contextCard.querySelectorAll('.copy-btn');
-        let btn;
-        if (action === 'copy-all') btn = btns[0];
-        else if (action === 'copy-home') btn = btns[1];
-        else if (action === 'copy-away') btn = btns[2];
-        if (btn) btn.click();
+        if (action === 'copy-all' && btns[0]) btns[0].click();
+        else if (action === 'copy-home' && btns[1]) btns[1].click();
+        else if (action === 'copy-away' && btns[2]) btns[2].click();
       }
-      
       contextMenu.classList.remove('active');
     });
   });
 
-  // ========================================
-  // FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON
-  // ========================================
   const scrollTopBtn = document.getElementById('scroll-top-btn');
-  
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 300) {
-      scrollTopBtn.classList.add('active');
-    } else {
-      scrollTopBtn.classList.remove('active');
-    }
-  });
-  
-  scrollTopBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  window.addEventListener('scroll', () => { scrollTopBtn.classList.toggle('active', window.scrollY > 300); });
+  scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-  // ========================================
-  // KONFETTI-ANIMATION
-  // ========================================
   function startKonfetti() {
     const canvas = document.getElementById('konfetti-canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    const particles = [];
-    const colors = ['#FF6B00', '#FFD700', '#FFFFFF', '#E55A00'];
-    
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const particles = []; const colors = ['#FF6B00', '#FFD700', '#FFFFFF', '#E55A00'];
     for (let i = 0; i < 150; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height - canvas.height,
-        vx: (Math.random() - 0.5) * 4,
-        vy: Math.random() * 3 + 2,
-        size: Math.random() * 8 + 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 10
-      });
+      particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height, vx: (Math.random() - 0.5) * 4, vy: Math.random() * 3 + 2, size: Math.random() * 8 + 4, color: colors[Math.floor(Math.random() * colors.length)], rotation: Math.random() * 360, rotationSpeed: (Math.random() - 0.5) * 10 });
     }
-    
     let frame = 0;
-    const maxFrames = 180;
-    
     function animate() {
-      if (frame >= maxFrames) {
-        canvas.style.display = 'none';
-        return;
-      }
-      
+      if (frame >= 180) { canvas.style.display = 'none'; return; }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.1;
-        p.rotation += p.rotationSpeed;
-        
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation * Math.PI / 180);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-        ctx.restore();
-      });
-      
-      frame++;
-      requestAnimationFrame(animate);
+      particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.rotation += p.rotationSpeed; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180); ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); ctx.restore(); });
+      frame++; requestAnimationFrame(animate);
     }
-    
     animate();
   }
 
-  // ========================================
-  // RESTLICHE FUNKTIONALITÄT
-  // ========================================
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme') || 'light';
-  if (savedTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    themeIcon.setAttribute('data-lucide', 'sun');
-    lucide.createIcons();
-  }
+  if (savedTheme === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeIcon.setAttribute('data-lucide', 'sun'); lucide.createIcons(); }
   themeToggle.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    themeIcon.setAttribute('data-lucide', next === 'dark' ? 'sun' : 'moon');
-    lucide.createIcons();
+    document.documentElement.setAttribute('data-theme', next); localStorage.setItem('theme', next);
+    themeIcon.setAttribute('data-lucide', next === 'dark' ? 'sun' : 'moon'); lucide.createIcons();
   });
 
   document.querySelectorAll('.stat-val').forEach(el => {
-    const target = parseInt(el.getAttribute('data-target'), 10);
-    let current = 0;
-    const increment = target / 30;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) { el.textContent = target; clearInterval(timer); }
-      else { el.textContent = Math.floor(current); }
-    }, 20);
+    const target = parseInt(el.getAttribute('data-target'), 10); let current = 0; const increment = target / 30;
+    const timer = setInterval(() => { current += increment; if (current >= target) { el.textContent = target; clearInterval(timer); } else el.textContent = Math.floor(current); }, 20);
   });
 
   document.getElementById('team-search').addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
-    document.querySelectorAll('.team-card').forEach(card => {
-      const name = card.getAttribute('data-team-name');
-      if (name.includes(query)) card.classList.remove('hidden');
-      else card.classList.add('hidden');
-    });
+    document.querySelectorAll('.team-card').forEach(card => { card.classList.toggle('hidden', !card.getAttribute('data-team-name').includes(query)); });
   });
 
   document.querySelectorAll('.team-card-header').forEach(header => {
     header.addEventListener('click', () => {
-      const card = header.parentElement;
-      const isExpanded = card.classList.contains('expanded');
+      const card = header.parentElement; const isExpanded = card.classList.contains('expanded');
       document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded'));
       if (!isExpanded) card.classList.add('expanded');
     });
@@ -713,131 +600,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const url = btn.getAttribute('data-copy');
-      try {
-        await navigator.clipboard.writeText(url);
-        const toast = document.getElementById('toast');
-        toast.classList.add('active');
-        setTimeout(() => toast.classList.remove('active'), 2000);
-      } catch (err) {
-        console.error('Kopieren fehlgeschlagen', err);
-      }
+      try { await navigator.clipboard.writeText(btn.getAttribute('data-copy')); const toast = document.getElementById('toast'); toast.classList.add('active'); setTimeout(() => toast.classList.remove('active'), 2000); } catch (err) { console.error('Kopieren fehlgeschlagen', err); }
     });
   });
 
-  document.getElementById('inst-toggle').addEventListener('click', () => {
-    document.getElementById('inst-toggle').classList.toggle('active');
-    document.getElementById('inst-content').classList.toggle('active');
-  });
+  document.getElementById('inst-toggle').addEventListener('click', () => { document.getElementById('inst-toggle').classList.toggle('active'); document.getElementById('inst-content').classList.toggle('active'); });
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('Service Worker registriert:', reg.scope);
-    }).catch(err => {
-      console.error('Service Worker Fehler:', err);
-    });
-  }
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
 });
 </script>
 </body>
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit allen neuen Features generiert.');
+  console.log('✅ index.html mit Download-Sektion generiert.');
 
-  const manifest = {
-    name: "TV Neunkirchen Baskets – Kalender",
-    short_name: "TVN Baskets",
-    description: "Offizielle Kalenderübersicht für alle Teams",
-    start_url: "/",
-    display: "standalone",
-    background_color: "#F8FAFC",
-    theme_color: "#FF6B00",
-    icons: [
-      {
-        src: "Logo.png",
-        sizes: "192x192",
-        type: "image/png"
-      },
-      {
-        src: "Logo.png",
-        sizes: "512x512",
-        type: "image/png"
-      }
-    ]
-  };
+  // manifest.json und sw.js (wie zuvor)
+  const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
+  fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
 
-  fs.writeFileSync(
-    path.resolve(__dirname, '../generated/manifest.json'),
-    JSON.stringify(manifest, null, 2),
-    'utf8'
-  );
-  console.log('✅ manifest.json für PWA generiert.');
-
-  const swContent = `
-const CACHE_NAME = 'tvn-baskets-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/Logo.png',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap',
-  'https://unpkg.com/lucide@latest'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache geöffnet');
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then(response => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        });
-      })
-  );
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
-`;
-
-  fs.writeFileSync(
-    path.resolve(__dirname, '../generated/sw.js'),
-    swContent,
-    'utf8'
-  );
-  console.log('✅ sw.js (Service Worker) für PWA generiert.');
+  const swContent = `const CACHE_NAME='tvn-baskets-v1';const urlsToCache=['/','/index.html','/Logo.png','/manifest.json'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(urlsToCache)))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});`;
+  fs.writeFileSync(path.resolve(__dirname, '../generated/sw.js'), swContent, 'utf8');
 }
 
 genHTML();
