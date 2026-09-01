@@ -1,4 +1,4 @@
-// complete generator script — mit allen Premium-Features & Private Analytics
+// complete generator script — mit robuster Report-Sendung
 const fs = require('fs');
 const path = require('path');
 
@@ -71,7 +71,6 @@ function genHTML() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TV Neunkirchen Baskets – Kalender</title>
 
-<!-- FEATURE 16: Open Graph Tags für WhatsApp/Social Media Vorschau -->
 <meta property="og:title" content="TV Neunkirchen Baskets – Kalender">
 <meta property="og:description" content="Offizielle, immer aktuelle Spielpläne für alle Teams. Einfach abonnieren.">
 <meta property="og:image" content="https://mragg.github.io/bbb-ics-generator/Logo.png">
@@ -99,7 +98,6 @@ function genHTML() {
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* FEATURE 1: Dark Mode Variablen */
 [data-theme="dark"] {
   --color-bg: #0F172A; --color-surface: #1E293B; --color-text: #F1F5F9;
   --color-text-muted: #94A3B8; --color-border: #334155;
@@ -113,7 +111,6 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* FEATURE 17: Skeleton Loading Animation */
 .skeleton {
   background: linear-gradient(90deg, var(--color-border) 25%, var(--color-surface) 50%, var(--color-border) 75%);
   background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: var(--radius-md);
@@ -135,7 +132,6 @@ body {
 
 .container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-/* FEATURE 5: Live Search */
 .search-wrapper { margin-bottom: 2rem; position: relative; }
 .search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }
 .search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }
@@ -178,7 +174,6 @@ body {
 .report-section { background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); border: 1px solid #FFEDD5; border-radius: var(--radius-lg); padding: 2rem; text-align: center; margin-bottom: 3rem; }
 [data-theme="dark"] .report-section { background: linear-gradient(135deg, #1E293B 0%, #334155 100%); border-color: #475569; }
 
-/* FEATURE 18: Private Analytics Panel */
 .analytics-panel { display: none; background: var(--color-surface); border: 2px solid var(--color-primary); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-lg); }
 .analytics-panel.active { display: block; }
 .analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--color-border); }
@@ -188,11 +183,9 @@ body {
 .analytics-list { margin-top: 1.5rem; max-height: 300px; overflow-y: auto; }
 .analytics-item { display: flex; justify-content: space-between; padding: 0.75rem; background: var(--color-bg); border-radius: var(--radius-sm); margin-bottom: 0.5rem; font-size: 0.9rem; }
 
-/* FEATURE 8: Toast Notification */
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
 .toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Modals & Forms (kompakt gehalten) */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 50; opacity: 0; visibility: hidden; transition: var(--transition); }
 .modal-backdrop.active { opacity: 1; visibility: visible; }
 .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); z-index: 51; width: 90%; max-width: 600px; max-height: 90dvh; overflow-y: auto; opacity: 0; visibility: hidden; transition: var(--transition); }
@@ -205,7 +198,7 @@ body {
 .form-group.full { grid-column: 1 / -1; }
 .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem; }
 .form-label .optional { font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem; }
-.form-input, .form-select, .form-textarea { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+.form-input, .form-select, .form-textarea { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-family: inherit; font-size: 0.95rem; }
 .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }
 .form-textarea { min-height: 100px; resize: vertical; }
 .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
@@ -234,7 +227,6 @@ body {
 </head>
 <body>
 
-<!-- FEATURE 17: Skeleton Loader -->
 <div id="skeleton-loader">
   <div class="container">
     <div class="skeleton skeleton-card"></div>
@@ -250,7 +242,6 @@ body {
       <h1>TV Neunkirchen Baskets</h1>
       <p>Kalenderübersicht • Stand: ${new Date().toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} Uhr</p>
     </div>
-    <!-- FEATURE 1: Dark Mode Toggle -->
     <button class="theme-toggle" id="theme-toggle" aria-label="Theme wechseln">
       <i data-lucide="moon" id="theme-icon" style="width:20px;height:20px;"></i>
     </button>
@@ -259,7 +250,6 @@ body {
 
 <main class="container" id="main-content" style="display:none;">
   
-  <!-- FEATURE 18: Private Analytics Panel -->
   <div class="analytics-panel" id="analytics-panel">
     <div class="analytics-header">
       <div style="font-family:'Oswald';font-size:1.5rem;font-weight:700;">📊 Admin Analytics</div>
@@ -289,7 +279,6 @@ body {
     </div>
   </div>
 
-  <!-- FEATURE 5: Live Search -->
   <div class="search-wrapper">
     <i data-lucide="search" class="search-icon" style="width:20px;height:20px;"></i>
     <input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)...">
@@ -312,7 +301,6 @@ body {
             <a href="${makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics')}" class="btn btn-primary track-click" data-tid="${t.teamId}">
               <i data-lucide="calendar-plus" style="width:16px;height:16px;"></i> Alle Spiele
             </a>
-            <!-- FEATURE 8: Copy Button -->
             <button class="btn btn-copy copy-btn" data-copy="${makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics')}">
               <i data-lucide="copy" style="width:14px;height:14px;"></i>
             </button>
@@ -352,13 +340,11 @@ body {
   <p>© ${new Date().getFullYear()} TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p>
 </footer>
 
-<!-- Toast Notification -->
 <div class="toast" id="toast">
   <i data-lucide="check-circle" style="width:18px;height:18px;"></i>
   <span id="toast-text">Link kopiert!</span>
 </div>
 
-<!-- Report Modal (Identisch zur vorherigen Version, kompakt) -->
 <div class="modal-backdrop" id="report-backdrop"></div>
 <div class="modal" id="report-modal" role="dialog" aria-modal="true">
   <div class="modal-header">
@@ -412,21 +398,20 @@ body {
 </div>
 
 <script>
-// --- DATEN ---
 window.GAMES_BY_TEAM = ${JSON.stringify(gamesByTeam)};
-const ANALYTICS_SECRET = 'tvn-admin-2024-geheim'; // ÄNDERE DIES FÜR DEINE SEITE!
+const ANALYTICS_SECRET = 'tvn-admin-2024-geheim';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // FEATURE 17: Skeleton ausblenden
   setTimeout(() => {
     document.getElementById('skeleton-loader').style.display = 'none';
     document.getElementById('main-header').style.display = 'block';
     document.getElementById('main-content').style.display = 'block';
     document.getElementById('main-footer').style.display = 'block';
     lucide.createIcons();
-  }, 400); // Kurze Verzögerung, damit die Animation sichtbar ist
+  }, 400);
 
-  // --- FEATURE 18: Private Analytics Init ---
+  console.log('✅ Seite geladen. GAMES_BY_TEAM enthält Teams:', Object.keys(window.GAMES_BY_TEAM));
+
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('admin') === ANALYTICS_SECRET) {
     document.getElementById('analytics-panel').classList.add('active');
@@ -469,7 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('analytics-panel').classList.remove('active');
   });
 
-  // --- FEATURE 1: Dark Mode ---
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -487,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
   });
 
-  // --- FEATURE 3: Animated Counters ---
   document.querySelectorAll('.stat-val').forEach(el => {
     const target = parseInt(el.getAttribute('data-target'), 10);
     let current = 0;
@@ -499,7 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 20);
   });
 
-  // --- FEATURE 5: Live Search ---
   document.getElementById('team-search').addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll('.team-card').forEach(card => {
@@ -509,7 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Team Cards Expand ---
   document.querySelectorAll('.team-card-header').forEach(header => {
     header.addEventListener('click', () => {
       const card = header.parentElement;
@@ -517,17 +498,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded'));
       if (!isExpanded) {
         card.classList.add('expanded');
-        trackClick(card.getAttribute('data-team-id')); // Track beim Öffnen
+        trackClick(card.getAttribute('data-team-id'));
       }
     });
   });
 
-  // Track auch bei direkten Downloads
   document.querySelectorAll('.track-click').forEach(link => {
     link.addEventListener('click', () => trackClick(link.getAttribute('data-tid')));
   });
 
-  // --- FEATURE 8: Copy to Clipboard ---
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const url = btn.getAttribute('data-copy');
@@ -542,13 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // --- Anleitung Toggle ---
   document.getElementById('inst-toggle').addEventListener('click', () => {
     document.getElementById('inst-toggle').classList.toggle('active');
     document.getElementById('inst-content').classList.toggle('active');
   });
 
-  // --- Report Modal Logic (wie zuvor, mit Honeypot & 3s Delay) ---
   const reportModal = document.getElementById('report-modal');
   const reportBackdrop = document.getElementById('report-backdrop');
   const reportTeam = document.getElementById('report-team');
@@ -573,63 +550,104 @@ document.addEventListener('DOMContentLoaded', () => {
 
   reportTeam.addEventListener('change', function() {
     const teamId = this.value;
+    console.log('🔍 Gewählte Team-ID im Formular:', teamId);
+    console.log('🔍 Verfügbare Team-IDs in GAMES_BY_TEAM:', Object.keys(window.GAMES_BY_TEAM));
+    
     reportGame.innerHTML = '<option value="" selected>Lade...</option>';
     reportGame.disabled = true;
+    
     if (!teamId) {
       reportGame.innerHTML = '<option value="" selected>Wähle zuerst ein Team</option>';
       return;
     }
+
     const games = window.GAMES_BY_TEAM[teamId] || [];
+    console.log('🔍 Gefundene Spiele für dieses Team:', games.length);
+
+    if (games.length === 0) {
+      reportGame.innerHTML = '<option value="" selected>Keine Spiele für dieses Team gefunden (ID-Mismatch?)</option>';
+      return;
+    }
+
     let html = '<option value="" selected>Bitte Spiel wählen (oder leer lassen)</option>';
     games.forEach(g => {
-      const d = g.date ? new Date(g.date).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'Datum';
+      const d = g.date ? new Date(g.date).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'Datum unbekannt';
       html += \`<option value="\${g.id}">\${d} vs. \${g.opponent} (\${g.isHome ? 'Heim' : 'Auswärts'})</option>\`;
     });
+    
     reportGame.innerHTML = html;
     reportGame.disabled = false;
   });
 
   document.getElementById('report-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (document.getElementById('hp-website').value.trim() !== '') return; // Honeypot
+    
+    if (document.getElementById('hp-website').value.trim() !== '') {
+      console.warn('🤖 Spam-Bot erkannt (Honeypot).');
+      return; 
+    }
+    
     const start = parseInt(document.getElementById('form-started').value, 10);
     if (Date.now() - start < 3000) {
-      document.getElementById('error-text').textContent = 'Bitte warte 3 Sekunden vor dem Absenden.';
+      document.getElementById('error-text').textContent = 'Bitte warte 3 Sekunden vor dem Absenden (Spam-Schutz).';
       document.getElementById('report-error').classList.add('active');
+      document.getElementById('report-success').classList.remove('active');
       return;
     }
 
     const btn = document.getElementById('submit-report-btn');
-    btn.disabled = true; btn.textContent = 'Sende...';
+    btn.disabled = true; 
+    btn.textContent = 'Sende...';
+    document.getElementById('report-error').classList.remove('active');
+    document.getElementById('report-success').classList.remove('active');
+
+    // ROBUSTE DATENVALIDIERUNG
+    const teamSelect = document.getElementById('report-team');
+    const calendarSelect = document.getElementById('report-calendar');
+    const gameSelect = document.getElementById('report-game');
+    
+    const payload = {
+      team: teamSelect.value ? teamSelect.options[teamSelect.selectedIndex].text : 'Nicht angegeben',
+      calendar: calendarSelect.value || 'Nicht angegeben',
+      game: gameSelect.value ? gameSelect.options[gameSelect.selectedIndex].text : 'Nicht angegeben',
+      title: document.getElementById('report-title').value.trim(),
+      description: document.getElementById('report-description').value.trim()
+    };
+    
+    console.log('📤 Sende Payload an Worker:', payload);
 
     try {
-      const res = await fetch('https://bbb-ics-report.raggelija.workers.dev', {
+      const res = await fetch('https://bbb-ics-report.raggelija.workers.dev/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          team: reportTeam.options[reportTeam.selectedIndex]?.text || '',
-          calendar: document.getElementById('report-calendar').value || '',
-          game: reportGame.value ? reportGame.options[reportGame.selectedIndex]?.text : '',
-          title: document.getElementById('report-title').value,
-          description: document.getElementById('report-description').value
-        })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
       });
-      if (res.ok) {
+      
+      console.log('📥 Worker Antwort Status:', res.status);
+      
+      const responseData = await res.json().catch(() => ({}));
+      console.log('📥 Worker Antwort Daten:', responseData);
+
+      if (res.ok && responseData.success) {
         document.getElementById('report-success').classList.add('active');
         document.getElementById('report-form').reset();
         setTimeout(closeModal, 2000);
       } else {
-        throw new Error('Serverfehler');
+        throw new Error(responseData.error || \`Server antwortete mit Status \${res.status}\`);
       }
     } catch (err) {
-      document.getElementById('error-text').textContent = 'Fehler beim Senden. Versuche es später erneut.';
+      console.error('❌ DETAILIERTER FEHLER BEIM SENDEN:', err);
+      document.getElementById('error-text').textContent = 'Fehler: ' + err.message + ' (Drücke F12 für Details)';
       document.getElementById('report-error').classList.add('active');
     } finally {
-      btn.disabled = false; btn.textContent = 'Senden';
+      btn.disabled = false; 
+      btn.textContent = 'Senden';
     }
   });
 
-  // Mobile Keyboard Fix
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
       if (reportModal.classList.contains('active')) {
@@ -643,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ Premium index.html mit allen Features erfolgreich generiert.');
+  console.log('✅ Premium index.html mit robuster Report-Sendung erfolgreich generiert.');
 }
 
 genHTML();
