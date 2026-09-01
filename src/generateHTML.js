@@ -1,4 +1,4 @@
-// complete generator script — mit Favorites (Original-Reihenfolge), Konfetti & PWA
+// complete generator script — mit Animationen, Schnellzugriff, Tastatur-Navigation & mehr
 const fs = require('fs');
 const path = require('path');
 
@@ -111,6 +111,23 @@ body {
 
 .container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }
 
+/* FEATURE 5: SCHNELLZUGRIFF-LEISTE */
+.quick-access {
+  position: sticky; top: 0; z-index: 100; background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem;
+  box-shadow: var(--shadow-sm); display: none; margin-bottom: 2rem;
+}
+.quick-access.active { display: block; }
+.quick-access-inner { max-width: 1024px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.quick-access-label { font-size: 0.875rem; color: var(--color-text-muted); font-weight: 600; margin-right: 0.5rem; }
+.quick-access-pill {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600;
+  cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem;
+}
+.quick-access-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
+.quick-access-pill i { width: 14px; height: 14px; }
+
 .search-wrapper { margin-bottom: 2rem; position: relative; }
 .search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }
 .search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }
@@ -128,7 +145,9 @@ body {
 .team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
 .team-card.hidden { display: none !important; }
 .team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+.team-card.keyboard-focus { outline: 3px solid var(--color-primary); outline-offset: 2px; }
 
+/* FEATURE 3: FAVORIT-ANIMATION */
 .favorite-btn {
   position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;
   background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
@@ -139,6 +158,15 @@ body {
 .favorite-btn:hover { transform: scale(1.1); }
 .favorite-btn i { color: var(--color-text-muted); transition: var(--transition); }
 .favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }
+@keyframes favorite-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+@keyframes favorite-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.favorite-btn.animating { animation: favorite-pulse 0.4s ease, favorite-bounce 0.4s ease; }
 
 .team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }
 [data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }
@@ -147,9 +175,14 @@ body {
 
 .team-stats { display: flex; justify-content: space-around; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: #FAFAFA; }
 [data-theme="dark"] .team-stats { background: #0F172A; }
-.stat { text-align: center; }
-.stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
-.stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.stat { text-align: center; transition: var(--transition); cursor: default; }
+.stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }
+.stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }
+
+/* FEATURE 4: STATISTIK-HOVER-EFFEKT */
+.team-stats:hover .stat { opacity: 0.4; }
+.team-stats .stat:hover { opacity: 1; transform: scale(1.1); }
+.team-stats .stat:hover .stat-val { font-size: 1.8rem; }
 
 .team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); }
 .team-card.expanded .team-actions { opacity: 1; max-height: 400px; }
@@ -170,6 +203,32 @@ body {
 
 #konfetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
 
+/* FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON */
+.scroll-top-btn {
+  position: fixed; bottom: 2rem; right: 2rem; width: 48px; height: 48px;
+  background: var(--color-primary); color: white; border: none; border-radius: 50%;
+  cursor: pointer; box-shadow: var(--shadow-lg); z-index: 90;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; visibility: hidden; transition: var(--transition);
+}
+.scroll-top-btn.active { opacity: 1; visibility: visible; }
+.scroll-top-btn:hover { background: var(--color-primary-hover); transform: translateY(-4px); }
+.scroll-top-btn i { width: 24px; height: 24px; }
+
+/* FEATURE 7: KONTEXT-MENÜ */
+.context-menu {
+  position: fixed; background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 0.5rem 0;
+  z-index: 200; min-width: 200px; display: none;
+}
+.context-menu.active { display: block; }
+.context-menu-item {
+  padding: 0.625rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.9rem; transition: var(--transition);
+}
+.context-menu-item:hover { background: var(--color-bg); }
+.context-menu-item i { width: 16px; height: 16px; color: var(--color-primary); }
+
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
 
@@ -179,6 +238,8 @@ body {
   .teams-grid { grid-template-columns: 1fr; }
   .link-row { flex-direction: column; }
   .link-row .btn-copy { width: 100%; }
+  .quick-access-inner { justify-content: center; }
+  .scroll-top-btn { bottom: 1rem; right: 1rem; width: 44px; height: 44px; }
 }
 </style>
 </head>
@@ -206,6 +267,14 @@ body {
     </button>
   </div>
 </header>
+
+<!-- FEATURE 5: SCHNELLZUGRIFF-LEISTE -->
+<div class="quick-access" id="quick-access">
+  <div class="quick-access-inner">
+    <span class="quick-access-label">⭐ Deine Favoriten:</span>
+    <div id="quick-access-pills"></div>
+  </div>
+</div>
 
 <main class="container" id="main-content" style="display:none;">
   <div class="instructions">
@@ -273,6 +342,35 @@ body {
   <p>© ${new Date().getFullYear()} TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p>
 </footer>
 
+<!-- FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON -->
+<button class="scroll-top-btn" id="scroll-top-btn" aria-label="Nach oben scrollen">
+  <i data-lucide="arrow-up"></i>
+</button>
+
+<!-- FEATURE 7: KONTEXT-MENÜ -->
+<div class="context-menu" id="context-menu">
+  <div class="context-menu-item" data-action="expand">
+    <i data-lucide="chevron-down"></i>
+    <span>Aufklappen</span>
+  </div>
+  <div class="context-menu-item" data-action="favorite">
+    <i data-lucide="heart"></i>
+    <span>Als Favorit markieren</span>
+  </div>
+  <div class="context-menu-item" data-action="copy-all">
+    <i data-lucide="copy"></i>
+    <span>Alle Spiele Link kopieren</span>
+  </div>
+  <div class="context-menu-item" data-action="copy-home">
+    <i data-lucide="home"></i>
+    <span>Heimspiele Link kopieren</span>
+  </div>
+  <div class="context-menu-item" data-action="copy-away">
+    <i data-lucide="map-pin"></i>
+    <span>Auswärts Link kopieren</span>
+  </div>
+</div>
+
 <div class="toast" id="toast">
   <i data-lucide="check-circle" style="width:18px;height:18px;"></i>
   <span id="toast-text">Link kopiert!</span>
@@ -293,8 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 400);
 
+  const grid = document.getElementById('teams-grid');
   const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-  
+  let currentKeyboardIndex = -1;
+
+  // ========================================
+  // FAVORITEN-SYSTEM MIT ANIMATION & VIBRATION
+  // ========================================
   document.querySelectorAll('.team-card').forEach(card => {
     const teamId = card.getAttribute('data-team-id');
     if (favorites.includes(teamId)) {
@@ -303,17 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  const grid = document.getElementById('teams-grid');
-  const cards = Array.from(grid.querySelectorAll('.team-card'));
-  cards.sort((a, b) => {
-    const aFav = a.classList.contains('favorite') ? 0 : 1;
-    const bFav = b.classList.contains('favorite') ? 0 : 1;
-    if (aFav !== bFav) return aFav - bFav;
-    const aIdx = parseInt(a.getAttribute('data-original-index'));
-    const bIdx = parseInt(b.getAttribute('data-original-index'));
-    return aIdx - bIdx;
-  });
-  cards.forEach(card => grid.appendChild(card));
+  sortCards();
+  updateQuickAccess();
 
   document.querySelectorAll('.favorite-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -321,8 +415,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = btn.closest('.team-card');
       const teamId = card.getAttribute('data-team-id');
       
+      // FEATURE 3: Animation
+      btn.classList.add('animating');
+      setTimeout(() => btn.classList.remove('animating'), 400);
+      
       card.classList.toggle('favorite');
       btn.classList.toggle('active');
+      
+      // FEATURE 10: Vibration
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
       
       const currentFavs = JSON.parse(localStorage.getItem('favorites') || '[]');
       if (card.classList.contains('favorite')) {
@@ -333,19 +436,178 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       localStorage.setItem('favorites', JSON.stringify(currentFavs));
       
-      const cards = Array.from(grid.querySelectorAll('.team-card'));
-      cards.sort((a, b) => {
-        const aFav = a.classList.contains('favorite') ? 0 : 1;
-        const bFav = b.classList.contains('favorite') ? 0 : 1;
-        if (aFav !== bFav) return aFav - bFav;
-        const aIdx = parseInt(a.getAttribute('data-original-index'));
-        const bIdx = parseInt(b.getAttribute('data-original-index'));
-        return aIdx - bIdx;
-      });
-      cards.forEach(card => grid.appendChild(card));
+      sortCards();
+      updateQuickAccess();
     });
   });
 
+  function sortCards() {
+    const cards = Array.from(grid.querySelectorAll('.team-card'));
+    cards.sort((a, b) => {
+      const aFav = a.classList.contains('favorite') ? 0 : 1;
+      const bFav = b.classList.contains('favorite') ? 0 : 1;
+      if (aFav !== bFav) return aFav - bFav;
+      const aIdx = parseInt(a.getAttribute('data-original-index'));
+      const bIdx = parseInt(b.getAttribute('data-original-index'));
+      return aIdx - bIdx;
+    });
+    cards.forEach(card => grid.appendChild(card));
+  }
+
+  // ========================================
+  // FEATURE 5: SCHNELLZUGRIFF-LEISTE
+  // ========================================
+  function updateQuickAccess() {
+    const quickAccess = document.getElementById('quick-access');
+    const pillsContainer = document.getElementById('quick-access-pills');
+    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (favs.length === 0) {
+      quickAccess.classList.remove('active');
+      return;
+    }
+    
+    quickAccess.classList.add('active');
+    pillsContainer.innerHTML = '';
+    
+    favs.forEach(teamId => {
+      const card = grid.querySelector('[data-team-id="' + teamId + '"]');
+      if (!card) return;
+      
+      const teamName = card.querySelector('.team-name').textContent;
+      const pill = document.createElement('button');
+      pill.className = 'quick-access-pill';
+      pill.innerHTML = '<i data-lucide="basketball"></i> ' + teamName;
+      pill.addEventListener('click', () => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('expanded');
+        setTimeout(() => {
+          document.querySelectorAll('.team-card').forEach(c => {
+            if (c !== card) c.classList.remove('expanded');
+          });
+        }, 500);
+      });
+      pillsContainer.appendChild(pill);
+    });
+    
+    lucide.createIcons();
+  }
+
+  // ========================================
+  // FEATURE 6: TASTATUR-NAVIGATION
+  // ========================================
+  document.addEventListener('keydown', (e) => {
+    const cards = Array.from(grid.querySelectorAll('.team-card:not(.hidden)'));
+    if (cards.length === 0) return;
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      currentKeyboardIndex = Math.min(currentKeyboardIndex + 1, cards.length - 1);
+      updateKeyboardFocus(cards);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      currentKeyboardIndex = Math.max(currentKeyboardIndex - 1, 0);
+      updateKeyboardFocus(cards);
+    } else if (e.key === 'Enter' && currentKeyboardIndex >= 0) {
+      e.preventDefault();
+      const card = cards[currentKeyboardIndex];
+      card.classList.toggle('expanded');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (e.key === 'f' && currentKeyboardIndex >= 0) {
+      e.preventDefault();
+      const card = cards[currentKeyboardIndex];
+      const btn = card.querySelector('.favorite-btn');
+      btn.click();
+    } else if (e.key === 'Escape') {
+      document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded', 'keyboard-focus'));
+      currentKeyboardIndex = -1;
+    }
+  });
+
+  function updateKeyboardFocus(cards) {
+    cards.forEach(c => c.classList.remove('keyboard-focus'));
+    if (currentKeyboardIndex >= 0 && currentKeyboardIndex < cards.length) {
+      cards[currentKeyboardIndex].classList.add('keyboard-focus');
+      cards[currentKeyboardIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  // ========================================
+  // FEATURE 7: KONTEXT-MENÜ
+  // ========================================
+  const contextMenu = document.getElementById('context-menu');
+  let contextCard = null;
+
+  document.querySelectorAll('.team-card').forEach(card => {
+    card.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      contextCard = card;
+      
+      const x = e.clientX;
+      const y = e.clientY;
+      
+      contextMenu.style.left = x + 'px';
+      contextMenu.style.top = y + 'px';
+      contextMenu.classList.add('active');
+      
+      // Menü-Texte anpassen
+      const isExpanded = card.classList.contains('expanded');
+      const isFavorite = card.classList.contains('favorite');
+      contextMenu.querySelector('[data-action="expand"] span').textContent = isExpanded ? 'Zuklappen' : 'Aufklappen';
+      contextMenu.querySelector('[data-action="favorite"] span').textContent = isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren';
+      
+      lucide.createIcons();
+    });
+  });
+
+  document.addEventListener('click', () => {
+    contextMenu.classList.remove('active');
+  });
+
+  contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!contextCard) return;
+      
+      const action = item.getAttribute('data-action');
+      
+      if (action === 'expand') {
+        contextCard.classList.toggle('expanded');
+      } else if (action === 'favorite') {
+        contextCard.querySelector('.favorite-btn').click();
+      } else if (action === 'copy-all' || action === 'copy-home' || action === 'copy-away') {
+        const btns = contextCard.querySelectorAll('.copy-btn');
+        let btn;
+        if (action === 'copy-all') btn = btns[0];
+        else if (action === 'copy-home') btn = btns[1];
+        else if (action === 'copy-away') btn = btns[2];
+        if (btn) btn.click();
+      }
+      
+      contextMenu.classList.remove('active');
+    });
+  });
+
+  // ========================================
+  // FEATURE 8: ZURÜCK-NACH-OBEN-BUTTON
+  // ========================================
+  const scrollTopBtn = document.getElementById('scroll-top-btn');
+  
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      scrollTopBtn.classList.add('active');
+    } else {
+      scrollTopBtn.classList.remove('active');
+    }
+  });
+  
+  scrollTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ========================================
+  // KONFETTI-ANIMATION
+  // ========================================
   function startKonfetti() {
     const canvas = document.getElementById('konfetti-canvas');
     const ctx = canvas.getContext('2d');
@@ -400,6 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
     animate();
   }
 
+  // ========================================
+  // RESTLICHE FUNKTIONALITÄT
+  // ========================================
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -478,7 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Favorites, Konfetti & PWA generiert.');
+  console.log('✅ index.html mit allen neuen Features generiert.');
 
   const manifest = {
     name: "TV Neunkirchen Baskets – Kalender",
