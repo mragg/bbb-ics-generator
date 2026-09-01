@@ -1,4 +1,4 @@
-// complete generator script — modernes Premium-Redesign
+// complete generator script — mit echten Spieldaten im Formular
 const fs = require('fs');
 const path = require('path');
 
@@ -24,11 +24,14 @@ function normalizeId(value) {
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
+  const gamesPath = path.resolve(__dirname, '../generated/games.json'); // <-- NEU: Spiele einlesen
 
   const rawMeta = safeReadJson(metaPath) || [];
   const rawTeams = safeReadJson(teamsPath) || [];
+  const rawGames = safeReadJson(gamesPath) || []; // <-- NEU
 
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
+  const gamesArray = Array.isArray(rawGames) ? rawGames : (rawGames.games || rawGames.data || []);
   
   const teams = metadataArray.map(m => ({
     teamId: normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? ''),
@@ -38,6 +41,32 @@ function genHTML() {
     homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
+
+  // --- NEU: Spiele nach Team gruppieren ---
+  const gamesByTeam = {};
+  gamesArray.forEach(g => {
+    const teamId = normalizeId(g.teamId ?? g.id ?? g.team ?? '');
+    if (!teamId) return;
+    
+    if (!gamesByTeam[teamId]) gamesByTeam[teamId] = [];
+    
+    // Robuste Feld-Erkennung (passt sich an verschiedene API-Strukturen an)
+    const opponent = g.opponent || g.awayTeam || g.guestTeam || g.gegner || 'Gegner';
+    const isHome = g.isHome !== undefined ? g.isHome : (g.venue === 'home' || g.location === 'Heim' || g.home === true);
+    const gameDate = g.date || g.start || g.tipoff || g.datetime;
+    
+    gamesByTeam[teamId].push({
+      id: normalizeId(g.gameId ?? g.id ?? g.matchId ?? ''),
+      date: gameDate,
+      opponent: opponent,
+      isHome: isHome
+    });
+  });
+
+  // Spiele innerhalb eines Teams chronologisch sortieren (älteste zuerst, oder nächste zuerst)
+  Object.keys(gamesByTeam).forEach(teamId => {
+    gamesByTeam[teamId].sort((a, b) => new Date(a.date) - new Date(b.date));
+  });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -81,17 +110,15 @@ body {
   color: var(--color-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  min-height: 100dvh; /* Dynamic viewport height für Mobile */
+  min-height: 100dvh;
 }
 
-/* HONEYPOT: Unsichtbar für Bots */
 .hp-field {
   position: absolute !important; width: 1px !important; height: 1px !important;
   padding: 0 !important; margin: -1px !important; overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
 }
 
-/* HEADER */
 .header {
   background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
   color: white;
@@ -115,10 +142,8 @@ body {
 }
 .header-text p { color: #94A3B8; margin-top: 0.5rem; font-size: 0.95rem; }
 
-/* CONTAINER */
 .container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-/* INSTRUCTIONS */
 .instructions {
   background: var(--color-surface); border-radius: var(--radius-lg);
   padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--color-border);
@@ -147,7 +172,6 @@ body {
   font-size: 0.8rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
 }
 
-/* TEAMS GRID */
 .teams-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem; margin-bottom: 3rem;
@@ -190,7 +214,6 @@ body {
 .btn-outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
 .btn-outline:hover { background: #F1F5F9; border-color: #CBD5E1; }
 
-/* REPORT SECTION */
 .report-section {
   background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%);
   border: 1px solid #FFEDD5; border-radius: var(--radius-lg);
@@ -199,7 +222,6 @@ body {
 .report-section h2 { font-family: 'Oswald', sans-serif; font-size: 1.75rem; margin-bottom: 0.5rem; }
 .report-section p { color: var(--color-text-muted); max-width: 500px; margin: 0 auto 1.5rem; }
 
-/* MODALS (Glassmorphism) */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(4px); z-index: 50; opacity: 0; visibility: hidden;
@@ -228,7 +250,6 @@ body {
 .modal-close:hover { background: #F1F5F9; color: var(--color-text); }
 .modal-body { padding: 1.5rem; }
 
-/* FORM */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group.full { grid-column: 1 / -1; }
@@ -261,12 +282,10 @@ body {
 .alert-success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
 .alert.active { display: flex; }
 
-/* FOOTER */
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
 .footer a:hover { text-decoration: underline; }
 
-/* MOBILE OPTIMIZATIONS */
 @media (max-width: 640px) {
   .header-inner { flex-direction: column; text-align: center; }
   .logo { height: 60px; }
@@ -296,7 +315,6 @@ body {
 </header>
 
 <main class="container">
-  <!-- ANLEITUNG -->
   <div class="instructions">
     <div class="inst-header" id="inst-toggle">
       <span style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="help-circle" style="width:20px;height:20px;color:var(--color-primary)"></i> So abonnierst du den Kalender</span>
@@ -310,17 +328,16 @@ body {
         </div>
         <div class="inst-step">
           <div class="inst-step-num">2</div>
-          <div><strong>Kalender öffnen:</strong> Gehe in deine Kalender-App (Apple, Google, Outlook) und wähle "Kalender hinzufügen" > "Aus dem Internet" / "Per URL".</div>
+          <div><strong>Kalender öffnen:</strong> Gehe in deine Kalender-App und wähle "Kalender hinzufügen" > "Aus dem Internet" / "Per URL".</div>
         </div>
         <div class="inst-step">
           <div class="inst-step-num">3</div>
-          <div><strong>Einfügen & Fertig:</strong> Füge den Link ein. Der Kalender aktualisiert sich automatisch bei neuen Spielansetzungen.</div>
+          <div><strong>Einfügen & Fertig:</strong> Füge den Link ein. Der Kalender aktualisiert sich automatisch.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TEAMS -->
   <div class="teams-grid">
     ${teams.map(t => `
       <div class="team-card" data-team-id="${t.teamId}">
@@ -357,7 +374,6 @@ body {
     `).join('')}
   </div>
 
-  <!-- REPORT TRIGGER -->
   <div class="report-section">
     <i data-lucide="bug" style="width:32px;height:32px;color:var(--color-primary);margin-bottom:0.5rem;"></i>
     <h2>Stimmt etwas nicht?</h2>
@@ -372,7 +388,6 @@ body {
   <p>© ${new Date().getFullYear()} TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p>
 </footer>
 
-<!-- REPORT MODAL -->
 <div class="modal-backdrop" id="report-backdrop"></div>
 <div class="modal" id="report-modal" role="dialog" aria-modal="true">
   <div class="modal-header">
@@ -381,7 +396,6 @@ body {
   </div>
   <div class="modal-body">
     <form id="report-form">
-      <!-- SPAM SCHUTZ -->
       <input type="text" name="website_url" id="hp-website" class="hp-field" tabindex="-1" autocomplete="off">
       <input type="hidden" name="form_started" id="form-started" value="">
 
@@ -407,7 +421,7 @@ body {
           <select id="report-game" class="form-select" disabled>
             <option value="" selected>Wähle zuerst ein Team aus</option>
           </select>
-          <div class="form-hint">Spiele werden automatisch geladen, wenn ein Team ausgewählt wird.</div>
+          <div class="form-hint">Die Spiele werden automatisch geladen, sobald ein Team ausgewählt wird.</div>
         </div>
         <div class="form-group full">
           <label class="form-label" for="report-title">Titel der Meldung *</label>
@@ -439,10 +453,11 @@ body {
 </div>
 
 <script>
-// Icons initialisieren
+// --- ECHTE SPIELDATEN EINGEBETTET ---
+window.GAMES_BY_TEAM = ${JSON.stringify(gamesByTeam)};
+
 lucide.createIcons();
 
-// DOM Elemente
 const instToggle = document.getElementById('inst-toggle');
 const instContent = document.getElementById('inst-content');
 const reportModal = document.getElementById('report-modal');
@@ -456,17 +471,14 @@ const submitBtn = document.getElementById('submit-report-btn');
 const errorAlert = document.getElementById('report-error');
 const successAlert = document.getElementById('report-success');
 
-// Anleitung Toggle
 instToggle.addEventListener('click', () => {
   instToggle.classList.toggle('active');
   instContent.classList.toggle('active');
 });
 
-// Team Cards Toggle
 document.querySelectorAll('.team-card-header').forEach(header => {
   header.addEventListener('click', () => {
     const card = header.parentElement;
-    // Schließe andere (optional, für Akkordeon-Effekt)
     document.querySelectorAll('.team-card').forEach(c => {
       if (c !== card) c.classList.remove('expanded');
     });
@@ -474,9 +486,8 @@ document.querySelectorAll('.team-card-header').forEach(header => {
   });
 });
 
-// Modal Funktionen
 function openModal() {
-  formStarted.value = Date.now().toString(); // Spam-Schutz Timer starten
+  formStarted.value = Date.now().toString();
   reportForm.reset();
   reportGame.innerHTML = '<option value="" selected>Wähle zuerst ein Team aus</option>';
   reportGame.disabled = true;
@@ -485,9 +496,8 @@ function openModal() {
   
   reportBackdrop.classList.add('active');
   reportModal.classList.add('active');
-  document.body.style.overflow = 'hidden'; // Scrollen im Hintergrund verhindern
+  document.body.style.overflow = 'hidden';
   
-  // Fokus auf erstes Feld für Accessibility
   setTimeout(() => reportTeam.focus(), 100);
 }
 
@@ -502,7 +512,7 @@ document.getElementById('close-report-btn').addEventListener('click', closeModal
 document.getElementById('cancel-report-btn').addEventListener('click', closeModal);
 reportBackdrop.addEventListener('click', closeModal);
 
-// Dynamisches Spiel-Dropdown (Mockup-Logik)
+// --- ECHTE SPIELE LADEN ---
 reportTeam.addEventListener('change', function() {
   const teamId = this.value;
   reportGame.innerHTML = '<option value="" selected>Lade Spiele...</option>';
@@ -513,29 +523,38 @@ reportTeam.addEventListener('change', function() {
     return;
   }
 
-  // HIER SPÄTER: Echte API-Abfrage an den Worker oder lokales JSON
-  // Simuliert mit Timeout für UX-Demo
-  setTimeout(() => {
-    reportGame.innerHTML = \`
-      <option value="" selected>Bitte Spiel wählen (oder leer lassen)</option>
-      <option value="game_1">Sa, 12.10.2024 - 18:00 vs. Gegner X (Heim)</option>
-      <option value="game_2">So, 20.10.2024 - 15:30 bei Gegner Y (Auswärts)</option>
-    \`;
-    reportGame.disabled = false;
-  }, 400);
+  const games = window.GAMES_BY_TEAM[teamId] || [];
+
+  if (games.length === 0) {
+    reportGame.innerHTML = '<option value="" selected>Keine Spiele für dieses Team gefunden</option>';
+    return;
+  }
+
+  let optionsHtml = '<option value="" selected>Bitte Spiel wählen (oder leer lassen)</option>';
+  
+  games.forEach(game => {
+    const dateStr = game.date ? new Date(game.date).toLocaleDateString('de-DE', { 
+      weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+    }) : 'Datum unbekannt';
+    
+    const venue = game.isHome ? 'Heim' : 'Auswärts';
+    const label = \`\${dateStr} vs. \${game.opponent} (\${venue})\`;
+    
+    optionsHtml += \`<option value="\${game.id}">\${label}</option>\`;
+  });
+
+  reportGame.innerHTML = optionsHtml;
+  reportGame.disabled = false;
 });
 
-// Formular Absenden mit Spam-Schutz
 reportForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // 1. Honeypot prüfen
   if (hpWebsite.value.trim() !== '') {
     console.warn('Spam-Bot erkannt (Honeypot).');
     return;
   }
 
-  // 2. Zeitprüfung (mindestens 3 Sekunden)
   const startTime = parseInt(formStarted.value, 10);
   if (isNaN(startTime) || (Date.now() - startTime) < 3000) {
     document.getElementById('error-text').textContent = 'Das Formular wurde zu schnell abgesendet. Bitte warte 3 Sekunden.';
@@ -554,7 +573,6 @@ reportForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // UI in Ladezustand versetzen
   submitBtn.disabled = true;
   submitBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin" style="width:16px;height:16px;"></i> Wird gesendet...';
   lucide.createIcons();
@@ -599,18 +617,15 @@ reportForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Mobile Keyboard Resize Fix (VisualViewport API)
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     if (reportModal.classList.contains('active')) {
-      // Stellt sicher, dass das Modal immer die verfügbare Höhe nutzt, wenn die Tastatur erscheint
       reportModal.style.maxHeight = window.visualViewport.height + 'px';
       document.body.style.overflow = 'hidden';
     }
   });
 }
 
-// ESC Taste schließt Modal
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && reportModal.classList.contains('active')) {
     closeModal();
@@ -621,7 +636,7 @@ document.addEventListener('keydown', (e) => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ Moderne index.html erfolgreich generiert.');
+  console.log('✅ Moderne index.html mit echten Spieldaten erfolgreich generiert.');
 }
 
 genHTML();
