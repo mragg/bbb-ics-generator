@@ -5,24 +5,16 @@
   "scripts": {
     "start": "node src/server.js",
     "update": "node src/cronUpdate.js",
-    "generate-html": "node src/generateHTML.js"
-  },
-  "dependencies": {
-    "axios": "^1.7.9",
-    "ics": "^3.8.1",
-    "express": "^4.21.2",
-    "node-cron": "^3.0.3"
-  }
-}
-{
-  "scripts": {
-    "update": "node src/generateICS.js",
     "generate-html": "node src/generateHTML.js",
     "generate-export": "node src/generateMasterExport.js"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "exceljs": "^4.4.0",
+    "express": "^4.21.2",
     "ical": "^0.8.0",
+    "ics": "^3.8.1",
+    "node-cron": "^3.0.3",
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.15.0"
   }
