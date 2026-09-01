@@ -1,4 +1,4 @@
-// complete generator script — mit Next Game, Favorites, Konfetti & PWA
+// complete generator script — mit Next Game, Favorites, Konfetti & PWA (FIXED)
 const fs = require('fs');
 const path = require('path');
 
@@ -42,7 +42,6 @@ function genHTML() {
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
 
-  // Spiele nach Team gruppieren
   const gamesByTeam = {};
   gamesArray.forEach(g => {
     const teamId = normalizeId(g.teamId ?? g.id ?? g.team ?? '');
@@ -61,20 +60,14 @@ function genHTML() {
     });
   });
 
-  // Spiele sortieren und nächstes Spiel finden
   const today = new Date();
   teams.forEach(t => {
     const teamGames = gamesByTeam[t.teamId] || [];
     teamGames.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    // Nächstes zukünftiges Spiel finden
     const nextGame = teamGames.find(g => new Date(g.date) > today);
     t.nextGame = nextGame || null;
   });
 
-  // ========================================
-  // 1. index.html generieren
-  // ========================================
   const content = `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -82,7 +75,6 @@ function genHTML() {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TV Neunkirchen Baskets – Kalender</title>
 
-<!-- PWA Meta Tags -->
 <meta name="theme-color" content="#FF6B00">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -166,7 +158,6 @@ body {
 .team-card.hidden { display: none !important; }
 .team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
 
-/* Favorit-Button */
 .favorite-btn {
   position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;
   background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
@@ -189,7 +180,6 @@ body {
 .stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
 .stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; }
 
-/* Nächstes Spiel */
 .next-game {
   padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(255,107,0,0.02));
   border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.75rem;
@@ -217,7 +207,6 @@ body {
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
 .toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Konfetti Canvas */
 #konfetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
 
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
@@ -275,59 +264,64 @@ body {
 
   <div class="teams-grid" id="teams-grid">
     ${teams.map(t => {
-      const nextGameHtml = t.nextGame ? 
-        \`<div class="next-game">
-          <div class="next-game-icon"><i data-lucide="calendar" style="width:16px;height:16px;"></i></div>
-          <div class="next-game-content">
-            <div class="next-game-label">Nächstes Spiel</div>
-            <div class="next-game-details">\${new Date(t.nextGame.date).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })} vs. \${t.nextGame.opponent} (\${t.nextGame.isHome ? 'Heim' : 'Auswärts'})</div>
-          </div>
-        </div>\` :
-        '<div class="next-game-none">Keine weiteren Spiele</div>';
+      let nextGameHtml = '';
+      if (t.nextGame) {
+        const dateStr = new Date(t.nextGame.date).toLocaleDateString('de-DE', { 
+          weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' 
+        });
+        const venue = t.nextGame.isHome ? 'Heim' : 'Auswärts';
+        nextGameHtml = '<div class="next-game">' +
+          '<div class="next-game-icon"><i data-lucide="calendar" style="width:16px;height:16px;"></i></div>' +
+          '<div class="next-game-content">' +
+            '<div class="next-game-label">Nächstes Spiel</div>' +
+            '<div class="next-game-details">' + dateStr + ' vs. ' + t.nextGame.opponent + ' (' + venue + ')</div>' +
+          '</div>' +
+        '</div>';
+      } else {
+        nextGameHtml = '<div class="next-game-none">Keine weiteren Spiele</div>';
+      }
       
-      return \`
-      <div class="team-card" data-team-id="\${t.teamId}" data-team-name="\${t.name.toLowerCase()} \${t.ageGroup.toLowerCase()}">
-        <button class="favorite-btn" aria-label="Als Favorit markieren">
-          <i data-lucide="heart" style="width:18px;height:18px;"></i>
-        </button>
-        <div class="team-card-header">
-          <span class="team-name">\${t.name}</span>
-          \${t.ageGroup ? \`<span class="team-badge">\${t.ageGroup}</span>\` : ''}
-        </div>
-        <div class="team-stats">
-          <div class="stat"><div class="stat-val" data-target="\${t.matchCount}">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>
-          <div class="stat"><div class="stat-val" data-target="\${t.homeMatchCount}">0</div><div class="stat-label"><i data-lucide="home" style="width:12px;height:12px;"></i> Heim</div></div>
-          <div class="stat"><div class="stat-val" data-target="\${t.awayMatchCount}">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>
-        </div>
-        \${nextGameHtml}
-        <div class="team-actions">
-          <div class="link-row">
-            <a href="\${makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics')}" class="btn btn-primary">
-              <i data-lucide="calendar-plus" style="width:16px;height:16px;"></i> Alle Spiele
-            </a>
-            <button class="btn btn-copy copy-btn" data-copy="\${makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics')}">
-              <i data-lucide="copy" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-          <div class="link-row">
-            <a href="\${makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics')}" class="btn btn-outline">
-              <i data-lucide="home" style="width:16px;height:16px;"></i> Heimspiele
-            </a>
-            <button class="btn btn-copy copy-btn" data-copy="\${makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics')}">
-              <i data-lucide="copy" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-          <div class="link-row">
-            <a href="\${makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics')}" class="btn btn-outline">
-              <i data-lucide="map-pin" style="width:16px;height:16px;"></i> Auswärts
-            </a>
-            <button class="btn btn-copy copy-btn" data-copy="\${makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics')}">
-              <i data-lucide="copy" style="width:14px;height:14px;"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    \`;
+      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '">' +
+        '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
+          '<i data-lucide="heart" style="width:18px;height:18px;"></i>' +
+        '</button>' +
+        '<div class="team-card-header">' +
+          '<span class="team-name">' + t.name + '</span>' +
+          (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') +
+        '</div>' +
+        '<div class="team-stats">' +
+          '<div class="stat"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
+          '<div class="stat"><div class="stat-val" data-target="' + t.homeMatchCount + '">0</div><div class="stat-label"><i data-lucide="home" style="width:12px;height:12px;"></i> Heim</div></div>' +
+          '<div class="stat"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
+        '</div>' +
+        nextGameHtml +
+        '<div class="team-actions">' +
+          '<div class="link-row">' +
+            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics') + '" class="btn btn-primary">' +
+              '<i data-lucide="calendar-plus" style="width:16px;height:16px;"></i> Alle Spiele' +
+            '</a>' +
+            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics') + '">' +
+              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+            '</button>' +
+          '</div>' +
+          '<div class="link-row">' +
+            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics') + '" class="btn btn-outline">' +
+              '<i data-lucide="home" style="width:16px;height:16px;"></i> Heimspiele' +
+            '</a>' +
+            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics') + '">' +
+              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+            '</button>' +
+          '</div>' +
+          '<div class="link-row">' +
+            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics') + '" class="btn btn-outline">' +
+              '<i data-lucide="map-pin" style="width:16px;height:16px;"></i> Auswärts' +
+            '</a>' +
+            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics') + '">' +
+              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }).join('')}
   </div>
 </main>
@@ -350,19 +344,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('main-footer').style.display = 'block';
     lucide.createIcons();
     
-    // Konfetti beim ersten Besuch
     if (!localStorage.getItem('konfetti_shown')) {
       startKonfetti();
       localStorage.setItem('konfetti_shown', 'true');
     }
   }, 400);
 
-  // ========================================
-  // FAVORITEN-SYSTEM
-  // ========================================
   const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
   
-  // Favoriten beim Laden wiederherstellen
   document.querySelectorAll('.team-card').forEach(card => {
     const teamId = card.getAttribute('data-team-id');
     if (favorites.includes(teamId)) {
@@ -371,7 +360,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  // Favoriten nach oben sortieren
   const grid = document.getElementById('teams-grid');
   const cards = Array.from(grid.querySelectorAll('.team-card'));
   cards.sort((a, b) => {
@@ -381,7 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   cards.forEach(card => grid.appendChild(card));
 
-  // Favorit-Button Klick
   document.querySelectorAll('.favorite-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -400,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       localStorage.setItem('favorites', JSON.stringify(currentFavs));
       
-      // Neu sortieren
       const cards = Array.from(grid.querySelectorAll('.team-card'));
       cards.sort((a, b) => {
         const aFav = a.classList.contains('favorite') ? 0 : 1;
@@ -411,9 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ========================================
-  // KONFETTI-ANIMATION
-  // ========================================
   function startKonfetti() {
     const canvas = document.getElementById('konfetti-canvas');
     const ctx = canvas.getContext('2d');
@@ -437,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     let frame = 0;
-    const maxFrames = 180; // 3 Sekunden bei 60fps
+    const maxFrames = 180;
     
     function animate() {
       if (frame >= maxFrames) {
@@ -450,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
       particles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.1; // Gravitation
+        p.vy += 0.1;
         p.rotation += p.rotationSpeed;
         
         ctx.save();
@@ -468,9 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
     animate();
   }
 
-  // ========================================
-  // RESTLICHE FUNKTIONALITÄT
-  // ========================================
   const themeToggle = document.getElementById('theme-toggle');
   const themeIcon = document.getElementById('theme-icon');
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -536,14 +516,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inst-content').classList.toggle('active');
   });
 
-  // ========================================
-  // PWA SERVICE WORKER REGISTRATION
-  // ========================================
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('✅ Service Worker registriert:', reg.scope);
+      console.log('Service Worker registriert:', reg.scope);
     }).catch(err => {
-      console.error('❌ Service Worker Fehler:', err);
+      console.error('Service Worker Fehler:', err);
     });
   }
 });
@@ -554,9 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
   console.log('✅ index.html mit Next Game, Favorites, Konfetti & PWA generiert.');
 
-  // ========================================
-  // 2. manifest.json für PWA generieren
-  // ========================================
   const manifest = {
     name: "TV Neunkirchen Baskets – Kalender",
     short_name: "TVN Baskets",
@@ -586,9 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
   );
   console.log('✅ manifest.json für PWA generiert.');
 
-  // ========================================
-  // 3. Service Worker (sw.js) generieren
-  // ========================================
   const swContent = `
 const CACHE_NAME = 'tvn-baskets-v1';
 const urlsToCache = [
@@ -604,7 +575,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('✅ Cache geöffnet');
+        console.log('Cache geöffnet');
         return cache.addAll(urlsToCache);
       })
   );
@@ -615,7 +586,7 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         if (response) {
-          return response; // Aus Cache
+          return response;
         }
         return fetch(event.request).then(response => {
           if (!response || response.status !== 200 || response.type !== 'basic') {
