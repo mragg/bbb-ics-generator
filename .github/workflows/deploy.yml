@@ -36,6 +36,10 @@ jobs:
         
       - name: Generate ICS files
         run: npm run update
+
+      # NEU: Export-Dateien generieren (Excel & PDF)
+      - name: Generate Master Export (Excel & PDF)
+        run: npm run generate-export
         
       - name: Generate HTML
         run: npm run generate-html
@@ -46,6 +50,8 @@ jobs:
           ls -la generated/
           echo "=== ICS files ==="
           find generated/ -name "*.ics" -ls
+          echo "=== Export files ==="
+          ls -la generated/*.xlsx generated/*.pdf 2>/dev/null || echo "Keine Export-Dateien gefunden"
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
