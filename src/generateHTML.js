@@ -1,4 +1,4 @@
-// complete generator script — mit robuster Report-Sendung
+// complete generator script — ohne Fehler-Report, fokussiert auf Kalender
 const fs = require('fs');
 const path = require('path');
 
@@ -24,14 +24,11 @@ function normalizeId(value) {
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
-  const gamesPath = path.resolve(__dirname, '../generated/games.json');
 
   const rawMeta = safeReadJson(metaPath) || [];
   const rawTeams = safeReadJson(teamsPath) || [];
-  const rawGames = safeReadJson(gamesPath) || [];
 
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
-  const gamesArray = Array.isArray(rawGames) ? rawGames : (rawGames.games || rawGames.data || []);
   
   const teams = metadataArray.map(m => ({
     teamId: normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? ''),
@@ -41,28 +38,6 @@ function genHTML() {
     homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
-
-  const gamesByTeam = {};
-  gamesArray.forEach(g => {
-    const teamId = normalizeId(g.teamId ?? g.id ?? g.team ?? '');
-    if (!teamId) return;
-    if (!gamesByTeam[teamId]) gamesByTeam[teamId] = [];
-    
-    const opponent = g.opponent || g.awayTeam || g.guestTeam || g.gegner || 'Gegner';
-    const isHome = g.isHome !== undefined ? g.isHome : (g.venue === 'home' || g.location === 'Heim' || g.home === true);
-    const gameDate = g.date || g.start || g.tipoff || g.datetime;
-    
-    gamesByTeam[teamId].push({
-      id: normalizeId(g.gameId ?? g.id ?? g.matchId ?? ''),
-      date: gameDate,
-      opponent: opponent,
-      isHome: isHome
-    });
-  });
-
-  Object.keys(gamesByTeam).forEach(teamId => {
-    gamesByTeam[teamId].sort((a, b) => new Date(a.date) - new Date(b.date));
-  });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -90,8 +65,6 @@ function genHTML() {
   --color-text: #0F172A;
   --color-text-muted: #64748B;
   --color-border: #E2E8F0;
-  --color-success: #10B981;
-  --color-error: #EF4444;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -117,8 +90,6 @@ body {
 }
 @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .skeleton-card { height: 180px; margin-bottom: 1.5rem; }
-
-.hp-field { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; border: 0 !important; }
 
 .header { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 2rem 1.5rem; position: relative; overflow: hidden; }
 .header-inner { max-width: 1024px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
@@ -171,9 +142,6 @@ body {
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
 
-.report-section { background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); border: 1px solid #FFEDD5; border-radius: var(--radius-lg); padding: 2rem; text-align: center; margin-bottom: 3rem; }
-[data-theme="dark"] .report-section { background: linear-gradient(135deg, #1E293B 0%, #334155 100%); border-color: #475569; }
-
 .analytics-panel { display: none; background: var(--color-surface); border: 2px solid var(--color-primary); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; box-shadow: var(--shadow-lg); }
 .analytics-panel.active { display: block; }
 .analytics-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--color-border); }
@@ -186,29 +154,6 @@ body {
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
 .toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 50; opacity: 0; visibility: hidden; transition: var(--transition); }
-.modal-backdrop.active { opacity: 1; visibility: visible; }
-.modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); z-index: 51; width: 90%; max-width: 600px; max-height: 90dvh; overflow-y: auto; opacity: 0; visibility: hidden; transition: var(--transition); }
-.modal.active { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
-.modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--color-surface); z-index: 10; }
-.modal-close { background: transparent; border: none; color: var(--color-text-muted); cursor: pointer; padding: 0.5rem; }
-.modal-body { padding: 1.5rem; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.form-group { margin-bottom: 1rem; }
-.form-group.full { grid-column: 1 / -1; }
-.form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem; }
-.form-label .optional { font-weight: 400; color: var(--color-text-muted); font-size: 0.8rem; }
-.form-input, .form-select, .form-textarea { width: 100%; padding: 0.625rem 0.875rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-family: inherit; font-size: 0.95rem; }
-.form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }
-.form-textarea { min-height: 100px; resize: vertical; }
-.form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
-.btn-secondary { background: #F1F5F9; color: var(--color-text); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.alert { padding: 0.875rem 1rem; border-radius: var(--radius-sm); font-size: 0.9rem; margin-top: 1rem; display: none; align-items: center; gap: 0.5rem; }
-.alert-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
-.alert-success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
-.alert.active { display: flex; }
-
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
 
@@ -216,10 +161,6 @@ body {
   .header-inner { flex-direction: column; text-align: center; }
   .logo { height: 60px; }
   .teams-grid { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
-  .modal { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; transform: translate(0, 0) translateY(100%); }
-  .modal.active { transform: translate(0, 0) translateY(0); }
-  .form-actions { flex-direction: column-reverse; }
   .link-row { flex-direction: column; }
   .link-row .btn-copy { width: 100%; }
 }
@@ -253,7 +194,7 @@ body {
   <div class="analytics-panel" id="analytics-panel">
     <div class="analytics-header">
       <div style="font-family:'Oswald';font-size:1.5rem;font-weight:700;">📊 Admin Analytics</div>
-      <button class="modal-close" id="analytics-close"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
+      <button class="modal-close" id="analytics-close" style="background:transparent;border:none;color:var(--color-text-muted);cursor:pointer;padding:0.5rem;"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
     </div>
     <div class="analytics-grid">
       <div class="analytics-stat">
@@ -325,15 +266,6 @@ body {
       </div>
     `).join('')}
   </div>
-
-  <div class="report-section">
-    <i data-lucide="bug" style="width:32px;height:32px;color:var(--color-primary);margin-bottom:0.5rem;"></i>
-    <h2>Stimmt etwas nicht?</h2>
-    <p style="color:var(--color-text-muted);max-width:500px;margin:0 auto 1.5rem;">Melde falsche Anpfiffzeiten, abgesagte Spiele oder andere Fehler.</p>
-    <button id="open-report-btn" class="btn btn-primary" style="width:auto;padding:0.75rem 2rem;">
-      <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> Fehler melden
-    </button>
-  </div>
 </main>
 
 <footer class="footer" id="main-footer" style="display:none;">
@@ -345,60 +277,7 @@ body {
   <span id="toast-text">Link kopiert!</span>
 </div>
 
-<div class="modal-backdrop" id="report-backdrop"></div>
-<div class="modal" id="report-modal" role="dialog" aria-modal="true">
-  <div class="modal-header">
-    <h3 class="modal-title" style="font-family:'Oswald';font-size:1.25rem;">Fehler melden</h3>
-    <button class="modal-close" id="close-report-btn"><i data-lucide="x" style="width:20px;height:20px;"></i></button>
-  </div>
-  <div class="modal-body">
-    <form id="report-form">
-      <input type="text" name="website_url" id="hp-website" class="hp-field" tabindex="-1" autocomplete="off">
-      <input type="hidden" name="form_started" id="form-started" value="">
-      <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label" for="report-team">Team <span class="optional">(optional)</span></label>
-          <select id="report-team" class="form-select">
-            <option value="" selected>Bitte wählen...</option>
-            ${teams.map(t => `<option value="${t.teamId}">${t.name}${t.ageGroup ? ` (${t.ageGroup})` : ''}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="report-calendar">Kalender <span class="optional">(optional)</span></label>
-          <select id="report-calendar" class="form-select">
-            <option value="" selected>Bitte wählen...</option>
-            <option value="Alle Spiele">Alle Spiele</option>
-            <option value="Nur Heimspiele">Nur Heimspiele</option>
-            <option value="Nur Auswärtsspiele">Nur Auswärtsspiele</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label class="form-label" for="report-game">Betroffenes Spiel <span class="optional">(optional)</span></label>
-          <select id="report-game" class="form-select" disabled>
-            <option value="" selected>Wähle zuerst ein Team aus</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label class="form-label" for="report-title">Titel der Meldung *</label>
-          <input type="text" id="report-title" class="form-input" maxlength="120" required>
-        </div>
-        <div class="form-group full">
-          <label class="form-label" for="report-description">Beschreibung *</label>
-          <textarea id="report-description" class="form-textarea" maxlength="2000" required></textarea>
-        </div>
-      </div>
-      <div id="report-error" class="alert alert-error"><i data-lucide="alert-circle" style="width:16px;height:16px;"></i><span id="error-text"></span></div>
-      <div id="report-success" class="alert alert-success"><i data-lucide="check-circle" style="width:16px;height:16px;"></i><span>Erfolgreich übermittelt.</span></div>
-      <div class="form-actions">
-        <button type="button" id="cancel-report-btn" class="btn btn-secondary">Abbrechen</button>
-        <button type="submit" id="submit-report-btn" class="btn btn-primary">Senden</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <script>
-window.GAMES_BY_TEAM = ${JSON.stringify(gamesByTeam)};
 const ANALYTICS_SECRET = 'tvn-admin-2024-geheim';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -409,8 +288,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('main-footer').style.display = 'block';
     lucide.createIcons();
   }, 400);
-
-  console.log('✅ Seite geladen. GAMES_BY_TEAM enthält Teams:', Object.keys(window.GAMES_BY_TEAM));
 
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('admin') === ANALYTICS_SECRET) {
@@ -525,143 +402,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('inst-toggle').classList.toggle('active');
     document.getElementById('inst-content').classList.toggle('active');
   });
-
-  const reportModal = document.getElementById('report-modal');
-  const reportBackdrop = document.getElementById('report-backdrop');
-  const reportTeam = document.getElementById('report-team');
-  const reportGame = document.getElementById('report-game');
-  
-  function openModal() {
-    document.getElementById('form-started').value = Date.now().toString();
-    reportModal.classList.add('active');
-    reportBackdrop.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal() {
-    reportModal.classList.remove('active');
-    reportBackdrop.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  document.getElementById('open-report-btn').addEventListener('click', openModal);
-  document.getElementById('close-report-btn').addEventListener('click', closeModal);
-  document.getElementById('cancel-report-btn').addEventListener('click', closeModal);
-  reportBackdrop.addEventListener('click', closeModal);
-
-  reportTeam.addEventListener('change', function() {
-    const teamId = this.value;
-    console.log('🔍 Gewählte Team-ID im Formular:', teamId);
-    console.log('🔍 Verfügbare Team-IDs in GAMES_BY_TEAM:', Object.keys(window.GAMES_BY_TEAM));
-    
-    reportGame.innerHTML = '<option value="" selected>Lade...</option>';
-    reportGame.disabled = true;
-    
-    if (!teamId) {
-      reportGame.innerHTML = '<option value="" selected>Wähle zuerst ein Team</option>';
-      return;
-    }
-
-    const games = window.GAMES_BY_TEAM[teamId] || [];
-    console.log('🔍 Gefundene Spiele für dieses Team:', games.length);
-
-    if (games.length === 0) {
-      reportGame.innerHTML = '<option value="" selected>Keine Spiele für dieses Team gefunden (ID-Mismatch?)</option>';
-      return;
-    }
-
-    let html = '<option value="" selected>Bitte Spiel wählen (oder leer lassen)</option>';
-    games.forEach(g => {
-      const d = g.date ? new Date(g.date).toLocaleDateString('de-DE', { weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'Datum unbekannt';
-      html += \`<option value="\${g.id}">\${d} vs. \${g.opponent} (\${g.isHome ? 'Heim' : 'Auswärts'})</option>\`;
-    });
-    
-    reportGame.innerHTML = html;
-    reportGame.disabled = false;
-  });
-
-  document.getElementById('report-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (document.getElementById('hp-website').value.trim() !== '') {
-      console.warn('🤖 Spam-Bot erkannt (Honeypot).');
-      return; 
-    }
-    
-    const start = parseInt(document.getElementById('form-started').value, 10);
-    if (Date.now() - start < 3000) {
-      document.getElementById('error-text').textContent = 'Bitte warte 3 Sekunden vor dem Absenden (Spam-Schutz).';
-      document.getElementById('report-error').classList.add('active');
-      document.getElementById('report-success').classList.remove('active');
-      return;
-    }
-
-    const btn = document.getElementById('submit-report-btn');
-    btn.disabled = true; 
-    btn.textContent = 'Sende...';
-    document.getElementById('report-error').classList.remove('active');
-    document.getElementById('report-success').classList.remove('active');
-
-    // ROBUSTE DATENVALIDIERUNG
-    const teamSelect = document.getElementById('report-team');
-    const calendarSelect = document.getElementById('report-calendar');
-    const gameSelect = document.getElementById('report-game');
-    
-    const payload = {
-      team: teamSelect.value ? teamSelect.options[teamSelect.selectedIndex].text : 'Nicht angegeben',
-      calendar: calendarSelect.value || 'Nicht angegeben',
-      game: gameSelect.value ? gameSelect.options[gameSelect.selectedIndex].text : 'Nicht angegeben',
-      title: document.getElementById('report-title').value.trim(),
-      description: document.getElementById('report-description').value.trim()
-    };
-    
-    console.log('📤 Sende Payload an Worker:', payload);
-
-    try {
-      const res = await fetch('https://bbb-ics-report.raggelija.workers.dev/', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      console.log('📥 Worker Antwort Status:', res.status);
-      
-      const responseData = await res.json().catch(() => ({}));
-      console.log('📥 Worker Antwort Daten:', responseData);
-
-      if (res.ok && responseData.success) {
-        document.getElementById('report-success').classList.add('active');
-        document.getElementById('report-form').reset();
-        setTimeout(closeModal, 2000);
-      } else {
-        throw new Error(responseData.error || \`Server antwortete mit Status \${res.status}\`);
-      }
-    } catch (err) {
-      console.error('❌ DETAILIERTER FEHLER BEIM SENDEN:', err);
-      document.getElementById('error-text').textContent = 'Fehler: ' + err.message + ' (Drücke F12 für Details)';
-      document.getElementById('report-error').classList.add('active');
-    } finally {
-      btn.disabled = false; 
-      btn.textContent = 'Senden';
-    }
-  });
-
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-      if (reportModal.classList.contains('active')) {
-        reportModal.style.maxHeight = window.visualViewport.height + 'px';
-      }
-    });
-  }
 });
 </script>
 </body>
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ Premium index.html mit robuster Report-Sendung erfolgreich generiert.');
+  console.log('✅ Clean index.html ohne Fehler-Report erfolgreich generiert.');
 }
 
 genHTML();
