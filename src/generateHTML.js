@@ -1,4 +1,4 @@
-// complete generator script — mit Next Game, Favorites, Konfetti & PWA (FIXED)
+// complete generator script — mit Favorites (Original-Reihenfolge), Konfetti & PWA
 const fs = require('fs');
 const path = require('path');
 
@@ -24,14 +24,11 @@ function normalizeId(value) {
 function genHTML() {
   const metaPath = path.resolve(__dirname, '../generated/metadata.json');
   const teamsPath = path.resolve(__dirname, '../generated/teams.json');
-  const gamesPath = path.resolve(__dirname, '../generated/games.json');
 
   const rawMeta = safeReadJson(metaPath) || [];
   const rawTeams = safeReadJson(teamsPath) || [];
-  const rawGames = safeReadJson(gamesPath) || [];
 
   const metadataArray = Array.isArray(rawMeta) ? rawMeta : (rawMeta.teams || rawMeta.data || []);
-  const gamesArray = Array.isArray(rawGames) ? rawGames : (rawGames.games || rawGames.data || []);
   
   const teams = metadataArray.map(m => ({
     teamId: normalizeId(m.teamId ?? m.id ?? m.idStr ?? m.identifier ?? ''),
@@ -41,32 +38,6 @@ function genHTML() {
     homeMatchCount: m.homeMatchCount ?? m.homeMatches ?? 0,
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
-
-  const gamesByTeam = {};
-  gamesArray.forEach(g => {
-    const teamId = normalizeId(g.teamId ?? g.id ?? g.team ?? '');
-    if (!teamId) return;
-    if (!gamesByTeam[teamId]) gamesByTeam[teamId] = [];
-    
-    const opponent = g.opponent || g.awayTeam || g.guestTeam || g.gegner || 'Gegner';
-    const isHome = g.isHome !== undefined ? g.isHome : (g.venue === 'home' || g.location === 'Heim' || g.home === true);
-    const gameDate = g.date || g.start || g.tipoff || g.datetime;
-    
-    gamesByTeam[teamId].push({
-      id: normalizeId(g.gameId ?? g.id ?? g.matchId ?? ''),
-      date: gameDate,
-      opponent: opponent,
-      isHome: isHome
-    });
-  });
-
-  const today = new Date();
-  teams.forEach(t => {
-    const teamGames = gamesByTeam[t.teamId] || [];
-    teamGames.sort((a, b) => new Date(a.date) - new Date(b.date));
-    const nextGame = teamGames.find(g => new Date(g.date) > today);
-    t.nextGame = nextGame || null;
-  });
 
   const content = `<!DOCTYPE html>
 <html lang="de">
@@ -180,16 +151,6 @@ body {
 .stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); }
 .stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; }
 
-.next-game {
-  padding: 1rem 1.25rem; background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(255,107,0,0.02));
-  border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.75rem;
-}
-.next-game-icon { background: var(--color-primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.next-game-content { flex: 1; font-size: 0.9rem; }
-.next-game-label { color: var(--color-text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.125rem; }
-.next-game-details { font-weight: 600; color: var(--color-text); }
-.next-game-none { color: var(--color-text-muted); font-style: italic; font-size: 0.9rem; padding: 1rem 1.25rem; text-align: center; }
-
 .team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); }
 .team-card.expanded .team-actions { opacity: 1; max-height: 400px; }
 
@@ -263,25 +224,8 @@ body {
   </div>
 
   <div class="teams-grid" id="teams-grid">
-    ${teams.map(t => {
-      let nextGameHtml = '';
-      if (t.nextGame) {
-        const dateStr = new Date(t.nextGame.date).toLocaleDateString('de-DE', { 
-          weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' 
-        });
-        const venue = t.nextGame.isHome ? 'Heim' : 'Auswärts';
-        nextGameHtml = '<div class="next-game">' +
-          '<div class="next-game-icon"><i data-lucide="calendar" style="width:16px;height:16px;"></i></div>' +
-          '<div class="next-game-content">' +
-            '<div class="next-game-label">Nächstes Spiel</div>' +
-            '<div class="next-game-details">' + dateStr + ' vs. ' + t.nextGame.opponent + ' (' + venue + ')</div>' +
-          '</div>' +
-        '</div>';
-      } else {
-        nextGameHtml = '<div class="next-game-none">Keine weiteren Spiele</div>';
-      }
-      
-      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '">' +
+    ${teams.map((t, index) => {
+      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '">' +
         '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
           '<i data-lucide="heart" style="width:18px;height:18px;"></i>' +
         '</button>' +
@@ -294,7 +238,6 @@ body {
           '<div class="stat"><div class="stat-val" data-target="' + t.homeMatchCount + '">0</div><div class="stat-label"><i data-lucide="home" style="width:12px;height:12px;"></i> Heim</div></div>' +
           '<div class="stat"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
         '</div>' +
-        nextGameHtml +
         '<div class="team-actions">' +
           '<div class="link-row">' +
             '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics') + '" class="btn btn-primary">' +
@@ -365,7 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
   cards.sort((a, b) => {
     const aFav = a.classList.contains('favorite') ? 0 : 1;
     const bFav = b.classList.contains('favorite') ? 0 : 1;
-    return aFav - bFav;
+    if (aFav !== bFav) return aFav - bFav;
+    const aIdx = parseInt(a.getAttribute('data-original-index'));
+    const bIdx = parseInt(b.getAttribute('data-original-index'));
+    return aIdx - bIdx;
   });
   cards.forEach(card => grid.appendChild(card));
 
@@ -391,7 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cards.sort((a, b) => {
         const aFav = a.classList.contains('favorite') ? 0 : 1;
         const bFav = b.classList.contains('favorite') ? 0 : 1;
-        return aFav - bFav;
+        if (aFav !== bFav) return aFav - bFav;
+        const aIdx = parseInt(a.getAttribute('data-original-index'));
+        const bIdx = parseInt(b.getAttribute('data-original-index'));
+        return aIdx - bIdx;
       });
       cards.forEach(card => grid.appendChild(card));
     });
@@ -529,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Next Game, Favorites, Konfetti & PWA generiert.');
+  console.log('✅ index.html mit Favorites, Konfetti & PWA generiert.');
 
   const manifest = {
     name: "TV Neunkirchen Baskets – Kalender",
