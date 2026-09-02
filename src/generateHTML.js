@@ -1,4 +1,4 @@
-// complete generator script — mit Dropdown-Fix, Favoriten-Animation & besserem Pill-Design
+// complete generator script — Dropdown-Fix mit position:fixed + JS-Positionierung
 const fs = require('fs');
 const path = require('path');
 
@@ -104,15 +104,11 @@ function genHTML() {
 '.theme-toggle { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.6rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }\n' +
 '.theme-toggle:hover { background: rgba(255,255,255,0.2); }\n' +
 '.container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }\n' +
-
-// QUICK-ACCESS MIT ANIMATION
 '.quick-access { position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem; box-shadow: var(--shadow-sm); display: none; margin-bottom: 2rem; animation: slideDown 0.3s ease; }\n' +
 '.quick-access.active { display: block; }\n' +
 '@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }\n' +
 '.quick-access-inner { max-width: 1024px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }\n' +
 '.quick-access-label { font-size: 0.875rem; color: var(--color-text-muted); font-weight: 600; margin-right: 0.5rem; }\n' +
-
-// BESSERE PILL-DESIGN
 '.quick-access-pill { background: var(--color-surface); border: 2px solid var(--color-primary); color: var(--color-text); padding: 0.5rem 1rem 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(255,107,0,0.15); animation: pillSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }\n' +
 '@keyframes pillSlideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }\n' +
 '.quick-access-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); background: rgba(255,107,0,0.05); }\n' +
@@ -125,7 +121,6 @@ function genHTML() {
 '.pill-text { display: flex; flex-direction: column; gap: 0.125rem; }\n' +
 '.pill-name { font-weight: 700; line-height: 1.2; }\n' +
 '.pill-age { font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500; }\n' +
-
 '.my-calendar-btn { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; }\n' +
 '.my-calendar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }\n' +
 '.my-calendar-btn i { width: 14px; height: 14px; }\n' +
@@ -154,7 +149,7 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
 '.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
-'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; overflow: visible; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
+'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
 '.team-card.expanded { z-index: 50; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
@@ -202,11 +197,11 @@ function genHTML() {
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
 
-// DROPDOWN MIT FIXED POSITION
-'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; min-width: 200px; }\n' +
-'.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.2s ease; }\n' +
-'@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }\n' +
-'.more-option-item { padding: 0.625rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
+// DROPDOWN: position fixed, z-index 9999, wird per JS positioniert
+'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; min-width: 220px; }\n' +
+'.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
+'@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
+'.more-option-item { padding: 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
 '.more-option-item:hover { background: var(--color-bg); }\n' +
 '.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
 '.btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; }\n' +
@@ -333,12 +328,8 @@ function genHTML() {
   content += '<footer class="footer" id="main-footer" style="display:none;"><p>© ' + new Date().getFullYear() + ' TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p></footer>\n';
   content += '<button class="scroll-top-btn" id="scroll-top-btn" aria-label="Nach oben scrollen"><i data-lucide="arrow-up"></i></button>\n';
 
-  // QR Modal
   content += '<div class="qr-modal" id="qr-modal"><div class="qr-modal-content"><div class="modal-title">QR-Code scannen</div><div class="modal-subtitle">Öffne die Kamera-App und scanne den Code</div><div class="qr-code-container" id="qr-code-container"></div><button class="modal-close-btn" id="qr-modal-close">Schließen</button></div></div>\n';
-
-  // Mein Kalender Modal
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
-
   content += '<div class="toast" id="toast"><i data-lucide="check-circle" style="width:18px;height:18px;"></i><span id="toast-text">Link kopiert!</span></div>\n';
 
   // JAVASCRIPT
@@ -361,9 +352,9 @@ function genHTML() {
   content += '    const teamId = card.getAttribute("data-team-id");\n';
   content += '    if (favorites.includes(teamId)) { card.classList.add("favorite"); card.querySelector(".favorite-btn").classList.add("active"); }\n';
   content += '  });\n';
-  content += '  sortCards(false); updateQuickAccess();\n\n';
+  content += '  sortCards(); updateQuickAccess();\n\n';
 
-  // FLIP Animation Helper
+  // FLIP Animation
   content += '  function getFirstPositions() {\n';
   content += '    const positions = new Map();\n';
   content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
@@ -373,24 +364,25 @@ function genHTML() {
   content += '    return positions;\n';
   content += '  }\n\n';
 
-  content += '  function animateWithFLIP(firstPositions, duration = 400) {\n';
+  content += '  function animateWithFLIP(firstPositions, duration) {\n';
+  content += '    duration = duration || 400;\n';
   content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
   content += '      const first = firstPositions.get(card);\n';
   content += '      if (!first) return;\n';
   content += '      const last = card.getBoundingClientRect();\n';
-  content += '      const deltaX = first.left - last.left;\n';
-  content += '      const deltaY = first.top - last.top;\n';
-  content += '      if (deltaX === 0 && deltaY === 0) return;\n';
-  content += '      card.style.transform = `translate(${deltaX}px, ${deltaY}px)`;\n';
+  content += '      const dx = first.left - last.left;\n';
+  content += '      const dy = first.top - last.top;\n';
+  content += '      if (dx === 0 && dy === 0) return;\n';
+  content += '      card.style.transform = "translate(" + dx + "px," + dy + "px)";\n';
   content += '      card.style.transition = "none";\n';
   content += '      requestAnimationFrame(() => {\n';
-  content += '        card.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;\n';
+  content += '        card.style.transition = "transform " + duration + "ms cubic-bezier(0.4, 0, 0.2, 1)";\n';
   content += '        card.style.transform = "";\n';
   content += '      });\n';
   content += '    });\n';
   content += '  }\n\n';
 
-  // Favorite buttons mit FLIP Animation
+  // Favorite buttons
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -402,33 +394,32 @@ function genHTML() {
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); }\n';
   content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
-  content += '      const firstPositions = getFirstPositions();\n';
-  content += '      sortCards(true);\n';
-  content += '      animateWithFLIP(firstPositions, 400);\n';
+  content += '      const fp = getFirstPositions();\n';
+  content += '      sortCards();\n';
+  content += '      animateWithFLIP(fp, 400);\n';
   content += '      updateQuickAccess();\n';
   content += '    });\n';
   content += '  });\n\n';
 
-  content += '  function sortCards(animate = false) {\n';
+  content += '  function sortCards() {\n';
   content += '    const cards = Array.from(grid.querySelectorAll(".team-card"));\n';
   content += '    cards.sort((a, b) => { const af = a.classList.contains("favorite") ? 0 : 1; const bf = b.classList.contains("favorite") ? 0 : 1; if (af !== bf) return af - bf; return parseInt(a.getAttribute("data-original-index")) - parseInt(b.getAttribute("data-original-index")); });\n';
   content += '    cards.forEach(card => grid.appendChild(card));\n';
   content += '  }\n\n';
 
-  // updateQuickAccess mit Animation
   content += '  function updateQuickAccess() {\n';
   content += '    const qa = document.getElementById("quick-access"); const pc = document.getElementById("quick-access-pills");\n';
   content += '    const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
   content += '    if (f.length === 0) { qa.classList.remove("active"); return; }\n';
-  content += '    qa.classList.add("active");\n';
-  content += '    pc.innerHTML = "";\n';
+  content += '    qa.classList.add("active"); pc.innerHTML = "";\n';
   content += '    f.forEach(tid => {\n';
   content += '      const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); if (!card) return;\n';
   content += '      const teamName = card.querySelector(".team-name").textContent;\n';
   content += '      const ageGroup = card.querySelector(".team-badge") ? card.querySelector(".team-badge").textContent : "";\n';
-  content += '      const ageColor = card.className.match(/age-(blue|green|purple|orange)/)?.[1] || "orange";\n';
+  content += '      const ageColor = card.className.match(/age-(blue|green|purple|orange)/);\n';
+  content += '      const ac = ageColor ? ageColor[1] : "orange";\n';
   content += '      const pill = document.createElement("button"); pill.className = "quick-access-pill";\n';
-  content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ageColor + \'"><i data-lucide="basketball"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
+  content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ac + \'"><i data-lucide="basketball"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
   content += '      pill.addEventListener("click", (e) => { e.stopPropagation(); card.scrollIntoView({ behavior: "smooth", block: "center" }); card.classList.add("expanded"); });\n';
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
@@ -436,7 +427,7 @@ function genHTML() {
   content += '  }\n\n';
 
   content += '  const stb = document.getElementById("scroll-top-btn");\n';
-  content += '  window.addEventListener("scroll", () => stb.classList.toggle("active", window.scrollY > 300));\n';
+  content += '  window.addEventListener("scroll", () => { stb.classList.toggle("active", window.scrollY > 300); closeAllDropdowns(); });\n';
   content += '  stb.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));\n\n';
 
   content += '  function startKonfetti() {\n';
@@ -472,7 +463,7 @@ function genHTML() {
   content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
-  // Stat-Click öffnet Karte und scrollt hin
+  // Stat-Click
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -503,24 +494,37 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // DROPDOWN MIT FIXED POSITION
+  // DROPDOWN: position fixed + JS-Positionierung
+  content += '  function closeAllDropdowns() {\n';
+  content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
+  content += '  }\n\n';
+
   content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
   content += '      const dropdown = btn.nextElementSibling;\n';
-  content += '      document.querySelectorAll(".more-options-dropdown").forEach(x => { if (x !== dropdown) x.classList.remove("active"); });\n';
-  content += '      if (dropdown.classList.contains("active")) {\n';
-  content += '        dropdown.classList.remove("active");\n';
-  content += '      } else {\n';
-  content += '        const rect = btn.getBoundingClientRect();\n';
-  content += '        dropdown.style.top = (rect.bottom + 8) + "px";\n';
-  content += '        dropdown.style.left = rect.left + "px";\n';
-  content += '        dropdown.classList.add("active");\n';
-  content += '      }\n';
+  content += '      const isActive = dropdown.classList.contains("active");\n';
+  content += '      closeAllDropdowns();\n';
+  content += '      if (isActive) return;\n';
+  content += '      const rect = btn.getBoundingClientRect();\n';
+  content += '      const ddWidth = 220;\n';
+  content += '      let top = rect.bottom + 8;\n';
+  content += '      let left = rect.left;\n';
+  content += '      if (left + ddWidth > window.innerWidth) left = window.innerWidth - ddWidth - 16;\n';
+  content += '      if (left < 8) left = 8;\n';
+  content += '      if (top + 250 > window.innerHeight) top = rect.top - 250;\n';
+  content += '      dropdown.style.top = top + "px";\n';
+  content += '      dropdown.style.left = left + "px";\n';
+  content += '      dropdown.style.width = ddWidth + "px";\n';
+  content += '      dropdown.classList.add("active");\n';
   content += '    });\n';
-  content += '  });\n';
-  content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n';
-  content += '  window.addEventListener("scroll", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
+  content += '  });\n\n';
+
+  content += '  document.addEventListener("click", (e) => {\n';
+  content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) {\n';
+  content += '      closeAllDropdowns();\n';
+  content += '    }\n';
+  content += '  });\n\n';
 
   // Copy-Button
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
@@ -537,14 +541,14 @@ function genHTML() {
   content += '        if (icon) { icon.setAttribute("data-lucide","check"); icon.style.animation=""; lucide.createIcons(); }\n';
   content += '        showToast("Link kopiert!");\n';
   content += '        setTimeout(() => { btn.classList.remove("success"); if (icon) { icon.setAttribute("data-lucide",orig); lucide.createIcons(); } }, 1500);\n';
-  content += '      } catch(err) { console.error("Copy failed:", err); btn.classList.remove("loading"); if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; lucide.createIcons(); } showToast("Kopieren fehlgeschlagen"); }\n';
+  content += '      } catch(err) { btn.classList.remove("loading"); if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; lucide.createIcons(); } showToast("Kopieren fehlgeschlagen"); }\n';
   content += '    });\n';
   content += '  });\n\n';
 
   // Calendar buttons
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { e.preventDefault(); e.stopPropagation(); const p = btn.getAttribute("data-platform"); const url = btn.getAttribute("data-url"); if (!url) return;\n';
-  content += '      document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
+  content += '      closeAllDropdowns();\n';
   content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
   content += '      else if (p === "google") { try { await navigator.clipboard.writeText(url); } catch(err) {} window.open("https://calendar.google.com/calendar/r/settings/addbyurl","_blank"); showToast("Link kopiert! Füge ihn bei Google Calendar ein."); }\n';
   content += '      else if (p === "outlook") { try { await navigator.clipboard.writeText(url); window.open("https://outlook.live.com/calendar/0/addfromweb","_blank"); showToast("Link kopiert! Füge ihn bei Outlook ein."); } catch(err) { window.open("https://outlook.live.com/calendar/0/addfromweb","_blank"); } }\n';
@@ -558,6 +562,7 @@ function genHTML() {
   content += '      e.preventDefault(); e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("href");\n';
   content += '      if (!url) { showToast("Kein Download verfügbar"); return; }\n';
+  content += '      closeAllDropdowns();\n';
   content += '      window.location.href = url;\n';
   content += '      showToast("Download gestartet!");\n';
   content += '    });\n';
@@ -565,7 +570,7 @@ function genHTML() {
 
   // QR Code
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")); });\n';
+  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); closeAllDropdowns(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); });\n';
   content += '  });\n';
   content += '  document.getElementById("qr-modal-close").addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
   content += '  document.getElementById("qr-modal").addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
@@ -602,7 +607,6 @@ function genHTML() {
   content += '    if (selected.length === 0) { showToast("Bitte wähle mindestens ein Team!"); return; }\n';
   content += '    showToast("Kalender wird erstellt...");\n';
   content += '    mcModal.classList.remove("active");\n\n';
-
   content += '    try {\n';
   content += '      let allEvents = [];\n';
   content += '      const seenUIDs = new Set();\n';
