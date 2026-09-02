@@ -1,4 +1,4 @@
-// complete generator script — mit Dropdown-Fix (öffnet nach unten)
+// complete generator script — final version
 const fs = require('fs');
 const path = require('path');
 
@@ -136,7 +136,8 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
 '.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
-'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: hidden; position: relative; cursor: pointer; scroll-margin-top: 100px; }\n' +
+'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: visible; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
+'.team-card.expanded { z-index: 50; overflow: visible; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }\n' +
