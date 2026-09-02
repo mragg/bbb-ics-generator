@@ -1,4 +1,4 @@
-// complete generator script — Dropdown-Fix mit position:fixed + JS-Positionierung
+// complete generator script — final version mit Dropdown-Fix
 const fs = require('fs');
 const path = require('path');
 
@@ -196,9 +196,7 @@ function genHTML() {
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-
-// DROPDOWN: position fixed, z-index 9999, wird per JS positioniert
-'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; min-width: 220px; }\n' +
+'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
 '.more-option-item { padding: 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
@@ -494,29 +492,29 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // DROPDOWN: position fixed + JS-Positionierung
+  // DROPDOWN: position fixed + JS-Positionierung (DIREKT UNTER DEM BUTTON)
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
   content += '  }\n\n';
 
-     document.querySelectorAll(".more-options-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const dropdown = btn.nextElementSibling;
-      const isActive = dropdown.classList.contains("active");
-      closeAllDropdowns();
-      if (isActive) return;
-      const rect = btn.getBoundingClientRect();
-      let top = rect.bottom + 8;
-      let left = rect.left;
-      let width = rect.width;
-      if (top + 250 > window.innerHeight) top = rect.top - 250;
-      dropdown.style.top = top + "px";
-      dropdown.style.left = left + "px";
-      dropdown.style.width = width + "px";
-      dropdown.classList.add("active");
-    });
-  });
+  content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
+  content += '    btn.addEventListener("click", (e) => {\n';
+  content += '      e.stopPropagation();\n';
+  content += '      const dropdown = btn.nextElementSibling;\n';
+  content += '      const isActive = dropdown.classList.contains("active");\n';
+  content += '      closeAllDropdowns();\n';
+  content += '      if (isActive) return;\n';
+  content += '      const rect = btn.getBoundingClientRect();\n';
+  content += '      let top = rect.bottom + 8;\n';
+  content += '      let left = rect.left;\n';
+  content += '      let width = rect.width;\n';
+  content += '      if (top + 250 > window.innerHeight) top = rect.top - 250;\n';
+  content += '      dropdown.style.top = top + "px";\n';
+  content += '      dropdown.style.left = left + "px";\n';
+  content += '      dropdown.style.width = width + "px";\n';
+  content += '      dropdown.classList.add("active");\n';
+  content += '    });\n';
+  content += '  });\n\n';
 
   content += '  document.addEventListener("click", (e) => {\n';
   content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) {\n';
