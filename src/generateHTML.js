@@ -1,4 +1,4 @@
-// complete generator script — final version mit Dropdown-Fix
+// complete generator script — final version mit Herz-Fill & weißem Alle-Teams-Button
 const fs = require('fs');
 const path = require('path');
 
@@ -133,8 +133,11 @@ function genHTML() {
 '.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }\n' +
 '.download-btn-excel:hover { background: #217346; color: white; }\n' +
 '.download-btn-pdf:hover { background: #D32F2F; color: white; }\n' +
-'.download-btn-allteams { background: #64748B; color: white; }\n' +
-'.download-btn-allteams:hover { background: #475569; }\n' +
+/* ÄNDERUNG 2: Weißer Hintergrund für Alle Teams Button */
+'.download-btn-allteams { background: white; color: var(--color-text); }\n' +
+'.download-btn-allteams:hover { background: #F1F5F9; }\n' +
+'[data-theme="dark"] .download-btn-allteams { background: #334155; color: white; }\n' +
+'[data-theme="dark"] .download-btn-allteams:hover { background: #475569; }\n' +
 '.download-btn i { width: 24px; height: 24px; }\n' +
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-size: 0.75rem; opacity: 0.7; display: block; }\n' +
@@ -143,7 +146,6 @@ function genHTML() {
 '[data-theme="dark"] .download-btn:hover { background: #475569; }\n' +
 '[data-theme="dark"] .download-btn-excel:hover { background: #217346; }\n' +
 '[data-theme="dark"] .download-btn-pdf:hover { background: #D32F2F; }\n' +
-'[data-theme="dark"] .download-btn-allteams:hover { background: #475569; }\n' +
 '.search-wrapper { margin-bottom: 2rem; position: relative; }\n' +
 '.search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
@@ -166,7 +168,8 @@ function genHTML() {
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
 '[data-theme="dark"] .favorite-btn { background: rgba(30,41,59,0.9); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); }\n' +
-'.favorite-btn i { color: var(--color-text-muted); transition: color 0.3s ease, transform 0.3s ease; }\n' +
+/* ÄNDERUNG 1: Herz-Icon mit sauberem Umriss und goldener Füllung */
+'.favorite-btn i { color: var(--color-text-muted); fill: transparent; transition: color 0.3s ease, fill 0.3s ease, transform 0.3s ease; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
@@ -492,7 +495,7 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // DROPDOWN: position fixed + JS-Positionierung (DIREKT UNTER DEM BUTTON)
+  // DROPDOWN
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
   content += '  }\n\n';
