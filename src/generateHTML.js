@@ -1,4 +1,4 @@
-// complete generator script — mit haptischem Feedback, Reset, Google Calendar Fix & Download-Button
+// complete generator script — mit visuellem Feedback, Reset, Google Calendar Fix & Download-Button
 const fs = require('fs');
 const path = require('path');
 
@@ -234,6 +234,17 @@ body {
 [data-theme="dark"] .btn-download { background: #334155; }
 .btn-download:hover { background: #E2E8F0; transform: translateY(-1px); }
 .btn-download i { width: 14px; height: 14px; }
+
+/* VISUELLES FEEDBACK BEI KALENDER-WECHSEL */
+@keyframes calendar-flash {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); }
+  50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,107,0,0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); }
+}
+.calendar-btn.flash, .share-btn.flash, .btn-copy.flash, .btn-download.flash {
+  animation: calendar-flash 0.4s ease;
+  border-color: var(--color-primary) !important;
+}
 
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
@@ -678,7 +689,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.team-card').forEach(c => {
         if (c !== card) {
           c.classList.remove('expanded');
-          // Reset auf "all" beim Schließen
           resetCardToAll(c);
         }
       });
@@ -687,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.classList.add('expanded');
       } else {
         card.classList.remove('expanded');
-        // Reset auf "all" beim Schließen
         resetCardToAll(card);
       }
     });
@@ -702,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // KALENDER-TYP WECHSEL MIT HAPTISCHEM FEEDBACK
+  // KALENDER-TYP WECHSEL MIT HAPTISCHEM UND VISUELLEM FEEDBACK
   document.querySelectorAll('.stat').forEach(stat => {
     stat.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -752,6 +761,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const downloadBtn = card.querySelector('.download-file-btn');
     if (downloadBtn) downloadBtn.href = url;
+    
+    // VISUELLES FEEDBACK: Alle Buttons kurz aufleuchten lassen
+    const buttonsToFlash = card.querySelectorAll('.calendar-btn, .share-btn, .btn-copy, .btn-download');
+    buttonsToFlash.forEach(btn => {
+      btn.classList.remove('flash');
+      void btn.offsetWidth;
+      btn.classList.add('flash');
+    });
+    
+    setTimeout(() => {
+      buttonsToFlash.forEach(btn => btn.classList.remove('flash'));
+    }, 400);
   }
 
   document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -805,38 +826,32 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (platform === 'google') {
         e.preventDefault();
         
-        // Link in Zwischenablage kopieren
         try {
           await navigator.clipboard.writeText(url);
         } catch (err) {
           console.error('Kopieren fehlgeschlagen', err);
         }
         
-        // Google Calendar App oder Web öffnen
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isAndroid = /Android/.test(navigator.userAgent);
         
         if (isIOS) {
-          // iOS: Versuche googlecalendar:// URL Scheme
           window.location.href = 'googlecalendar://';
           setTimeout(() => {
             window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
             showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
           }, 1500);
         } else if (isAndroid) {
-          // Android: Versuche App zu öffnen, sonst Play Store
           const startTime = Date.now();
           window.location.href = 'intent://calendar.google.com/calendar/u/0/r/settings/addbyurl#Intent;scheme=https;package=com.google.android.calendar;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.google.android.calendar;end';
           
           setTimeout(() => {
-            // Wenn wir nach 2 Sekunden immer noch auf der Seite sind, App nicht installiert
             if (Date.now() - startTime < 2500) {
               window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
               showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
             }
           }, 2000);
         } else {
-          // Desktop: Browser
           window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
           showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
         }
@@ -896,7 +911,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit haptischem Feedback, Reset, Google Calendar Fix & Download-Button generiert.');
+  console.log('✅ index.html mit visuellem Feedback, Reset, Google Calendar Fix & Download-Button generiert.');
 
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
