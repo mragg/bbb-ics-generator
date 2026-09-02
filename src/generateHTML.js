@@ -1,4 +1,4 @@
-// complete generator script — mit runden Ecken, grauem Download-Button & FLIP-Animation
+// complete generator script — mit Dropdown-Fix, Favoriten-Animation & besserem Pill-Design
 const fs = require('fs');
 const path = require('path');
 
@@ -104,13 +104,28 @@ function genHTML() {
 '.theme-toggle { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.6rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }\n' +
 '.theme-toggle:hover { background: rgba(255,255,255,0.2); }\n' +
 '.container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }\n' +
-'.quick-access { position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem; box-shadow: var(--shadow-sm); display: none; margin-bottom: 2rem; }\n' +
+
+// QUICK-ACCESS MIT ANIMATION
+'.quick-access { position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem; box-shadow: var(--shadow-sm); display: none; margin-bottom: 2rem; animation: slideDown 0.3s ease; }\n' +
 '.quick-access.active { display: block; }\n' +
+'@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }\n' +
 '.quick-access-inner { max-width: 1024px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }\n' +
 '.quick-access-label { font-size: 0.875rem; color: var(--color-text-muted); font-weight: 600; margin-right: 0.5rem; }\n' +
-'.quick-access-pill { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover)); color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; }\n' +
-'.quick-access-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); }\n' +
-'.quick-access-pill i { width: 14px; height: 14px; }\n' +
+
+// BESSERE PILL-DESIGN
+'.quick-access-pill { background: var(--color-surface); border: 2px solid var(--color-primary); color: var(--color-text); padding: 0.5rem 1rem 0.5rem 0.75rem; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(255,107,0,0.15); animation: pillSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }\n' +
+'@keyframes pillSlideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }\n' +
+'.quick-access-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); background: rgba(255,107,0,0.05); }\n' +
+'.pill-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
+'.pill-icon i { width: 14px; height: 14px; color: white; }\n' +
+'.pill-icon.age-blue { background: var(--color-blue); }\n' +
+'.pill-icon.age-green { background: var(--color-green); }\n' +
+'.pill-icon.age-purple { background: var(--color-purple); }\n' +
+'.pill-icon.age-orange { background: var(--color-primary); }\n' +
+'.pill-text { display: flex; flex-direction: column; gap: 0.125rem; }\n' +
+'.pill-name { font-weight: 700; line-height: 1.2; }\n' +
+'.pill-age { font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500; }\n' +
+
 '.my-calendar-btn { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; }\n' +
 '.my-calendar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }\n' +
 '.my-calendar-btn i { width: 14px; height: 14px; }\n' +
@@ -140,8 +155,7 @@ function genHTML() {
 '.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
 '.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; overflow: visible; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
-'.team-card-inner { border-radius: var(--radius-lg); overflow: hidden; }\n' +
-'.team-card.expanded { z-index: 50; overflow: visible; }\n' +
+'.team-card.expanded { z-index: 50; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }\n' +
@@ -161,7 +175,7 @@ function genHTML() {
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
-'.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }\n' +
+'.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }\n' +
 '[data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }\n' +
 '.team-name { font-family: "Oswald", sans-serif; font-size: 1.25rem; font-weight: 600; }\n' +
 '.team-badge { color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 99px; }\n' +
@@ -187,8 +201,11 @@ function genHTML() {
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 100; }\n' +
-'.more-options-dropdown.active { display: flex; }\n' +
+
+// DROPDOWN MIT FIXED POSITION
+'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; min-width: 200px; }\n' +
+'.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.2s ease; }\n' +
+'@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }\n' +
 '.more-option-item { padding: 0.625rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
 '.more-option-item:hover { background: var(--color-bg); }\n' +
 '.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
@@ -286,7 +303,6 @@ function genHTML() {
     const ageColor = getAgeGroupColor(t.name);
     content += '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
       '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart" style="width:20px;height:20px;"></i></button>' +
-      '<div class="team-card-inner">' +
       '<div class="team-card-header"><span class="team-name">' + t.name + '</span>' + (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') + '</div>' +
       '<div class="team-stats">' +
         '<div class="stat active" data-type="all"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
@@ -309,7 +325,6 @@ function genHTML() {
             '<button class="more-option-item copy-btn"><i data-lucide="copy"></i> Link kopieren</button>' +
           '</div>' +
         '</div>' +
-      '</div>' +
       '</div>' +
     '</div>\n';
   });
@@ -400,15 +415,20 @@ function genHTML() {
   content += '    cards.forEach(card => grid.appendChild(card));\n';
   content += '  }\n\n';
 
+  // updateQuickAccess mit Animation
   content += '  function updateQuickAccess() {\n';
   content += '    const qa = document.getElementById("quick-access"); const pc = document.getElementById("quick-access-pills");\n';
   content += '    const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
   content += '    if (f.length === 0) { qa.classList.remove("active"); return; }\n';
-  content += '    qa.classList.add("active"); pc.innerHTML = "";\n';
+  content += '    qa.classList.add("active");\n';
+  content += '    pc.innerHTML = "";\n';
   content += '    f.forEach(tid => {\n';
   content += '      const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); if (!card) return;\n';
+  content += '      const teamName = card.querySelector(".team-name").textContent;\n';
+  content += '      const ageGroup = card.querySelector(".team-badge") ? card.querySelector(".team-badge").textContent : "";\n';
+  content += '      const ageColor = card.className.match(/age-(blue|green|purple|orange)/)?.[1] || "orange";\n';
   content += '      const pill = document.createElement("button"); pill.className = "quick-access-pill";\n';
-  content += '      pill.innerHTML = \'<i data-lucide="basketball"></i> \' + card.querySelector(".team-name").textContent;\n';
+  content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ageColor + \'"><i data-lucide="basketball"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
   content += '      pill.addEventListener("click", (e) => { e.stopPropagation(); card.scrollIntoView({ behavior: "smooth", block: "center" }); card.classList.add("expanded"); });\n';
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
@@ -483,10 +503,24 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
+  // DROPDOWN MIT FIXED POSITION
   content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); const d = btn.nextElementSibling; document.querySelectorAll(".more-options-dropdown").forEach(x => { if (x !== d) x.classList.remove("active"); }); d.classList.toggle("active"); });\n';
+  content += '    btn.addEventListener("click", (e) => {\n';
+  content += '      e.stopPropagation();\n';
+  content += '      const dropdown = btn.nextElementSibling;\n';
+  content += '      document.querySelectorAll(".more-options-dropdown").forEach(x => { if (x !== dropdown) x.classList.remove("active"); });\n';
+  content += '      if (dropdown.classList.contains("active")) {\n';
+  content += '        dropdown.classList.remove("active");\n';
+  content += '      } else {\n';
+  content += '        const rect = btn.getBoundingClientRect();\n';
+  content += '        dropdown.style.top = (rect.bottom + 8) + "px";\n';
+  content += '        dropdown.style.left = rect.left + "px";\n';
+  content += '        dropdown.classList.add("active");\n';
+  content += '      }\n';
+  content += '    });\n';
   content += '  });\n';
-  content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
+  content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n';
+  content += '  window.addEventListener("scroll", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
 
   // Copy-Button
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
