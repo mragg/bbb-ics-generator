@@ -1,4 +1,4 @@
-// complete generator script — mit Kalender-Direkt-Links, Share API & Print-CSS
+// complete generator script — mit Kalender-Typ-Wechsel & Google Calendar App-Deep-Links
 const fs = require('fs');
 const path = require('path');
 
@@ -176,12 +176,12 @@ body {
 
 .team-stats { display: flex; justify-content: space-around; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: #FAFAFA; }
 [data-theme="dark"] .team-stats { background: #0F172A; }
-.stat { text-align: center; transition: var(--transition); cursor: default; }
+.stat { text-align: center; transition: var(--transition); cursor: pointer; padding: 0.5rem; border-radius: var(--radius-sm); }
+.stat:hover { background: rgba(255,107,0,0.1); }
+.stat.active { background: rgba(255,107,0,0.15); }
 .stat-val { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }
 .stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }
-.team-stats:hover .stat { opacity: 0.4; }
-.team-stats .stat:hover { opacity: 1; transform: scale(1.1); }
-.team-stats .stat:hover .stat-val { font-size: 1.8rem; }
+.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }
 
 .team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); }
 .team-card.expanded .team-actions { opacity: 1; max-height: 600px; }
@@ -373,7 +373,7 @@ body {
       <i data-lucide="chevron-down" style="width:20px;height:20px;"></i>
     </div>
     <div class="inst-content" id="inst-content">
-      <p style="padding:0.5rem 0;">1. Wähle dein Team und klicke auf den Button deines Kalender-Programms.<br>2. Bestätige das Hinzufügen des Kalenders.<br>3. Fertig! Der Kalender aktualisiert sich automatisch.</p>
+      <p style="padding:0.5rem 0;">1. Wähle dein Team und klicke auf "Gesamt", "Heim" oder "Auswärts".<br>2. Klicke dann auf den Button deines Kalender-Programms.<br>3. Fertig! Der Kalender aktualisiert sich automatisch.</p>
     </div>
   </div>
 
@@ -384,10 +384,7 @@ body {
 
   <div class="teams-grid" id="teams-grid">
     ${teams.map((t, index) => {
-      const icsUrl = makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics');
-      const webcalUrl = icsUrl.replace('https://', 'webcal://');
-      
-      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '">' +
+      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
         '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
           '<i data-lucide="heart" style="width:18px;height:18px;"></i>' +
         '</button>' +
@@ -396,32 +393,32 @@ body {
           (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') +
         '</div>' +
         '<div class="team-stats">' +
-          '<div class="stat"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
-          '<div class="stat"><div class="stat-val" data-target="' + t.homeMatchCount + '">0</div><div class="stat-label"><i data-lucide="home" style="width:12px;height:12px;"></i> Heim</div></div>' +
-          '<div class="stat"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
+          '<div class="stat active" data-type="all"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
+          '<div class="stat" data-type="home"><div class="stat-val" data-target="' + t.homeMatchCount + '">0</div><div class="stat-label"><i data-lucide="home" style="width:12px;height:12px;"></i> Heim</div></div>' +
+          '<div class="stat" data-type="away"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
         '</div>' +
         '<div class="team-actions">' +
-          '<div style="margin-bottom:0.5rem;font-weight:600;font-size:0.9rem;">Alle Spiele:</div>' +
-          '<div class="calendar-buttons" data-calendar-type="all" data-team-name="' + t.name + '">' +
-            '<a href="' + webcalUrl + '" class="calendar-btn calendar-btn-apple" title="Apple Kalender">' +
+          '<div class="calendar-type-label" style="margin-bottom:0.5rem;font-weight:600;font-size:0.9rem;">Alle Spiele:</div>' +
+          '<div class="calendar-buttons">' +
+            '<a href="#" class="calendar-btn calendar-btn-apple calendar-link" data-platform="apple" title="Apple Kalender">' +
               '<i data-lucide="apple"></i>' +
               '<span>Apple</span>' +
             '</a>' +
-            '<button class="calendar-btn calendar-btn-google" data-action="google" data-url="' + icsUrl + '" title="Google Calendar">' +
+            '<button class="calendar-btn calendar-btn-google calendar-link" data-platform="google" title="Google Calendar">' +
               '<i data-lucide="calendar"></i>' +
               '<span>Google</span>' +
             '</button>' +
-            '<button class="calendar-btn calendar-btn-outlook" data-action="outlook" data-url="' + icsUrl + '" title="Outlook">' +
+            '<button class="calendar-btn calendar-btn-outlook calendar-link" data-platform="outlook" title="Outlook">' +
               '<i data-lucide="mail"></i>' +
               '<span>Outlook</span>' +
             '</button>' +
-            '<button class="share-btn" data-action="share" data-url="' + icsUrl + '" data-team="' + t.name + '">' +
+            '<button class="share-btn calendar-link" data-platform="share">' +
               '<i data-lucide="share-2"></i>' +
               '<span>Teilen</span>' +
             '</button>' +
           '</div>' +
           '<div class="link-row" style="margin-top:0.5rem;">' +
-            '<button class="btn btn-copy copy-btn" data-copy="' + icsUrl + '">' +
+            '<button class="btn btn-copy copy-btn" data-copy="">' +
               '<i data-lucide="copy" style="width:14px;height:14px;"></i> Link kopieren' +
             '</button>' +
           '</div>' +
@@ -465,6 +462,11 @@ document.addEventListener('DOMContentLoaded', () => {
       startKonfetti();
       localStorage.setItem('konfetti_shown', 'true');
     }
+    
+    // Initialisiere alle Team-Karten mit "all" als Standard
+    document.querySelectorAll('.team-card').forEach(card => {
+      updateCardLinks(card, 'all');
+    });
   }, 400);
 
   const grid = document.getElementById('teams-grid');
@@ -662,6 +664,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // KALENDER-TYP WECHSEL (Gesamt/Heim/Auswärts)
+  document.querySelectorAll('.stat').forEach(stat => {
+    stat.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = stat.closest('.team-card');
+      const type = stat.getAttribute('data-type');
+      
+      // Alle Stats in dieser Karte deaktivieren
+      card.querySelectorAll('.stat').forEach(s => s.classList.remove('active'));
+      stat.classList.add('active');
+      
+      // Links aktualisieren
+      updateCardLinks(card, type);
+    });
+  });
+
+  function updateCardLinks(card, type) {
+    const urls = {
+      all: card.getAttribute('data-all-url'),
+      home: card.getAttribute('data-home-url'),
+      away: card.getAttribute('data-away-url')
+    };
+    
+    const url = urls[type];
+    const webcalUrl = url.replace('https://', 'webcal://');
+    
+    const labels = {
+      all: 'Alle Spiele:',
+      home: 'Nur Heimspiele:',
+      away: 'Nur Auswärtsspiele:'
+    };
+    
+    // Label aktualisieren
+    const label = card.querySelector('.calendar-type-label');
+    if (label) label.textContent = labels[type];
+    
+    // Apple Link
+    const appleLink = card.querySelector('.calendar-btn-apple');
+    if (appleLink) appleLink.href = webcalUrl;
+    
+    // Google, Outlook, Share, Copy
+    card.querySelectorAll('.calendar-link').forEach(link => {
+      link.setAttribute('data-url', url);
+    });
+    
+    const copyBtn = card.querySelector('.copy-btn');
+    if (copyBtn) copyBtn.setAttribute('data-copy', url);
+  }
+
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const icon = btn.querySelector('i');
@@ -700,21 +751,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.querySelectorAll('.calendar-btn[data-action]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const action = btn.getAttribute('data-action');
+  // KALENDER-BUTTONS MIT GOOGLE APP DEEP LINKS
+  document.querySelectorAll('.calendar-link').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const platform = btn.getAttribute('data-platform');
       const url = btn.getAttribute('data-url');
       
-      if (action === 'google') {
-        try {
-          await navigator.clipboard.writeText(url);
+      if (!url) return;
+      
+      if (platform === 'apple') {
+        // webcal:// wird automatisch von Apple Calendar übernommen
+        return;
+      } else if (platform === 'google') {
+        e.preventDefault();
+        // Versuche Google Calendar App zu öffnen
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        if (isIOS) {
+          // iOS: Versuche googlecalendar:// URL Scheme
+          window.location.href = 'googlecalendar://';
+          setTimeout(() => {
+            // Fallback: Browser
+            window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
+            showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
+          }, 1000);
+        } else if (isAndroid) {
+          // Android: Intent URL
+          const intentUrl = 'intent://calendar.google.com/calendar/u/0/r/settings/addbyurl#Intent;scheme=https;package=com.google.android.calendar;end';
+          window.location.href = intentUrl;
+          setTimeout(() => {
+            // Fallback: Browser
+            window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
+            showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
+          }, 1000);
+        } else {
+          // Desktop: Browser
           window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
           showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-        } catch (err) {
-          window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
-          showToast('Kopiere den Link und füge ihn bei Google Calendar ein.');
         }
-      } else if (action === 'outlook') {
+        
+        // Link in Zwischenablage kopieren
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (err) {
+          console.error('Kopieren fehlgeschlagen', err);
+        }
+      } else if (platform === 'outlook') {
+        e.preventDefault();
         try {
           await navigator.clipboard.writeText(url);
           window.open('https://outlook.live.com/calendar/0/addfromweb', '_blank');
@@ -723,33 +807,31 @@ document.addEventListener('DOMContentLoaded', () => {
           window.open('https://outlook.live.com/calendar/0/addfromweb', '_blank');
           showToast('Kopiere den Link und füge ihn bei Outlook ein.');
         }
-      }
-    });
-  });
-
-  document.querySelectorAll('.share-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const url = btn.getAttribute('data-url');
-      const team = btn.getAttribute('data-team');
-      
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'TVN Baskets - ' + team,
-            text: 'Hier ist der Spielplan für ' + team,
-            url: url
-          });
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            console.error('Teilen fehlgeschlagen', err);
+      } else if (platform === 'share') {
+        e.preventDefault();
+        const teamName = btn.closest('.team-card').querySelector('.team-name').textContent;
+        const type = btn.closest('.team-card').querySelector('.stat.active').getAttribute('data-type');
+        const typeLabels = { all: 'alle Spiele', home: 'Heimspiele', away: 'Auswärtsspiele' };
+        
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'TVN Baskets - ' + teamName,
+              text: 'Hier sind ' + typeLabels[type] + ' für ' + teamName,
+              url: url
+            });
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Teilen fehlgeschlagen', err);
+            }
           }
-        }
-      } else {
-        try {
-          await navigator.clipboard.writeText(url);
-          showToast('Link kopiert!');
-        } catch (err) {
-          console.error('Kopieren fehlgeschlagen', err);
+        } else {
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast('Link kopiert!');
+          } catch (err) {
+            console.error('Kopieren fehlgeschlagen', err);
+          }
         }
       }
     });
@@ -771,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Kalender-Direkt-Links, Share API & Print-CSS generiert.');
+  console.log('✅ index.html mit Kalender-Typ-Wechsel & Google Calendar App-Deep-Links generiert.');
 
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
