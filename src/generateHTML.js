@@ -1,4 +1,4 @@
-// complete generator script — mit Touch-Targets, Empty States & Loading-States
+// complete generator script — mit Kalender-Direkt-Links, Share API & Print-CSS
 const fs = require('fs');
 const path = require('path');
 
@@ -184,7 +184,7 @@ body {
 .team-stats .stat:hover .stat-val { font-size: 1.8rem; }
 
 .team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); }
-.team-card.expanded .team-actions { opacity: 1; max-height: 400px; }
+.team-card.expanded .team-actions { opacity: 1; max-height: 600px; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }
 .btn-primary { background: var(--color-primary); color: white; }
@@ -196,10 +196,39 @@ body {
 .btn-copy:hover { background: #E2E8F0; }
 .btn-copy.loading { pointer-events: none; opacity: 0.7; }
 .btn-copy.success { background: #10B981; color: white; }
+
+/* KALENDER-BUTTONS */
+.calendar-buttons { display: flex; gap: 0.375rem; flex-wrap: wrap; }
+.calendar-btn {
+  flex: 1; min-width: 60px; padding: 0.5rem; border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border); background: var(--color-surface);
+  cursor: pointer; transition: var(--transition); display: flex; flex-direction: column;
+  align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600;
+  color: var(--color-text-muted); text-decoration: none;
+}
+.calendar-btn:hover { border-color: var(--color-primary); color: var(--color-primary); transform: translateY(-2px); }
+.calendar-btn i { width: 18px; height: 18px; }
+.calendar-btn-apple { background: #F5F5F7; }
+.calendar-btn-apple:hover { background: #000; color: white; border-color: #000; }
+.calendar-btn-google { background: #F8F9FA; }
+.calendar-btn-google:hover { background: #4285F4; color: white; border-color: #4285F4; }
+.calendar-btn-outlook { background: #F3F2F1; }
+.calendar-btn-outlook:hover { background: #0078D4; color: white; border-color: #0078D4; }
+
+/* SHARE BUTTON */
+.share-btn {
+  background: #F1F5F9; color: var(--color-text); padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm); border: none; cursor: pointer;
+  transition: var(--transition); display: flex; align-items: center; gap: 0.375rem;
+  font-size: 0.8rem; font-weight: 600;
+}
+[data-theme="dark"] .share-btn { background: #334155; }
+.share-btn:hover { background: #E2E8F0; transform: translateY(-1px); }
+.share-btn i { width: 14px; height: 14px; }
+
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
 
-/* EMPTY STATE */
 .empty-state {
   grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;
   background: var(--color-surface); border-radius: var(--radius-lg);
@@ -209,7 +238,6 @@ body {
 .empty-state-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: var(--color-text); margin-bottom: 0.5rem; }
 .empty-state-text { color: var(--color-text-muted); font-size: 0.95rem; }
 
-/* DOWNLOAD-SEKTION */
 .download-section {
   background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
   border-radius: var(--radius-lg); padding: 2.5rem; text-align: center;
@@ -268,6 +296,39 @@ body {
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
 
+/* PRINT STYLES */
+@media print {
+  @page { size: A4; margin: 1.5cm; }
+  
+  body { background: white !important; color: black !important; font-size: 10pt; }
+  
+  .header, .quick-access, .search-wrapper, .instructions, .download-section,
+  .scroll-top-btn, .context-menu, .toast, #konfetti-canvas, #skeleton-loader,
+  .theme-toggle, .favorite-btn, .share-btn, .btn-copy, .calendar-buttons,
+  .footer { display: none !important; }
+  
+  .container { max-width: 100%; padding: 0; margin: 0; }
+  
+  .teams-grid { display: block; }
+  
+  .team-card {
+    break-inside: avoid; page-break-inside: avoid;
+    border: 1px solid #ccc; margin-bottom: 1cm; box-shadow: none !important;
+  }
+  
+  .team-card.expanded .team-actions { opacity: 1 !important; max-height: none !important; }
+  
+  .team-card-header { background: #f5f5f5 !important; }
+  
+  .btn-primary, .btn-outline {
+    background: white !important; color: black !important; border: 1px solid #ccc !important;
+    font-size: 9pt; padding: 0.3rem 0.5rem;
+  }
+  
+  .link-row { display: block; }
+  .link-row a { display: block; margin-bottom: 0.3rem; word-break: break-all; }
+}
+
 @media (max-width: 640px) {
   .header-inner { flex-direction: column; text-align: center; }
   .logo { height: 60px; }
@@ -280,6 +341,8 @@ body {
   .download-btn { justify-content: center; }
   .favorite-btn { width: 44px; height: 44px; }
   .btn-copy { min-height: 44px; }
+  .calendar-buttons { flex-direction: column; }
+  .calendar-btn { min-width: 100%; }
 }
 </style>
 </head>
@@ -322,7 +385,7 @@ body {
       <i data-lucide="chevron-down" style="width:20px;height:20px;"></i>
     </div>
     <div class="inst-content" id="inst-content">
-      <p style="padding:0.5rem 0;">1. Wähle dein Team und kopiere den Link.<br>2. Öffne deine Kalender-App > "Kalender hinzufügen" > "Aus dem Internet".<br>3. Link einfügen und fertig.</p>
+      <p style="padding:0.5rem 0;">1. Wähle dein Team und klicke auf den Button deines Kalender-Programms.<br>2. Bestätige das Hinzufügen des Kalenders.<br>3. Fertig! Der Kalender aktualisiert sich automatisch.</p>
     </div>
   </div>
 
@@ -333,6 +396,11 @@ body {
 
   <div class="teams-grid" id="teams-grid">
     ${teams.map((t, index) => {
+      const icsUrl = makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics');
+      const webcalUrl = icsUrl.replace('https://', 'webcal://');
+      const googleUrl = 'https://calendar.google.com/calendar/u/0/r/settings/addbyurl';
+      const outlookUrl = 'https://outlook.live.com/calendar/0/addfromweb';
+      
       return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '">' +
         '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
           '<i data-lucide="heart" style="width:18px;height:18px;"></i>' +
@@ -347,28 +415,28 @@ body {
           '<div class="stat"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
         '</div>' +
         '<div class="team-actions">' +
-          '<div class="link-row">' +
-            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics') + '" class="btn btn-primary">' +
-              '<i data-lucide="calendar-plus" style="width:16px;height:16px;"></i> Alle Spiele' +
+          '<div style="margin-bottom:0.5rem;font-weight:600;font-size:0.9rem;">Alle Spiele:</div>' +
+          '<div class="calendar-buttons" data-calendar-type="all" data-team-name="' + t.name + '">' +
+            '<a href="' + webcalUrl + '" class="calendar-btn calendar-btn-apple" title="Apple Kalender">' +
+              '<i data-lucide="apple"></i>' +
+              '<span>Apple</span>' +
             '</a>' +
-            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics') + '">' +
-              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+            '<button class="calendar-btn calendar-btn-google" data-action="google" data-url="' + icsUrl + '" title="Google Calendar">' +
+              '<i data-lucide="calendar"></i>' +
+              '<span>Google</span>' +
+            '</button>' +
+            '<button class="calendar-btn calendar-btn-outlook" data-action="outlook" data-url="' + icsUrl + '" title="Outlook">' +
+              '<i data-lucide="mail"></i>' +
+              '<span>Outlook</span>' +
+            '</button>' +
+            '<button class="share-btn" data-action="share" data-url="' + icsUrl + '" data-team="' + t.name + '">' +
+              '<i data-lucide="share-2"></i>' +
+              '<span>Teilen</span>' +
             '</button>' +
           '</div>' +
-          '<div class="link-row">' +
-            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics') + '" class="btn btn-outline">' +
-              '<i data-lucide="home" style="width:16px;height:16px;"></i> Heimspiele' +
-            '</a>' +
-            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_home.ics' : encodeURIComponent(t.name) + '_home.ics') + '">' +
-              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
-            '</button>' +
-          '</div>' +
-          '<div class="link-row">' +
-            '<a href="' + makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics') + '" class="btn btn-outline">' +
-              '<i data-lucide="map-pin" style="width:16px;height:16px;"></i> Auswärts' +
-            '</a>' +
-            '<button class="btn btn-copy copy-btn" data-copy="' + makeWebcalLink(t.teamId ? t.teamId + '_away.ics' : encodeURIComponent(t.name) + '_away.ics') + '">' +
-              '<i data-lucide="copy" style="width:14px;height:14px;"></i>' +
+          '<div class="link-row" style="margin-top:0.5rem;">' +
+            '<button class="btn btn-copy copy-btn" data-copy="' + icsUrl + '">' +
+              '<i data-lucide="copy" style="width:14px;height:14px;"></i> Link kopieren' +
             '</button>' +
           '</div>' +
         '</div>' +
@@ -413,9 +481,7 @@ body {
 <div class="context-menu" id="context-menu">
   <div class="context-menu-item" data-action="expand"><i data-lucide="chevron-down"></i><span>Aufklappen</span></div>
   <div class="context-menu-item" data-action="favorite"><i data-lucide="heart"></i><span>Als Favorit markieren</span></div>
-  <div class="context-menu-item" data-action="copy-all"><i data-lucide="copy"></i><span>Alle Spiele Link kopieren</span></div>
-  <div class="context-menu-item" data-action="copy-home"><i data-lucide="home"></i><span>Heimspiele Link kopieren</span></div>
-  <div class="context-menu-item" data-action="copy-away"><i data-lucide="map-pin"></i><span>Auswärts Link kopieren</span></div>
+  <div class="context-menu-item" data-action="copy-all"><i data-lucide="copy"></i><span>Link kopieren</span></div>
 </div>
 
 <div class="toast" id="toast">
@@ -550,11 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const action = item.getAttribute('data-action');
       if (action === 'expand') contextCard.classList.toggle('expanded');
       else if (action === 'favorite') contextCard.querySelector('.favorite-btn').click();
-      else if (action === 'copy-all' || action === 'copy-home' || action === 'copy-away') {
-        const btns = contextCard.querySelectorAll('.copy-btn');
-        if (action === 'copy-all' && btns[0]) btns[0].click();
-        else if (action === 'copy-home' && btns[1]) btns[1].click();
-        else if (action === 'copy-away' && btns[2]) btns[2].click();
+      else if (action === 'copy-all') {
+        const btn = contextCard.querySelector('.copy-btn');
+        if (btn) btn.click();
       }
       contextMenu.classList.remove('active');
     });
@@ -598,7 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const timer = setInterval(() => { current += increment; if (current >= target) { el.textContent = target; clearInterval(timer); } else el.textContent = Math.floor(current); }, 20);
   });
 
-  // SEARCH MIT EMPTY STATE
   document.getElementById('team-search').addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
     let visibleCount = 0;
@@ -613,7 +676,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Empty State anzeigen/verstecken
     let emptyState = document.getElementById('empty-state');
     if (visibleCount === 0 && query.length > 0) {
       if (!emptyState) {
@@ -647,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const icon = btn.querySelector('i');
       const originalIcon = icon.getAttribute('data-lucide');
       
-      // Loading-State
       btn.classList.add('loading');
       icon.setAttribute('data-lucide', 'loader-2');
       icon.style.animation = 'spin 1s linear infinite';
@@ -656,7 +717,6 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         await navigator.clipboard.writeText(btn.getAttribute('data-copy'));
         
-        // Success-State
         btn.classList.remove('loading');
         btn.classList.add('success');
         icon.setAttribute('data-lucide', 'check');
@@ -666,7 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const toast = document.getElementById('toast');
         toast.classList.add('active');
         
-        // Nach 1.5 Sekunden zurück zum Original
         setTimeout(() => {
           btn.classList.remove('success');
           icon.setAttribute('data-lucide', originalIcon);
@@ -683,6 +742,72 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // KALENDER-BUTTONS (Google & Outlook)
+  document.querySelectorAll('.calendar-btn[data-action]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const action = btn.getAttribute('data-action');
+      const url = btn.getAttribute('data-url');
+      
+      if (action === 'google') {
+        // Kopiere Link und öffne Google Calendar
+        try {
+          await navigator.clipboard.writeText(url);
+          window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
+          showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
+        } catch (err) {
+          window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
+          showToast('Kopiere den Link und füge ihn bei Google Calendar ein.');
+        }
+      } else if (action === 'outlook') {
+        try {
+          await navigator.clipboard.writeText(url);
+          window.open('https://outlook.live.com/calendar/0/addfromweb', '_blank');
+          showToast('Link kopiert! Füge ihn bei Outlook ein.');
+        } catch (err) {
+          window.open('https://outlook.live.com/calendar/0/addfromweb', '_blank');
+          showToast('Kopiere den Link und füge ihn bei Outlook ein.');
+        }
+      }
+    });
+  });
+
+  // SHARE API
+  document.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = btn.getAttribute('data-url');
+      const team = btn.getAttribute('data-team');
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'TVN Baskets - ' + team,
+            text: 'Hier ist der Spielplan für ' + team,
+            url: url
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.error('Teilen fehlgeschlagen', err);
+          }
+        }
+      } else {
+        // Fallback: Copy to Clipboard
+        try {
+          await navigator.clipboard.writeText(url);
+          showToast('Link kopiert!');
+        } catch (err) {
+          console.error('Kopieren fehlgeschlagen', err);
+        }
+      }
+    });
+  });
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = message;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
+  }
+
   document.getElementById('inst-toggle').addEventListener('click', () => { document.getElementById('inst-toggle').classList.toggle('active'); document.getElementById('inst-content').classList.toggle('active'); });
 
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
@@ -692,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Touch-Targets, Empty States & Loading-States generiert.');
+  console.log('✅ index.html mit Kalender-Direkt-Links, Share API & Print-CSS generiert.');
 
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
