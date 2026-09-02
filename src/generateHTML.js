@@ -197,7 +197,6 @@ body {
 .btn-copy.loading { pointer-events: none; opacity: 0.7; }
 .btn-copy.success { background: #10B981; color: white; }
 
-/* KALENDER-BUTTONS */
 .calendar-buttons { display: flex; gap: 0.375rem; flex-wrap: wrap; }
 .calendar-btn {
   flex: 1; min-width: 60px; padding: 0.5rem; border-radius: var(--radius-sm);
@@ -215,7 +214,6 @@ body {
 .calendar-btn-outlook { background: #F3F2F1; }
 .calendar-btn-outlook:hover { background: #0078D4; color: white; border-color: #0078D4; }
 
-/* SHARE BUTTON */
 .share-btn {
   background: #F1F5F9; color: var(--color-text); padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm); border: none; cursor: pointer;
@@ -296,35 +294,25 @@ body {
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
 
-/* PRINT STYLES */
 @media print {
   @page { size: A4; margin: 1.5cm; }
-  
   body { background: white !important; color: black !important; font-size: 10pt; }
-  
   .header, .quick-access, .search-wrapper, .instructions, .download-section,
   .scroll-top-btn, .context-menu, .toast, #konfetti-canvas, #skeleton-loader,
   .theme-toggle, .favorite-btn, .share-btn, .btn-copy, .calendar-buttons,
   .footer { display: none !important; }
-  
   .container { max-width: 100%; padding: 0; margin: 0; }
-  
   .teams-grid { display: block; }
-  
   .team-card {
     break-inside: avoid; page-break-inside: avoid;
     border: 1px solid #ccc; margin-bottom: 1cm; box-shadow: none !important;
   }
-  
   .team-card.expanded .team-actions { opacity: 1 !important; max-height: none !important; }
-  
   .team-card-header { background: #f5f5f5 !important; }
-  
   .btn-primary, .btn-outline {
     background: white !important; color: black !important; border: 1px solid #ccc !important;
     font-size: 9pt; padding: 0.3rem 0.5rem;
   }
-  
   .link-row { display: block; }
   .link-row a { display: block; margin-bottom: 0.3rem; word-break: break-all; }
 }
@@ -398,8 +386,6 @@ body {
     ${teams.map((t, index) => {
       const icsUrl = makeWebcalLink(t.teamId ? t.teamId + '_all.ics' : encodeURIComponent(t.name) + '_all.ics');
       const webcalUrl = icsUrl.replace('https://', 'webcal://');
-      const googleUrl = 'https://calendar.google.com/calendar/u/0/r/settings/addbyurl';
-      const outlookUrl = 'https://outlook.live.com/calendar/0/addfromweb';
       
       return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '">' +
         '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
@@ -444,30 +430,7 @@ body {
     }).join('')}
   </div>
 
-  ${excelExists || pdfExists ? `
-  <div class="download-section">
-    <i data-lucide="download" style="width:40px;height:40px;color:var(--color-primary);margin-bottom:0.5rem;position:relative;"></i>
-    <h2>Gesamt-Spielplan herunterladen</h2>
-    <p>Alle Spiele aller Mannschaften chronologisch sortiert in einer Datei.</p>
-    <div class="download-buttons">
-      ${excelExists ? `
-      <a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel">
-        <i data-lucide="table"></i>
-        <div class="download-btn-text">
-          <span class="download-btn-label">Excel-Datei</span>
-          <span class="download-btn-name">Gesamt-Spielplan.xlsx</span>
-        </div>
-      </a>` : ''}
-      ${pdfExists ? `
-      <a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf">
-        <i data-lucide="file-text"></i>
-        <div class="download-btn-text">
-          <span class="download-btn-label">PDF-Datei</span>
-          <span class="download-btn-name">Gesamt-Spielplan.pdf</span>
-        </div>
-      </a>` : ''}
-    </div>
-  </div>` : ''}
+  ${excelExists || pdfExists ? '<div class="download-section"><i data-lucide="download" style="width:40px;height:40px;color:var(--color-primary);margin-bottom:0.5rem;position:relative;"></i><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele aller Mannschaften chronologisch sortiert in einer Datei.</p><div class="download-buttons">' + (excelExists ? '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel-Datei</span><span class="download-btn-name">Gesamt-Spielplan.xlsx</span></div></a>' : '') + (pdfExists ? '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF-Datei</span><span class="download-btn-name">Gesamt-Spielplan.pdf</span></div></a>' : '') + '</div></div>' : ''}
 </main>
 
 <footer class="footer" id="main-footer" style="display:none;">
@@ -682,11 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState = document.createElement('div');
         emptyState.id = 'empty-state';
         emptyState.className = 'empty-state';
-        emptyState.innerHTML = `
-          <i data-lucide="search-x" class="empty-state-icon"></i>
-          <div class="empty-state-title">Keine Teams gefunden</div>
-          <div class="empty-state-text">Versuche einen anderen Suchbegriff oder lösche die Suche.</div>
-        `;
+        emptyState.innerHTML = '<i data-lucide="search-x" class="empty-state-icon"></i><div class="empty-state-title">Keine Teams gefunden</div><div class="empty-state-text">Versuche einen anderen Suchbegriff oder lösche die Suche.</div>';
         grid.appendChild(emptyState);
         lucide.createIcons();
       }
@@ -703,7 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // COPY-BUTTONS MIT LOADING-STATE
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const icon = btn.querySelector('i');
@@ -742,14 +700,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // KALENDER-BUTTONS (Google & Outlook)
   document.querySelectorAll('.calendar-btn[data-action]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const action = btn.getAttribute('data-action');
       const url = btn.getAttribute('data-url');
       
       if (action === 'google') {
-        // Kopiere Link und öffne Google Calendar
         try {
           await navigator.clipboard.writeText(url);
           window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
@@ -771,7 +727,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // SHARE API
   document.querySelectorAll('.share-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const url = btn.getAttribute('data-url');
@@ -790,7 +745,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       } else {
-        // Fallback: Copy to Clipboard
         try {
           await navigator.clipboard.writeText(url);
           showToast('Link kopiert!');
