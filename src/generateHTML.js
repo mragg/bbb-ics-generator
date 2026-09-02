@@ -1,4 +1,4 @@
-// complete generator script — mit klickbarer Team-Karte Fix & Mein Kalender Feature
+// complete generator script — mit allen Fixes
 const fs = require('fs');
 const path = require('path');
 
@@ -52,7 +52,8 @@ function genHTML() {
   const pdfExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.pdf'));
   const allTeamsIcsExists = fs.existsSync(path.resolve(__dirname, '../generated/all_teams.ics'));
 
-  const content = '<!DOCTYPE html>\n' +
+  // FIX 3: let statt const
+  let content = '<!DOCTYPE html>\n' +
 '<html lang="de">\n' +
 '<head>\n' +
 '<meta charset="UTF-8">\n' +
@@ -145,14 +146,16 @@ function genHTML() {
 '.team-card.age-purple .team-badge { background: var(--color-purple); }\n' +
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.team-card.age-orange .team-badge { background: var(--color-primary); }\n' +
-'.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
+
+// FIX 4: Herz-Animation sanfter, ohne Layout-Verschiebung
+'.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
 '[data-theme="dark"] .favorite-btn { background: rgba(30,41,59,0.9); }\n' +
-'.favorite-btn:hover { transform: scale(1.1); }\n' +
-'.favorite-btn i { color: var(--color-text-muted); transition: var(--transition); }\n' +
+'.favorite-btn:hover { transform: scale(1.15); }\n' +
+'.favorite-btn i { color: var(--color-text-muted); transition: color 0.3s ease, transform 0.3s ease; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
-'@keyframes favorite-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }\n' +
-'@keyframes favorite-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }\n' +
-'.favorite-btn.animating { animation: favorite-pulse 0.4s ease, favorite-bounce 0.4s ease; }\n' +
+'@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
+'.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
+
 '.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }\n' +
 '[data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }\n' +
 '.team-name { font-family: "Oswald", sans-serif; font-size: 1.25rem; font-weight: 600; }\n' +
@@ -165,7 +168,7 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }\n' +
 '.stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); pointer-events: none; }\n' +
+'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); pointer-events: none; overflow: hidden; }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 700px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
@@ -176,7 +179,7 @@ function genHTML() {
 '.primary-actions .btn { flex: 1; }\n' +
 '.more-options-wrapper { position: relative; }\n' +
 '.more-options-btn { background: #F1F5F9; color: var(--color-text); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; width: 100%; }\n' +
-'[data-theme="dark"] .more-options-btn { background: #334155; }\n' +
+'[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
 '.more-options-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 20; }\n' +
@@ -185,7 +188,7 @@ function genHTML() {
 '.more-option-item:hover { background: var(--color-bg); }\n' +
 '.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
 '.btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; }\n' +
-'[data-theme="dark"] .btn-copy { background: #334155; }\n' +
+'[data-theme="dark"] .btn-copy { background: #334155; color: var(--color-text); }\n' +
 '.btn-copy:hover { background: #E2E8F0; }\n' +
 '.btn-copy.loading { pointer-events: none; opacity: 0.7; }\n' +
 '.btn-copy.success { background: #10B981; color: white; }\n' +
@@ -276,7 +279,7 @@ function genHTML() {
   teams.forEach((t, index) => {
     const ageColor = getAgeGroupColor(t.name);
     content += '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
-      '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart" style="width:18px;height:18px;"></i></button>' +
+      '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart" style="width:20px;height:20px;"></i></button>' +
       '<div class="team-card-header"><span class="team-name">' + t.name + '</span>' + (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') + '</div>' +
       '<div class="team-stats">' +
         '<div class="stat active" data-type="all"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
@@ -337,12 +340,12 @@ function genHTML() {
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
 
-  // Favorite buttons
+  // Favorite buttons - sanftere Animation
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
   content += '      const card = btn.closest(".team-card"); const teamId = card.getAttribute("data-team-id");\n';
-  content += '      btn.classList.add("animating"); setTimeout(() => btn.classList.remove("animating"), 400);\n';
+  content += '      btn.classList.add("animating"); setTimeout(() => btn.classList.remove("animating"), 500);\n';
   content += '      card.classList.toggle("favorite"); btn.classList.toggle("active");\n';
   content += '      if (navigator.vibrate) navigator.vibrate(50);\n';
   content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
@@ -374,12 +377,10 @@ function genHTML() {
   content += '    lucide.createIcons();\n';
   content += '  }\n\n';
 
-  // Scroll top
   content += '  const stb = document.getElementById("scroll-top-btn");\n';
   content += '  window.addEventListener("scroll", () => stb.classList.toggle("active", window.scrollY > 300));\n';
   content += '  stb.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));\n\n';
 
-  // Konfetti
   content += '  function startKonfetti() {\n';
   content += '    const c = document.getElementById("konfetti-canvas"); const ctx = c.getContext("2d");\n';
   content += '    c.width = window.innerWidth; c.height = window.innerHeight;\n';
@@ -390,18 +391,15 @@ function genHTML() {
   content += '    a();\n';
   content += '  }\n\n';
 
-  // Theme
   content += '  const tt = document.getElementById("theme-toggle"); const ti = document.getElementById("theme-icon");\n';
   content += '  if (localStorage.getItem("theme") === "dark") { document.documentElement.setAttribute("data-theme","dark"); ti.setAttribute("data-lucide","sun"); lucide.createIcons(); }\n';
   content += '  tt.addEventListener("click", () => { const n = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme",n); localStorage.setItem("theme",n); ti.setAttribute("data-lucide", n==="dark"?"sun":"moon"); lucide.createIcons(); });\n\n';
 
-  // Counter animation
   content += '  document.querySelectorAll(".stat-val").forEach(el => { const t = parseInt(el.getAttribute("data-target"),10); let c = 0; const inc = t/30; const timer = setInterval(() => { c+=inc; if (c>=t) { el.textContent=t; clearInterval(timer); } else el.textContent=Math.floor(c); }, 20); });\n\n';
 
-  // Search
   content += '  document.getElementById("team-search").addEventListener("input", (e) => { const q = e.target.value.toLowerCase(); document.querySelectorAll(".team-card").forEach(card => { card.classList.toggle("hidden", !card.getAttribute("data-team-name").includes(q)); }); });\n\n';
 
-  // TEAM-KARTE KLICKBAR - FIX: Klick auf gesamte Karte
+  // TEAM-KARTE KLICKBAR
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    card.addEventListener("click", (e) => {\n';
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
@@ -416,7 +414,6 @@ function genHTML() {
   content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
-  // Stat click
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation(); const card = stat.closest(".team-card"); const type = stat.getAttribute("data-type");\n';
@@ -426,7 +423,6 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // Update links
   content += '  function updateCardLinks(card, type) {\n';
   content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
   content += '    const url = urls[type]; const webcalUrl = url.replace("https://", "webcal://");\n';
@@ -441,18 +437,27 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // More options dropdown
   content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); const d = btn.nextElementSibling; document.querySelectorAll(".more-options-dropdown").forEach(x => { if (x !== d) x.classList.remove("active"); }); d.classList.toggle("active"); });\n';
   content += '  });\n';
   content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
 
-  // Copy buttons
+  // FIX 1: Copy-Button repariert
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", async (e) => { e.stopPropagation(); const icon = btn.querySelector("i"); const orig = icon.getAttribute("data-lucide");\n';
-  content += '      btn.classList.add("loading"); icon.setAttribute("data-lucide","loader-2"); icon.style.animation="spin 1s linear infinite"; lucide.createIcons();\n';
-  content += '      try { await navigator.clipboard.writeText(btn.getAttribute("data-copy")); btn.classList.remove("loading"); btn.classList.add("success"); icon.setAttribute("data-lucide","check"); icon.style.animation=""; lucide.createIcons(); showToast("Link kopiert!"); setTimeout(() => { btn.classList.remove("success"); icon.setAttribute("data-lucide",orig); lucide.createIcons(); }, 1500); }\n';
-  content += '      catch(err) { btn.classList.remove("loading"); icon.setAttribute("data-lucide",orig); icon.style.animation=""; lucide.createIcons(); }\n';
+  content += '    btn.addEventListener("click", async (e) => {\n';
+  content += '      e.preventDefault(); e.stopPropagation();\n';
+  content += '      const url = btn.getAttribute("data-copy");\n';
+  content += '      if (!url) { showToast("Kein Link verfügbar"); return; }\n';
+  content += '      const icon = btn.querySelector("i"); const orig = icon ? icon.getAttribute("data-lucide") : "copy";\n';
+  content += '      btn.classList.add("loading");\n';
+  content += '      if (icon) { icon.setAttribute("data-lucide","loader-2"); icon.style.animation="spin 1s linear infinite"; lucide.createIcons(); }\n';
+  content += '      try {\n';
+  content += '        await navigator.clipboard.writeText(url);\n';
+  content += '        btn.classList.remove("loading"); btn.classList.add("success");\n';
+  content += '        if (icon) { icon.setAttribute("data-lucide","check"); icon.style.animation=""; lucide.createIcons(); }\n';
+  content += '        showToast("Link kopiert!");\n';
+  content += '        setTimeout(() => { btn.classList.remove("success"); if (icon) { icon.setAttribute("data-lucide",orig); lucide.createIcons(); } }, 1500);\n';
+  content += '      } catch(err) { console.error("Copy failed:", err); btn.classList.remove("loading"); if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; lucide.createIcons(); } showToast("Kopieren fehlgeschlagen"); }\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -467,6 +472,22 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
+  // FIX 1: Download-Button repariert
+  content += '  document.querySelectorAll(".download-file-btn").forEach(btn => {\n';
+  content += '    btn.addEventListener("click", (e) => {\n';
+  content += '      e.preventDefault(); e.stopPropagation();\n';
+  content += '      const url = btn.getAttribute("href");\n';
+  content += '      if (!url) { showToast("Kein Download verfügbar"); return; }\n';
+  content += '      const a = document.createElement("a");\n';
+  content += '      a.href = url;\n';
+  content += '      a.download = "";\n';
+  content += '      document.body.appendChild(a);\n';
+  content += '      a.click();\n';
+  content += '      document.body.removeChild(a);\n';
+  content += '      showToast("Download gestartet!");\n';
+  content += '    });\n';
+  content += '  });\n\n';
+
   // QR Code
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")); });\n';
@@ -474,7 +495,7 @@ function genHTML() {
   content += '  document.getElementById("qr-modal-close").addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
   content += '  document.getElementById("qr-modal").addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
 
-  // MEIN KALENDER - ICS kombinieren im Browser
+  // Mein Kalender
   content += '  const mcBtn = document.getElementById("my-calendar-btn");\n';
   content += '  const mcModal = document.getElementById("my-calendar-modal");\n';
   content += '  const mcList = document.getElementById("team-checkbox-list");\n';
@@ -501,7 +522,6 @@ function genHTML() {
   content += '  document.getElementById("my-calendar-cancel").addEventListener("click", () => mcModal.classList.remove("active"));\n';
   content += '  mcModal.addEventListener("click", (e) => { if (e.target.id === "my-calendar-modal") mcModal.classList.remove("active"); });\n\n';
 
-  // ICS kombinieren
   content += '  document.getElementById("my-calendar-create").addEventListener("click", async () => {\n';
   content += '    const selected = Array.from(mcList.querySelectorAll("input:checked")).map(cb => cb.value);\n';
   content += '    if (selected.length === 0) { showToast("Bitte wähle mindestens ein Team!"); return; }\n';
