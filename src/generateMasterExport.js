@@ -23,12 +23,31 @@ const teams = [
   { id: "276318", name: "U10.2", ageGroup: "" }
 ];
 
+// Farbpalette für Teams (Pastellfarben für gute Lesbarkeit)
+const teamColors = [
+  { pdf: '#FFE5E5', excel: 'FFE5E5', name: 'Rosa' },
+  { pdf: '#E5F3FF', excel: 'E5F3FF', name: 'Hellblau' },
+  { pdf: '#E5FFE5', excel: 'E5FFE5', name: 'Hellgrün' },
+  { pdf: '#FFF5E5', excel: 'FFF5E5', name: 'Hellgelb' },
+  { pdf: '#F3E5FF', excel: 'F3E5FF', name: 'Helllila' },
+  { pdf: '#FFE5F5', excel: 'FFE5F5', name: 'Pink' },
+  { pdf: '#E5FFFA', excel: 'E5FFFA', name: 'Türkis' },
+  { pdf: '#FFF0E5', excel: 'FFF0E5', name: 'Pfirsich' },
+  { pdf: '#E5E5FF', excel: 'E5E5FF', name: 'Lavendel' },
+  { pdf: '#F0FFE5', excel: 'F0FFE5', name: 'Limette' },
+  { pdf: '#FFE5E5', excel: 'FFE5E5', name: 'Koralle' },
+  { pdf: '#E5F9FF', excel: 'E5F9FF', name: 'Himmelblau' },
+  { pdf: '#E8FFE5', excel: 'E8FFE5', name: 'Minzgrün' },
+  { pdf: '#FFFBE5', excel: 'FFFBE5', name: 'Creme' }
+];
+
 const BASE_URL = 'https://mragg.github.io/bbb-ics-generator/';
 
 async function fetchAndParseAllGames() {
   const allGames = [];
 
-  for (const team of teams) {
+  for (let teamIndex = 0; teamIndex < teams.length; teamIndex++) {
+    const team = teams[teamIndex];
     const url = `${BASE_URL}${team.id}_all.ics`;
     console.log(`📥 Lade: ${team.name} (${url})`);
 
@@ -70,6 +89,8 @@ async function fetchAndParseAllGames() {
 
         allGames.push({
           teamName,
+          teamId: team.id,
+          teamIndex,
           dateObj: startDate,
           displayDate: startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }),
           displayTime: startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
@@ -84,7 +105,12 @@ async function fetchAndParseAllGames() {
     }
   }
 
-  allGames.sort((a, b) => a.dateObj - b.dateObj);
+  // Erst nach Team gruppieren, dann chronologisch sortieren
+  allGames.sort((a, b) => {
+    if (a.teamIndex !== b.teamIndex) return a.teamIndex - b.teamIndex;
+    return a.dateObj - b.dateObj;
+  });
+
   return allGames;
 }
 
@@ -103,10 +129,12 @@ async function generateExcel(games) {
     { header: 'Status', key: 'status', width: 12 }
   ];
 
+  // Header stylen
   worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
   worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B00' } };
   worksheet.getRow(1).height = 25;
 
+  // Daten einfügen mit Team-Farben
   games.forEach(game => {
     const row = worksheet.addRow({
       teamName: game.teamName,
@@ -118,14 +146,19 @@ async function generateExcel(games) {
       status: game.status
     });
 
+    // Team-spezifische Hintergrundfarbe
+    const color = teamColors[game.teamIndex % teamColors.length];
+    row.eachCell(cell => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color.excel } };
+    });
+
+    // Abgesagte Spiele zusätzlich rot markieren
     if (game.status.includes('Abgesagt')) {
       row.font = { bold: true, color: { argb: 'FFD32F2F' } };
-      row.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEBEE' } };
-      });
     }
   });
 
+  // Auto-Filter für einfache Filterung
   worksheet.autoFilter = 'A1:G1';
 
   const outputPath = path.resolve(__dirname, '../generated/Gesamt-Spielplan.xlsx');
@@ -140,11 +173,13 @@ function generatePDF(games) {
   
   doc.pipe(fs.createWriteStream(outputPath));
 
+  // Titel
   doc.fontSize(22).font('Helvetica-Bold').fillColor('#FF6B00').text('TV Neunkirchen Baskets', { align: 'center' });
   doc.fontSize(14).font('Helvetica').fillColor('#0F172A').text('Gesamt-Spielplan aller Mannschaften', { align: 'center' });
   doc.fontSize(10).fillColor('#64748B').text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')} Uhr`, { align: 'center' });
   doc.moveDown(1);
 
+  // Tabellen-Konfiguration
   const startX = 40;
   const rowHeight = 18;
   let currentY = doc.y;
@@ -152,6 +187,7 @@ function generatePDF(games) {
   const headers = ['Team', 'Datum', 'Uhrzeit', 'H/A', 'Gegner', 'Ort', 'Status'];
   const colWidths = [90, 60, 60, 50, 110, 280, 70];
   
+  // Header
   doc.rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill('#FF6B00');
   doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
   
@@ -164,11 +200,18 @@ function generatePDF(games) {
   currentY += rowHeight;
   doc.fillColor('#0F172A').font('Helvetica').fontSize(8);
 
+  let lastTeamIndex = -1;
+
   games.forEach((game, index) => {
+    // Team-Wechsel erkennen
+    const isNewTeam = game.teamIndex !== lastTeamIndex;
+    
+    // Seitenumbruch prüfen
     if (currentY + rowHeight > doc.page.height - 40) {
       doc.addPage();
       currentY = 40;
       
+      // Header auf neuer Seite
       doc.rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill('#FF6B00');
       doc.fillColor('white').font('Helvetica-Bold').fontSize(9);
       currentX = startX;
@@ -180,10 +223,11 @@ function generatePDF(games) {
       doc.fillColor('#0F172A').font('Helvetica').fontSize(8);
     }
 
-    if (index % 2 === 0) {
-      doc.rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill('#F8FAFC');
-    }
+    // Team-Hintergrundfarbe
+    const color = teamColors[game.teamIndex % teamColors.length];
+    doc.rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill(color.pdf);
 
+    // Abgesagte Spiele
     const isCancelled = game.status.includes('Abgesagt');
     doc.fillColor(isCancelled ? '#D32F2F' : '#0F172A');
     if (isCancelled) doc.font('Helvetica-Bold');
@@ -199,6 +243,7 @@ function generatePDF(games) {
     });
 
     currentY += rowHeight;
+    lastTeamIndex = game.teamIndex;
   });
 
   doc.end();
@@ -215,7 +260,7 @@ async function main() {
     return;
   }
 
-  console.log(`\n✅ Insgesamt ${games.length} Spiele erfolgreich extrahiert und chronologisch sortiert.`);
+  console.log(`\n✅ Insgesamt ${games.length} Spiele erfolgreich extrahiert und sortiert.`);
 
   await generateExcel(games);
   generatePDF(games);
