@@ -1,4 +1,4 @@
-// complete generator script — mit scroll-margin-top Fix
+// complete generator script — mit Dropdown-Fix (öffnet nach unten)
 const fs = require('fs');
 const path = require('path');
 
@@ -168,7 +168,7 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }\n' +
 '.stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); pointer-events: none; overflow: hidden; }\n' +
+'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 700px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
@@ -182,7 +182,7 @@ function genHTML() {
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 100; }\n' +
+'.more-options-dropdown { position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 100; }\n' +
 '.more-options-dropdown.active { display: flex; }\n' +
 '.more-option-item { padding: 0.625rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
 '.more-option-item:hover { background: var(--color-bg); }\n' +
@@ -431,7 +431,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // updateCardLinks mit href für Download
+  // updateCardLinks
   content += '  function updateCardLinks(card, type) {\n';
   content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
   content += '    const url = urls[type]; const webcalUrl = url.replace("https://", "webcal://");\n';
