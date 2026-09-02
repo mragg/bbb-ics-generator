@@ -52,7 +52,6 @@ function genHTML() {
   const pdfExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.pdf'));
   const allTeamsIcsExists = fs.existsSync(path.resolve(__dirname, '../generated/all_teams.ics'));
 
-  // FIX 3: let statt const
   let content = '<!DOCTYPE html>\n' +
 '<html lang="de">\n' +
 '<head>\n' +
@@ -128,6 +127,10 @@ function genHTML() {
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-size: 0.75rem; opacity: 0.7; display: block; }\n' +
 '.download-btn-name { font-size: 1rem; font-weight: 700; display: block; }\n' +
+'[data-theme="dark"] .download-btn { background: #334155; color: white; }\n' +
+'[data-theme="dark"] .download-btn:hover { background: #475569; }\n' +
+'[data-theme="dark"] .download-btn-excel:hover { background: #217346; }\n' +
+'[data-theme="dark"] .download-btn-pdf:hover { background: #D32F2F; }\n' +
 '.search-wrapper { margin-bottom: 2rem; position: relative; }\n' +
 '.search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
@@ -146,8 +149,6 @@ function genHTML() {
 '.team-card.age-purple .team-badge { background: var(--color-purple); }\n' +
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.team-card.age-orange .team-badge { background: var(--color-primary); }\n' +
-
-// FIX 4: Herz-Animation sanfter, ohne Layout-Verschiebung
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
 '[data-theme="dark"] .favorite-btn { background: rgba(30,41,59,0.9); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); }\n' +
@@ -155,7 +156,6 @@ function genHTML() {
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
-
 '.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }\n' +
 '[data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }\n' +
 '.team-name { font-family: "Oswald", sans-serif; font-size: 1.25rem; font-weight: 600; }\n' +
@@ -182,7 +182,7 @@ function genHTML() {
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 20; }\n' +
+'.more-options-dropdown { position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 100; }\n' +
 '.more-options-dropdown.active { display: flex; }\n' +
 '.more-option-item { padding: 0.625rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
 '.more-option-item:hover { background: var(--color-bg); }\n' +
@@ -298,7 +298,7 @@ function genHTML() {
             '<button class="more-option-item calendar-link" data-platform="outlook"><i data-lucide="mail"></i> Outlook</button>' +
             '<button class="more-option-item calendar-link" data-platform="share"><i data-lucide="share-2"></i> Teilen</button>' +
             '<button class="more-option-item qr-btn"><i data-lucide="qr-code"></i> QR-Code</button>' +
-            '<button class="more-option-item download-file-btn" download><i data-lucide="download"></i> .ics herunterladen</button>' +
+            '<button class="more-option-item download-file-btn"><i data-lucide="download"></i> .ics herunterladen</button>' +
             '<button class="more-option-item copy-btn"><i data-lucide="copy"></i> Link kopieren</button>' +
           '</div>' +
         '</div>' +
@@ -340,7 +340,7 @@ function genHTML() {
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
 
-  // Favorite buttons - sanftere Animation
+  // Favorite buttons
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -414,15 +414,23 @@ function genHTML() {
   content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
+  // FIX 4: Stat-Click öffnet Karte und scrollt hin
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
-  content += '      e.stopPropagation(); const card = stat.closest(".team-card"); const type = stat.getAttribute("data-type");\n';
+  content += '      e.stopPropagation();\n';
+  content += '      const card = stat.closest(".team-card");\n';
+  content += '      const type = stat.getAttribute("data-type");\n';
+  content += '      document.querySelectorAll(".team-card").forEach(c => { if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } });\n';
+  content += '      card.classList.add("expanded");\n';
+  content += '      card.scrollIntoView({ behavior: "smooth", block: "center" });\n';
   content += '      if (navigator.vibrate) navigator.vibrate(30);\n';
-  content += '      card.querySelectorAll(".stat").forEach(s => s.classList.remove("active")); stat.classList.add("active");\n';
+  content += '      card.querySelectorAll(".stat").forEach(s => s.classList.remove("active"));\n';
+  content += '      stat.classList.add("active");\n';
   content += '      updateCardLinks(card, type);\n';
   content += '    });\n';
   content += '  });\n\n';
 
+  // FIX 3: updateCardLinks mit href für Download
   content += '  function updateCardLinks(card, type) {\n';
   content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
   content += '    const url = urls[type]; const webcalUrl = url.replace("https://", "webcal://");\n';
@@ -431,7 +439,7 @@ function genHTML() {
   content += '    const al = card.querySelector(\'.calendar-link[data-platform="apple"]\'); if (al) al.href = webcalUrl;\n';
   content += '    card.querySelectorAll(".calendar-link").forEach(l => l.setAttribute("data-url", url));\n';
   content += '    const cb = card.querySelector(".copy-btn"); if (cb) cb.setAttribute("data-copy", url);\n';
-  content += '    const db = card.querySelector(".download-file-btn"); if (db) db.href = url;\n';
+  content += '    const db = card.querySelector(".download-file-btn"); if (db) db.setAttribute("href", url);\n';
   content += '    const qb = card.querySelector(".qr-btn"); if (qb) qb.setAttribute("data-url", webcalUrl);\n';
   content += '    card.querySelectorAll(".btn, .more-option-item").forEach(b => { b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); });\n';
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
@@ -442,7 +450,7 @@ function genHTML() {
   content += '  });\n';
   content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
 
-  // FIX 1: Copy-Button repariert
+  // FIX 1: Copy-Button
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
   content += '      e.preventDefault(); e.stopPropagation();\n';
@@ -472,18 +480,13 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // FIX 1: Download-Button repariert
+  // FIX 1: Download-Button
   content += '  document.querySelectorAll(".download-file-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.preventDefault(); e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("href");\n';
   content += '      if (!url) { showToast("Kein Download verfügbar"); return; }\n';
-  content += '      const a = document.createElement("a");\n';
-  content += '      a.href = url;\n';
-  content += '      a.download = "";\n';
-  content += '      document.body.appendChild(a);\n';
-  content += '      a.click();\n';
-  content += '      document.body.removeChild(a);\n';
+  content += '      window.location.href = url;\n';
   content += '      showToast("Download gestartet!");\n';
   content += '    });\n';
   content += '  });\n\n';
