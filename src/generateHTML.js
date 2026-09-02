@@ -1,4 +1,4 @@
-// complete generator script — final version
+// complete generator script — mit runden Ecken, grauem Download-Button & FLIP-Animation
 const fs = require('fs');
 const path = require('path');
 
@@ -123,6 +123,8 @@ function genHTML() {
 '.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }\n' +
 '.download-btn-excel:hover { background: #217346; color: white; }\n' +
 '.download-btn-pdf:hover { background: #D32F2F; color: white; }\n' +
+'.download-btn-allteams { background: #64748B; color: white; }\n' +
+'.download-btn-allteams:hover { background: #475569; }\n' +
 '.download-btn i { width: 24px; height: 24px; }\n' +
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-size: 0.75rem; opacity: 0.7; display: block; }\n' +
@@ -131,12 +133,14 @@ function genHTML() {
 '[data-theme="dark"] .download-btn:hover { background: #475569; }\n' +
 '[data-theme="dark"] .download-btn-excel:hover { background: #217346; }\n' +
 '[data-theme="dark"] .download-btn-pdf:hover { background: #D32F2F; }\n' +
+'[data-theme="dark"] .download-btn-allteams:hover { background: #475569; }\n' +
 '.search-wrapper { margin-bottom: 2rem; position: relative; }\n' +
 '.search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
 '.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
-'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: visible; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
+'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; overflow: visible; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
+'.team-card-inner { border-radius: var(--radius-lg); overflow: hidden; }\n' +
 '.team-card.expanded { z-index: 50; overflow: visible; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
@@ -264,7 +268,7 @@ function genHTML() {
   if (excelExists || pdfExists || allTeamsIcsExists) {
     let dlButtons = '';
     if (allTeamsIcsExists) {
-      dlButtons += '<a href="all_teams.ics" download class="download-btn" style="background:#FF6B00;color:white;"><i data-lucide="calendar"></i><div class="download-btn-text"><span class="download-btn-label">Alle Teams</span><span class="download-btn-name">all_teams.ics</span></div></a>';
+      dlButtons += '<a href="all_teams.ics" download class="download-btn download-btn-allteams"><i data-lucide="calendar"></i><div class="download-btn-text"><span class="download-btn-label">Alle Teams</span><span class="download-btn-name">all_teams.ics</span></div></a>';
     }
     if (excelExists) {
       dlButtons += '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel</span><span class="download-btn-name">Spielplan.xlsx</span></div></a>';
@@ -282,6 +286,7 @@ function genHTML() {
     const ageColor = getAgeGroupColor(t.name);
     content += '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
       '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart" style="width:20px;height:20px;"></i></button>' +
+      '<div class="team-card-inner">' +
       '<div class="team-card-header"><span class="team-name">' + t.name + '</span>' + (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') + '</div>' +
       '<div class="team-stats">' +
         '<div class="stat active" data-type="all"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
@@ -304,6 +309,7 @@ function genHTML() {
             '<button class="more-option-item copy-btn"><i data-lucide="copy"></i> Link kopieren</button>' +
           '</div>' +
         '</div>' +
+      '</div>' +
       '</div>' +
     '</div>\n';
   });
@@ -340,9 +346,36 @@ function genHTML() {
   content += '    const teamId = card.getAttribute("data-team-id");\n';
   content += '    if (favorites.includes(teamId)) { card.classList.add("favorite"); card.querySelector(".favorite-btn").classList.add("active"); }\n';
   content += '  });\n';
-  content += '  sortCards(); updateQuickAccess();\n\n';
+  content += '  sortCards(false); updateQuickAccess();\n\n';
 
-  // Favorite buttons
+  // FLIP Animation Helper
+  content += '  function getFirstPositions() {\n';
+  content += '    const positions = new Map();\n';
+  content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '      const rect = card.getBoundingClientRect();\n';
+  content += '      positions.set(card, { top: rect.top, left: rect.left });\n';
+  content += '    });\n';
+  content += '    return positions;\n';
+  content += '  }\n\n';
+
+  content += '  function animateWithFLIP(firstPositions, duration = 400) {\n';
+  content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '      const first = firstPositions.get(card);\n';
+  content += '      if (!first) return;\n';
+  content += '      const last = card.getBoundingClientRect();\n';
+  content += '      const deltaX = first.left - last.left;\n';
+  content += '      const deltaY = first.top - last.top;\n';
+  content += '      if (deltaX === 0 && deltaY === 0) return;\n';
+  content += '      card.style.transform = `translate(${deltaX}px, ${deltaY}px)`;\n';
+  content += '      card.style.transition = "none";\n';
+  content += '      requestAnimationFrame(() => {\n';
+  content += '        card.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`;\n';
+  content += '        card.style.transform = "";\n';
+  content += '      });\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
+  // Favorite buttons mit FLIP Animation
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -354,11 +387,14 @@ function genHTML() {
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); }\n';
   content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
-  content += '      sortCards(); updateQuickAccess();\n';
+  content += '      const firstPositions = getFirstPositions();\n';
+  content += '      sortCards(true);\n';
+  content += '      animateWithFLIP(firstPositions, 400);\n';
+  content += '      updateQuickAccess();\n';
   content += '    });\n';
   content += '  });\n\n';
 
-  content += '  function sortCards() {\n';
+  content += '  function sortCards(animate = false) {\n';
   content += '    const cards = Array.from(grid.querySelectorAll(".team-card"));\n';
   content += '    cards.sort((a, b) => { const af = a.classList.contains("favorite") ? 0 : 1; const bf = b.classList.contains("favorite") ? 0 : 1; if (af !== bf) return af - bf; return parseInt(a.getAttribute("data-original-index")) - parseInt(b.getAttribute("data-original-index")); });\n';
   content += '    cards.forEach(card => grid.appendChild(card));\n';
