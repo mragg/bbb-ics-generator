@@ -1,4 +1,4 @@
-// complete generator script — mit Kalender-Typ-Wechsel & Google Calendar App-Deep-Links
+// complete generator script — mit haptischem Feedback, Reset, Google Calendar Fix & Download-Button
 const fs = require('fs');
 const path = require('path');
 
@@ -184,7 +184,7 @@ body {
 .stat.active .stat-label { color: var(--color-primary); font-weight: 600; }
 
 .team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); }
-.team-card.expanded .team-actions { opacity: 1; max-height: 600px; }
+.team-card.expanded .team-actions { opacity: 1; max-height: 700px; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }
 .btn-primary { background: var(--color-primary); color: white; }
@@ -223,6 +223,17 @@ body {
 [data-theme="dark"] .share-btn { background: #334155; }
 .share-btn:hover { background: #E2E8F0; transform: translateY(-1px); }
 .share-btn i { width: 14px; height: 14px; }
+
+.btn-download {
+  background: #F1F5F9; color: var(--color-text); padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm); border: 1px solid var(--color-border);
+  cursor: pointer; transition: var(--transition); display: flex; align-items: center;
+  justify-content: center; gap: 0.375rem; font-size: 0.8rem; font-weight: 600;
+  text-decoration: none;
+}
+[data-theme="dark"] .btn-download { background: #334155; }
+.btn-download:hover { background: #E2E8F0; transform: translateY(-1px); }
+.btn-download i { width: 14px; height: 14px; }
 
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
@@ -421,6 +432,9 @@ body {
             '<button class="btn btn-copy copy-btn" data-copy="">' +
               '<i data-lucide="copy" style="width:14px;height:14px;"></i> Link kopieren' +
             '</button>' +
+            '<a href="#" class="btn-download download-file-btn" download>' +
+              '<i data-lucide="download" style="width:14px;height:14px;"></i> Herunterladen' +
+            '</a>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -463,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('konfetti_shown', 'true');
     }
     
-    // Initialisiere alle Team-Karten mit "all" als Standard
     document.querySelectorAll('.team-card').forEach(card => {
       updateCardLinks(card, 'all');
     });
@@ -656,26 +669,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // TEAM-KARTE ÖFFNEN/SCHLIESSEN MIT RESET
   document.querySelectorAll('.team-card-header').forEach(header => {
     header.addEventListener('click', () => {
-      const card = header.parentElement; const isExpanded = card.classList.contains('expanded');
-      document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded'));
-      if (!isExpanded) card.classList.add('expanded');
+      const card = header.parentElement;
+      const isExpanded = card.classList.contains('expanded');
+      
+      document.querySelectorAll('.team-card').forEach(c => {
+        if (c !== card) {
+          c.classList.remove('expanded');
+          // Reset auf "all" beim Schließen
+          resetCardToAll(c);
+        }
+      });
+      
+      if (!isExpanded) {
+        card.classList.add('expanded');
+      } else {
+        card.classList.remove('expanded');
+        // Reset auf "all" beim Schließen
+        resetCardToAll(card);
+      }
     });
   });
 
-  // KALENDER-TYP WECHSEL (Gesamt/Heim/Auswärts)
+  function resetCardToAll(card) {
+    card.querySelectorAll('.stat').forEach(s => s.classList.remove('active'));
+    const allStat = card.querySelector('.stat[data-type="all"]');
+    if (allStat) {
+      allStat.classList.add('active');
+      updateCardLinks(card, 'all');
+    }
+  }
+
+  // KALENDER-TYP WECHSEL MIT HAPTISCHEM FEEDBACK
   document.querySelectorAll('.stat').forEach(stat => {
     stat.addEventListener('click', (e) => {
       e.stopPropagation();
       const card = stat.closest('.team-card');
       const type = stat.getAttribute('data-type');
       
-      // Alle Stats in dieser Karte deaktivieren
+      // Haptisches Feedback
+      if (navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+      
       card.querySelectorAll('.stat').forEach(s => s.classList.remove('active'));
       stat.classList.add('active');
       
-      // Links aktualisieren
       updateCardLinks(card, type);
     });
   });
@@ -696,21 +737,21 @@ document.addEventListener('DOMContentLoaded', () => {
       away: 'Nur Auswärtsspiele:'
     };
     
-    // Label aktualisieren
     const label = card.querySelector('.calendar-type-label');
     if (label) label.textContent = labels[type];
     
-    // Apple Link
     const appleLink = card.querySelector('.calendar-btn-apple');
     if (appleLink) appleLink.href = webcalUrl;
     
-    // Google, Outlook, Share, Copy
     card.querySelectorAll('.calendar-link').forEach(link => {
       link.setAttribute('data-url', url);
     });
     
     const copyBtn = card.querySelector('.copy-btn');
     if (copyBtn) copyBtn.setAttribute('data-copy', url);
+    
+    const downloadBtn = card.querySelector('.download-file-btn');
+    if (downloadBtn) downloadBtn.href = url;
   }
 
   document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -751,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // KALENDER-BUTTONS MIT GOOGLE APP DEEP LINKS
+  // KALENDER-BUTTONS MIT GOOGLE CALENDAR APP LINK
   document.querySelectorAll('.calendar-link').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const platform = btn.getAttribute('data-platform');
@@ -760,11 +801,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!url) return;
       
       if (platform === 'apple') {
-        // webcal:// wird automatisch von Apple Calendar übernommen
         return;
       } else if (platform === 'google') {
         e.preventDefault();
-        // Versuche Google Calendar App zu öffnen
+        
+        // Link in Zwischenablage kopieren
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (err) {
+          console.error('Kopieren fehlgeschlagen', err);
+        }
+        
+        // Google Calendar App oder Web öffnen
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         const isAndroid = /Android/.test(navigator.userAgent);
         
@@ -772,30 +820,25 @@ document.addEventListener('DOMContentLoaded', () => {
           // iOS: Versuche googlecalendar:// URL Scheme
           window.location.href = 'googlecalendar://';
           setTimeout(() => {
-            // Fallback: Browser
             window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
             showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-          }, 1000);
+          }, 1500);
         } else if (isAndroid) {
-          // Android: Intent URL
-          const intentUrl = 'intent://calendar.google.com/calendar/u/0/r/settings/addbyurl#Intent;scheme=https;package=com.google.android.calendar;end';
-          window.location.href = intentUrl;
+          // Android: Versuche App zu öffnen, sonst Play Store
+          const startTime = Date.now();
+          window.location.href = 'intent://calendar.google.com/calendar/u/0/r/settings/addbyurl#Intent;scheme=https;package=com.google.android.calendar;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.google.android.calendar;end';
+          
           setTimeout(() => {
-            // Fallback: Browser
-            window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
-            showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-          }, 1000);
+            // Wenn wir nach 2 Sekunden immer noch auf der Seite sind, App nicht installiert
+            if (Date.now() - startTime < 2500) {
+              window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
+              showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
+            }
+          }, 2000);
         } else {
           // Desktop: Browser
           window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
           showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-        }
-        
-        // Link in Zwischenablage kopieren
-        try {
-          await navigator.clipboard.writeText(url);
-        } catch (err) {
-          console.error('Kopieren fehlgeschlagen', err);
         }
       } else if (platform === 'outlook') {
         e.preventDefault();
@@ -853,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Kalender-Typ-Wechsel & Google Calendar App-Deep-Links generiert.');
+  console.log('✅ index.html mit haptischem Feedback, Reset, Google Calendar Fix & Download-Button generiert.');
 
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
