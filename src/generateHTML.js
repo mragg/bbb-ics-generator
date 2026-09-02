@@ -499,26 +499,24 @@ function genHTML() {
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
   content += '  }\n\n';
 
-  content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", (e) => {\n';
-  content += '      e.stopPropagation();\n';
-  content += '      const dropdown = btn.nextElementSibling;\n';
-  content += '      const isActive = dropdown.classList.contains("active");\n';
-  content += '      closeAllDropdowns();\n';
-  content += '      if (isActive) return;\n';
-  content += '      const rect = btn.getBoundingClientRect();\n';
-  content += '      const ddWidth = 220;\n';
-  content += '      let top = rect.bottom + 8;\n';
-  content += '      let left = rect.left;\n';
-  content += '      if (left + ddWidth > window.innerWidth) left = window.innerWidth - ddWidth - 16;\n';
-  content += '      if (left < 8) left = 8;\n';
-  content += '      if (top + 250 > window.innerHeight) top = rect.top - 250;\n';
-  content += '      dropdown.style.top = top + "px";\n';
-  content += '      dropdown.style.left = left + "px";\n';
-  content += '      dropdown.style.width = ddWidth + "px";\n';
-  content += '      dropdown.classList.add("active");\n';
-  content += '    });\n';
-  content += '  });\n\n';
+     document.querySelectorAll(".more-options-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const dropdown = btn.nextElementSibling;
+      const isActive = dropdown.classList.contains("active");
+      closeAllDropdowns();
+      if (isActive) return;
+      const rect = btn.getBoundingClientRect();
+      let top = rect.bottom + 8;
+      let left = rect.left;
+      let width = rect.width;
+      if (top + 250 > window.innerHeight) top = rect.top - 250;
+      dropdown.style.top = top + "px";
+      dropdown.style.left = left + "px";
+      dropdown.style.width = width + "px";
+      dropdown.classList.add("active");
+    });
+  });
 
   content += '  document.addEventListener("click", (e) => {\n';
   content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) {\n';
