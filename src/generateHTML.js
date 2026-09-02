@@ -1,4 +1,4 @@
-// complete generator script — mit Download-Sektion für Gesamt-Spielplan
+// complete generator script — mit Touch-Targets, Empty States & Loading-States
 const fs = require('fs');
 const path = require('path');
 
@@ -39,7 +39,6 @@ function genHTML() {
     awayMatchCount: m.awayMatchCount ?? m.awayMatches ?? 0
   }));
 
-  // Prüfen ob Export-Dateien existieren
   const excelExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.xlsx'));
   const pdfExists = fs.existsSync(path.resolve(__dirname, '../generated/Gesamt-Spielplan.pdf'));
 
@@ -192,11 +191,23 @@ body {
 .btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
 .btn-outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
 .btn-outline:hover { background: var(--color-surface); }
-.btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; }
+.btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; position: relative; }
 [data-theme="dark"] .btn-copy { background: #334155; }
 .btn-copy:hover { background: #E2E8F0; }
+.btn-copy.loading { pointer-events: none; opacity: 0.7; }
+.btn-copy.success { background: #10B981; color: white; }
 .link-row { display: flex; gap: 0.5rem; align-items: center; }
 .link-row .btn { flex: 1; }
+
+/* EMPTY STATE */
+.empty-state {
+  grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+}
+.empty-state-icon { width: 64px; height: 64px; color: var(--color-text-muted); margin: 0 auto 1rem; opacity: 0.5; }
+.empty-state-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: var(--color-text); margin-bottom: 0.5rem; }
+.empty-state-text { color: var(--color-text-muted); font-size: 0.95rem; }
 
 /* DOWNLOAD-SEKTION */
 .download-section {
@@ -262,11 +273,13 @@ body {
   .logo { height: 60px; }
   .teams-grid { grid-template-columns: 1fr; }
   .link-row { flex-direction: column; }
-  .link-row .btn-copy { width: 100%; }
+  .link-row .btn-copy { width: 100%; min-height: 44px; }
   .quick-access-inner { justify-content: center; }
   .scroll-top-btn { bottom: 1rem; right: 1rem; width: 44px; height: 44px; }
   .download-buttons { flex-direction: column; align-items: stretch; }
   .download-btn { justify-content: center; }
+  .favorite-btn { width: 44px; height: 44px; }
+  .btn-copy { min-height: 44px; }
 }
 </style>
 </head>
@@ -585,9 +598,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const timer = setInterval(() => { current += increment; if (current >= target) { el.textContent = target; clearInterval(timer); } else el.textContent = Math.floor(current); }, 20);
   });
 
+  // SEARCH MIT EMPTY STATE
   document.getElementById('team-search').addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
-    document.querySelectorAll('.team-card').forEach(card => { card.classList.toggle('hidden', !card.getAttribute('data-team-name').includes(query)); });
+    let visibleCount = 0;
+    
+    document.querySelectorAll('.team-card').forEach(card => {
+      const name = card.getAttribute('data-team-name');
+      if (name.includes(query)) {
+        card.classList.remove('hidden');
+        visibleCount++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    // Empty State anzeigen/verstecken
+    let emptyState = document.getElementById('empty-state');
+    if (visibleCount === 0 && query.length > 0) {
+      if (!emptyState) {
+        emptyState = document.createElement('div');
+        emptyState.id = 'empty-state';
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = `
+          <i data-lucide="search-x" class="empty-state-icon"></i>
+          <div class="empty-state-title">Keine Teams gefunden</div>
+          <div class="empty-state-text">Versuche einen anderen Suchbegriff oder lösche die Suche.</div>
+        `;
+        grid.appendChild(emptyState);
+        lucide.createIcons();
+      }
+    } else if (emptyState) {
+      emptyState.remove();
+    }
   });
 
   document.querySelectorAll('.team-card-header').forEach(header => {
@@ -598,9 +641,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // COPY-BUTTONS MIT LOADING-STATE
   document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(btn.getAttribute('data-copy')); const toast = document.getElementById('toast'); toast.classList.add('active'); setTimeout(() => toast.classList.remove('active'), 2000); } catch (err) { console.error('Kopieren fehlgeschlagen', err); }
+      const icon = btn.querySelector('i');
+      const originalIcon = icon.getAttribute('data-lucide');
+      
+      // Loading-State
+      btn.classList.add('loading');
+      icon.setAttribute('data-lucide', 'loader-2');
+      icon.style.animation = 'spin 1s linear infinite';
+      lucide.createIcons();
+      
+      try {
+        await navigator.clipboard.writeText(btn.getAttribute('data-copy'));
+        
+        // Success-State
+        btn.classList.remove('loading');
+        btn.classList.add('success');
+        icon.setAttribute('data-lucide', 'check');
+        icon.style.animation = '';
+        lucide.createIcons();
+        
+        const toast = document.getElementById('toast');
+        toast.classList.add('active');
+        
+        // Nach 1.5 Sekunden zurück zum Original
+        setTimeout(() => {
+          btn.classList.remove('success');
+          icon.setAttribute('data-lucide', originalIcon);
+          lucide.createIcons();
+          toast.classList.remove('active');
+        }, 1500);
+      } catch (err) {
+        console.error('Kopieren fehlgeschlagen', err);
+        btn.classList.remove('loading');
+        icon.setAttribute('data-lucide', originalIcon);
+        icon.style.animation = '';
+        lucide.createIcons();
+      }
     });
   });
 
@@ -613,9 +692,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Download-Sektion generiert.');
+  console.log('✅ index.html mit Touch-Targets, Empty States & Loading-States generiert.');
 
-  // manifest.json und sw.js (wie zuvor)
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
 
