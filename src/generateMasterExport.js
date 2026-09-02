@@ -105,11 +105,8 @@ async function fetchAndParseAllGames() {
     }
   }
 
-  // Erst nach Team gruppieren, dann chronologisch sortieren
-  allGames.sort((a, b) => {
-    if (a.teamIndex !== b.teamIndex) return a.teamIndex - b.teamIndex;
-    return a.dateObj - b.dateObj;
-  });
+  // CHRONOLOGISCHE SORTIERUNG (nach Datum, nicht nach Team)
+  allGames.sort((a, b) => a.dateObj - b.dateObj);
 
   return allGames;
 }
@@ -134,7 +131,7 @@ async function generateExcel(games) {
   worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B00' } };
   worksheet.getRow(1).height = 25;
 
-  // Daten einfügen mit Team-Farben
+  // Daten einfügen mit Team-Farben (chronologisch sortiert)
   games.forEach(game => {
     const row = worksheet.addRow({
       teamName: game.teamName,
@@ -200,12 +197,8 @@ function generatePDF(games) {
   currentY += rowHeight;
   doc.fillColor('#0F172A').font('Helvetica').fontSize(8);
 
-  let lastTeamIndex = -1;
-
+  // Chronologisch sortierte Spiele mit Team-Farben
   games.forEach((game, index) => {
-    // Team-Wechsel erkennen
-    const isNewTeam = game.teamIndex !== lastTeamIndex;
-    
     // Seitenumbruch prüfen
     if (currentY + rowHeight > doc.page.height - 40) {
       doc.addPage();
@@ -223,7 +216,7 @@ function generatePDF(games) {
       doc.fillColor('#0F172A').font('Helvetica').fontSize(8);
     }
 
-    // Team-Hintergrundfarbe
+    // Team-Hintergrundfarbe (jedes Spiel behält seine Team-Farbe)
     const color = teamColors[game.teamIndex % teamColors.length];
     doc.rect(startX, currentY, colWidths.reduce((a, b) => a + b, 0), rowHeight).fill(color.pdf);
 
@@ -243,7 +236,6 @@ function generatePDF(games) {
     });
 
     currentY += rowHeight;
-    lastTeamIndex = game.teamIndex;
   });
 
   doc.end();
@@ -260,7 +252,7 @@ async function main() {
     return;
   }
 
-  console.log(`\n✅ Insgesamt ${games.length} Spiele erfolgreich extrahiert und sortiert.`);
+  console.log(`\n✅ Insgesamt ${games.length} Spiele erfolgreich extrahiert und chronologisch sortiert.`);
 
   await generateExcel(games);
   generatePDF(games);
