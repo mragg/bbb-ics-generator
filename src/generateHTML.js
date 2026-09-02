@@ -170,6 +170,7 @@ function genHTML() {
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
 '.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); pointer-events: none; overflow: hidden; }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 700px; pointer-events: auto; }\n' +
+'.team-card { scroll-margin-top: 80px; }
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
 '.btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }\n' +
