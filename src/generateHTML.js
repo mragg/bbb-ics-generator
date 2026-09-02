@@ -1,4 +1,4 @@
-// complete generator script — mit allen Fixes
+// complete generator script — mit scroll-margin-top Fix
 const fs = require('fs');
 const path = require('path');
 
@@ -136,7 +136,7 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
 '.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
-'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: hidden; position: relative; cursor: pointer; }\n' +
+'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: hidden; position: relative; cursor: pointer; scroll-margin-top: 100px; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }\n' +
@@ -170,7 +170,6 @@ function genHTML() {
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
 '.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: var(--transition); pointer-events: none; overflow: hidden; }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 700px; pointer-events: auto; }\n' +
-'.team-card { scroll-margin-top: 80px; }
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
 '.btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }\n' +
@@ -234,6 +233,7 @@ function genHTML() {
 '  .favorite-btn { width: 44px; height: 44px; }\n' +
 '  .primary-actions { flex-direction: column; }\n' +
 '  .calendar-type-selector { flex-direction: column; }\n' +
+'  .team-card { scroll-margin-top: 140px; }\n' +
 '}\n' +
 '</style>\n' +
 '</head>\n' +
@@ -415,7 +415,7 @@ function genHTML() {
   content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
-  // FIX 4: Stat-Click öffnet Karte und scrollt hin
+  // Stat-Click öffnet Karte und scrollt hin
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -431,7 +431,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // FIX 3: updateCardLinks mit href für Download
+  // updateCardLinks mit href für Download
   content += '  function updateCardLinks(card, type) {\n';
   content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
   content += '    const url = urls[type]; const webcalUrl = url.replace("https://", "webcal://");\n';
@@ -451,7 +451,7 @@ function genHTML() {
   content += '  });\n';
   content += '  document.addEventListener("click", () => document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active")));\n\n';
 
-  // FIX 1: Copy-Button
+  // Copy-Button
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
   content += '      e.preventDefault(); e.stopPropagation();\n';
@@ -481,7 +481,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // FIX 1: Download-Button
+  // Download-Button
   content += '  document.querySelectorAll(".download-file-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.preventDefault(); e.stopPropagation();\n';
