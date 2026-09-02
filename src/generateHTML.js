@@ -1,4 +1,4 @@
-// complete generator script — mit visuellem Feedback, Reset, Google Calendar Fix & Download-Button
+// complete generator script — mit klickbarer Team-Karte & Google Calendar Fix
 const fs = require('fs');
 const path = require('path');
 
@@ -19,6 +19,15 @@ function safeReadJson(filePath) {
 function normalizeId(value) {
   if (value === undefined || value === null) return '';
   return String(value).trim();
+}
+
+function getAgeGroupColor(teamName) {
+  const name = teamName.toLowerCase();
+  if (name.includes('u10') || name.includes('u12')) return 'blue';
+  if (name.includes('u14') || name.includes('u16')) return 'green';
+  if (name.includes('u18')) return 'purple';
+  if (name.includes('herren') || name.includes('damen')) return 'orange';
+  return 'orange';
 }
 
 function genHTML() {
@@ -66,6 +75,7 @@ function genHTML() {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root {
   --color-primary: #FF6B00;
@@ -76,6 +86,9 @@ function genHTML() {
   --color-text-muted: #64748B;
   --color-border: #E2E8F0;
   --color-gold: #FFD700;
+  --color-blue: #3B82F6;
+  --color-green: #10B981;
+  --color-purple: #8B5CF6;
   --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -130,24 +143,60 @@ body {
 .quick-access-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
 .quick-access-pill i { width: 14px; height: 14px; }
 
+.my-calendar-btn {
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600;
+  cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem;
+}
+.my-calendar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+.my-calendar-btn i { width: 14px; height: 14px; }
+
+.download-section {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  border-radius: var(--radius-lg); padding: 2rem; text-align: center;
+  margin-bottom: 2rem; position: relative; overflow: hidden;
+  box-shadow: 0 10px 30px rgba(255,107,0,0.2);
+}
+.download-section::before {
+  content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%;
+}
+.download-section h2 { font-family: 'Oswald', sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem; position: relative; }
+.download-section p { color: rgba(255,255,255,0.9); max-width: 500px; margin: 0 auto 1.5rem; position: relative; font-size: 1rem; }
+.download-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+.download-btn {
+  display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 1.75rem;
+  border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; text-decoration: none;
+  transition: var(--transition); border: none; cursor: pointer; background: white; color: var(--color-text);
+}
+.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.download-btn-excel:hover { background: #217346; color: white; }
+.download-btn-pdf:hover { background: #D32F2F; color: white; }
+.download-btn i { width: 24px; height: 24px; }
+.download-btn-text { text-align: left; }
+.download-btn-label { font-size: 0.75rem; opacity: 0.7; display: block; }
+.download-btn-name { font-size: 1rem; font-weight: 700; display: block; }
+
 .search-wrapper { margin-bottom: 2rem; position: relative; }
 .search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }
 .search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }
 .search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
 
-.instructions { background: var(--color-surface); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--color-border); }
-.inst-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-family: 'Oswald', sans-serif; font-size: 1.1rem; font-weight: 500; }
-.inst-header i { transition: var(--transition); }
-.inst-header.active i { transform: rotate(180deg); }
-.inst-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; color: var(--color-text-muted); }
-.inst-content.active { max-height: 500px; margin-top: 1rem; }
-
 .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
-.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: hidden; position: relative; }
+.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: var(--transition); overflow: hidden; position: relative; cursor: pointer; }
 .team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }
 .team-card.hidden { display: none !important; }
 .team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
 .team-card.keyboard-focus { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+
+.team-card.age-blue { border-left: 4px solid var(--color-blue); }
+.team-card.age-blue .team-badge { background: var(--color-blue); }
+.team-card.age-green { border-left: 4px solid var(--color-green); }
+.team-card.age-green .team-badge { background: var(--color-green); }
+.team-card.age-purple { border-left: 4px solid var(--color-purple); }
+.team-card.age-purple .team-badge { background: var(--color-purple); }
+.team-card.age-orange { border-left: 4px solid var(--color-primary); }
+.team-card.age-orange .team-badge { background: var(--color-primary); }
 
 .favorite-btn {
   position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;
@@ -169,10 +218,10 @@ body {
 }
 .favorite-btn.animating { animation: favorite-pulse 0.4s ease, favorite-bounce 0.4s ease; }
 
-.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }
+.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; }
 [data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }
 .team-name { font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 600; }
-.team-badge { background: var(--color-text); color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 99px; }
+.team-badge { color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 99px; }
 
 .team-stats { display: flex; justify-content: space-around; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: #FAFAFA; }
 [data-theme="dark"] .team-stats { background: #0F172A; }
@@ -191,98 +240,52 @@ body {
 .btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
 .btn-outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
 .btn-outline:hover { background: var(--color-surface); }
+
+.primary-actions { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.primary-actions .btn { flex: 1; }
+
+.more-options-wrapper { position: relative; }
+.more-options-btn {
+  background: #F1F5F9; color: var(--color-text); padding: 0.75rem;
+  border-radius: var(--radius-sm); border: 1px solid var(--color-border);
+  cursor: pointer; transition: var(--transition); display: flex; align-items: center;
+  justify-content: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; width: 100%;
+}
+[data-theme="dark"] .more-options-btn { background: #334155; }
+.more-options-btn:hover { background: #E2E8F0; }
+.more-options-btn i { width: 16px; height: 16px; }
+
+.more-options-dropdown {
+  position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 0.5rem;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
+  display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 20;
+}
+.more-options-dropdown.active { display: flex; }
+.more-option-item {
+  padding: 0.625rem 0.75rem; border-radius: var(--radius-sm);
+  cursor: pointer; transition: var(--transition); display: flex; align-items: center;
+  gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent;
+  color: var(--color-text); text-align: left; width: 100%;
+}
+.more-option-item:hover { background: var(--color-bg); }
+.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }
+
 .btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; position: relative; }
 [data-theme="dark"] .btn-copy { background: #334155; }
 .btn-copy:hover { background: #E2E8F0; }
 .btn-copy.loading { pointer-events: none; opacity: 0.7; }
 .btn-copy.success { background: #10B981; color: white; }
 
-.calendar-buttons { display: flex; gap: 0.375rem; flex-wrap: wrap; }
-.calendar-btn {
-  flex: 1; min-width: 60px; padding: 0.5rem; border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border); background: var(--color-surface);
-  cursor: pointer; transition: var(--transition); display: flex; flex-direction: column;
-  align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600;
-  color: var(--color-text-muted); text-decoration: none;
-}
-.calendar-btn:hover { border-color: var(--color-primary); color: var(--color-primary); transform: translateY(-2px); }
-.calendar-btn i { width: 18px; height: 18px; }
-.calendar-btn-apple { background: #F5F5F7; }
-.calendar-btn-apple:hover { background: #000; color: white; border-color: #000; }
-.calendar-btn-google { background: #F8F9FA; }
-.calendar-btn-google:hover { background: #4285F4; color: white; border-color: #4285F4; }
-.calendar-btn-outlook { background: #F3F2F1; }
-.calendar-btn-outlook:hover { background: #0078D4; color: white; border-color: #0078D4; }
-
-.share-btn {
-  background: #F1F5F9; color: var(--color-text); padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm); border: none; cursor: pointer;
-  transition: var(--transition); display: flex; align-items: center; gap: 0.375rem;
-  font-size: 0.8rem; font-weight: 600;
-}
-[data-theme="dark"] .share-btn { background: #334155; }
-.share-btn:hover { background: #E2E8F0; transform: translateY(-1px); }
-.share-btn i { width: 14px; height: 14px; }
-
-.btn-download {
-  background: #F1F5F9; color: var(--color-text); padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm); border: 1px solid var(--color-border);
-  cursor: pointer; transition: var(--transition); display: flex; align-items: center;
-  justify-content: center; gap: 0.375rem; font-size: 0.8rem; font-weight: 600;
-  text-decoration: none;
-}
-[data-theme="dark"] .btn-download { background: #334155; }
-.btn-download:hover { background: #E2E8F0; transform: translateY(-1px); }
-.btn-download i { width: 14px; height: 14px; }
-
-/* VISUELLES FEEDBACK BEI KALENDER-WECHSEL */
 @keyframes calendar-flash {
   0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); }
   50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,107,0,0.4); }
   100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); }
 }
-.calendar-btn.flash, .share-btn.flash, .btn-copy.flash, .btn-download.flash {
+.btn.flash {
   animation: calendar-flash 0.4s ease;
   border-color: var(--color-primary) !important;
 }
-
-.link-row { display: flex; gap: 0.5rem; align-items: center; }
-.link-row .btn { flex: 1; }
-
-.empty-state {
-  grid-column: 1 / -1; text-align: center; padding: 4rem 2rem;
-  background: var(--color-surface); border-radius: var(--radius-lg);
-  border: 2px dashed var(--color-border);
-}
-.empty-state-icon { width: 64px; height: 64px; color: var(--color-text-muted); margin: 0 auto 1rem; opacity: 0.5; }
-.empty-state-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; color: var(--color-text); margin-bottom: 0.5rem; }
-.empty-state-text { color: var(--color-text-muted); font-size: 0.95rem; }
-
-.download-section {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  border-radius: var(--radius-lg); padding: 2.5rem; text-align: center;
-  margin-bottom: 3rem; position: relative; overflow: hidden;
-}
-.download-section::before {
-  content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(255,107,0,0.15) 0%, transparent 70%); border-radius: 50%;
-}
-.download-section h2 { font-family: 'Oswald', sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem; position: relative; }
-.download-section p { color: #94A3B8; max-width: 500px; margin: 0 auto 1.5rem; position: relative; }
-.download-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
-.download-btn {
-  display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem;
-  border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; text-decoration: none;
-  transition: var(--transition); border: none; cursor: pointer;
-}
-.download-btn-excel { background: #217346; color: white; }
-.download-btn-excel:hover { background: #1a5c38; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(33,115,70,0.3); }
-.download-btn-pdf { background: #D32F2F; color: white; }
-.download-btn-pdf:hover { background: #b71c1c; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(211,47,47,0.3); }
-.download-btn i { width: 20px; height: 20px; }
-.download-btn-text { text-align: left; }
-.download-btn-label { font-size: 0.75rem; opacity: 0.8; display: block; }
-.download-btn-name { font-size: 1rem; font-weight: 700; display: block; }
 
 .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
 .toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -300,59 +303,69 @@ body {
 .scroll-top-btn:hover { background: var(--color-primary-hover); transform: translateY(-4px); }
 .scroll-top-btn i { width: 24px; height: 24px; }
 
-.context-menu {
-  position: fixed; background: var(--color-surface); border: 1px solid var(--color-border);
-  border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 0.5rem 0;
-  z-index: 200; min-width: 200px; display: none;
+.qr-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+  display: none; align-items: center; justify-content: center; padding: 1rem;
 }
-.context-menu.active { display: block; }
-.context-menu-item {
-  padding: 0.625rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
-  font-size: 0.9rem; transition: var(--transition);
+.qr-modal.active { display: flex; }
+.qr-modal-content {
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  padding: 2rem; max-width: 400px; width: 100%; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
-.context-menu-item:hover { background: var(--color-bg); }
-.context-menu-item i { width: 16px; height: 16px; color: var(--color-primary); }
+.qr-modal-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.qr-modal-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.qr-code-container { background: white; padding: 1.5rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1.5rem; }
+.qr-modal-close {
+  background: var(--color-primary); color: white; border: none; padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; width: 100%;
+}
+.qr-modal-close:hover { background: var(--color-primary-hover); }
+
+.my-calendar-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+  display: none; align-items: center; justify-content: center; padding: 1rem;
+}
+.my-calendar-modal.active { display: flex; }
+.my-calendar-modal-content {
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  padding: 2rem; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.my-calendar-modal-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+.my-calendar-modal-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.team-checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+.team-checkbox-item {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  cursor: pointer; transition: var(--transition);
+}
+.team-checkbox-item:hover { background: var(--color-bg); }
+.team-checkbox-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+.team-checkbox-item label { flex: 1; cursor: pointer; font-weight: 500; }
+.calendar-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.calendar-type-btn {
+  flex: 1; padding: 0.75rem; border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm); background: var(--color-surface);
+  cursor: pointer; transition: var(--transition); font-weight: 600; text-align: center;
+}
+.calendar-type-btn.active { border-color: var(--color-primary); background: rgba(255,107,0,0.1); }
+.my-calendar-actions { display: flex; gap: 0.75rem; }
+.my-calendar-actions .btn { flex: 1; }
 
 .footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }
 .footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }
-
-@media print {
-  @page { size: A4; margin: 1.5cm; }
-  body { background: white !important; color: black !important; font-size: 10pt; }
-  .header, .quick-access, .search-wrapper, .instructions, .download-section,
-  .scroll-top-btn, .context-menu, .toast, #konfetti-canvas, #skeleton-loader,
-  .theme-toggle, .favorite-btn, .share-btn, .btn-copy, .calendar-buttons,
-  .footer { display: none !important; }
-  .container { max-width: 100%; padding: 0; margin: 0; }
-  .teams-grid { display: block; }
-  .team-card {
-    break-inside: avoid; page-break-inside: avoid;
-    border: 1px solid #ccc; margin-bottom: 1cm; box-shadow: none !important;
-  }
-  .team-card.expanded .team-actions { opacity: 1 !important; max-height: none !important; }
-  .team-card-header { background: #f5f5f5 !important; }
-  .btn-primary, .btn-outline {
-    background: white !important; color: black !important; border: 1px solid #ccc !important;
-    font-size: 9pt; padding: 0.3rem 0.5rem;
-  }
-  .link-row { display: block; }
-  .link-row a { display: block; margin-bottom: 0.3rem; word-break: break-all; }
-}
 
 @media (max-width: 640px) {
   .header-inner { flex-direction: column; text-align: center; }
   .logo { height: 60px; }
   .teams-grid { grid-template-columns: 1fr; }
-  .link-row { flex-direction: column; }
-  .link-row .btn-copy { width: 100%; min-height: 44px; }
   .quick-access-inner { justify-content: center; }
   .scroll-top-btn { bottom: 1rem; right: 1rem; width: 44px; height: 44px; }
   .download-buttons { flex-direction: column; align-items: stretch; }
   .download-btn { justify-content: center; }
   .favorite-btn { width: 44px; height: 44px; }
-  .btn-copy { min-height: 44px; }
-  .calendar-buttons { flex-direction: column; }
-  .calendar-btn { min-width: 100%; }
+  .primary-actions { flex-direction: column; }
 }
 </style>
 </head>
@@ -385,19 +398,16 @@ body {
   <div class="quick-access-inner">
     <span class="quick-access-label">⭐ Deine Favoriten:</span>
     <div id="quick-access-pills"></div>
+    <button class="my-calendar-btn" id="my-calendar-btn">
+      <i data-lucide="calendar-plus"></i>
+      <span>Mein Kalender</span>
+    </button>
   </div>
 </div>
 
 <main class="container" id="main-content" style="display:none;">
-  <div class="instructions">
-    <div class="inst-header" id="inst-toggle">
-      <span style="display:flex;align-items:center;gap:0.5rem;"><i data-lucide="help-circle" style="width:20px;height:20px;color:var(--color-primary)"></i> So abonnierst du den Kalender</span>
-      <i data-lucide="chevron-down" style="width:20px;height:20px;"></i>
-    </div>
-    <div class="inst-content" id="inst-content">
-      <p style="padding:0.5rem 0;">1. Wähle dein Team und klicke auf "Gesamt", "Heim" oder "Auswärts".<br>2. Klicke dann auf den Button deines Kalender-Programms.<br>3. Fertig! Der Kalender aktualisiert sich automatisch.</p>
-    </div>
-  </div>
+  
+  ${excelExists || pdfExists ? '<div class="download-section"><i data-lucide="download" style="width:48px;height:48px;color:white;margin-bottom:1rem;position:relative;"></i><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele aller Mannschaften chronologisch sortiert in einer Datei – perfekt zum Ausdrucken oder Weitergeben.</p><div class="download-buttons">' + (excelExists ? '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel-Datei</span><span class="download-btn-name">Gesamt-Spielplan.xlsx</span></div></a>' : '') + (pdfExists ? '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF-Datei</span><span class="download-btn-name">Gesamt-Spielplan.pdf</span></div></a>' : '') + '</div></div>' : ''}
 
   <div class="search-wrapper">
     <i data-lucide="search" class="search-icon" style="width:20px;height:20px;"></i>
@@ -406,7 +416,8 @@ body {
 
   <div class="teams-grid" id="teams-grid">
     ${teams.map((t, index) => {
-      return '<div class="team-card" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
+      const ageColor = getAgeGroupColor(t.name);
+      return '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
         '<button class="favorite-btn" aria-label="Als Favorit markieren">' +
           '<i data-lucide="heart" style="width:18px;height:18px;"></i>' +
         '</button>' +
@@ -421,38 +432,40 @@ body {
         '</div>' +
         '<div class="team-actions">' +
           '<div class="calendar-type-label" style="margin-bottom:0.5rem;font-weight:600;font-size:0.9rem;">Alle Spiele:</div>' +
-          '<div class="calendar-buttons">' +
-            '<a href="#" class="calendar-btn calendar-btn-apple calendar-link" data-platform="apple" title="Apple Kalender">' +
-              '<i data-lucide="apple"></i>' +
-              '<span>Apple</span>' +
+          '<div class="primary-actions">' +
+            '<a href="#" class="btn btn-primary calendar-link" data-platform="apple" title="Apple Kalender">' +
+              '<i data-lucide="apple" style="width:16px;height:16px;"></i> Apple' +
             '</a>' +
-            '<button class="calendar-btn calendar-btn-google calendar-link" data-platform="google" title="Google Calendar">' +
-              '<i data-lucide="calendar"></i>' +
-              '<span>Google</span>' +
-            '</button>' +
-            '<button class="calendar-btn calendar-btn-outlook calendar-link" data-platform="outlook" title="Outlook">' +
-              '<i data-lucide="mail"></i>' +
-              '<span>Outlook</span>' +
-            '</button>' +
-            '<button class="share-btn calendar-link" data-platform="share">' +
-              '<i data-lucide="share-2"></i>' +
-              '<span>Teilen</span>' +
+            '<button class="btn btn-outline calendar-link" data-platform="google" title="Google Calendar">' +
+              '<i data-lucide="calendar" style="width:16px;height:16px;"></i> Google' +
             '</button>' +
           '</div>' +
-          '<div class="link-row" style="margin-top:0.5rem;">' +
-            '<button class="btn btn-copy copy-btn" data-copy="">' +
-              '<i data-lucide="copy" style="width:14px;height:14px;"></i> Link kopieren' +
+          '<div class="more-options-wrapper">' +
+            '<button class="more-options-btn">' +
+              '<i data-lucide="more-horizontal"></i> Mehr Optionen' +
             '</button>' +
-            '<a href="#" class="btn-download download-file-btn" download>' +
-              '<i data-lucide="download" style="width:14px;height:14px;"></i> Herunterladen' +
-            '</a>' +
+            '<div class="more-options-dropdown">' +
+              '<button class="more-option-item calendar-link" data-platform="outlook">' +
+                '<i data-lucide="mail"></i> Outlook' +
+              '</button>' +
+              '<button class="more-option-item calendar-link" data-platform="share">' +
+                '<i data-lucide="share-2"></i> Teilen' +
+              '</button>' +
+              '<button class="more-option-item qr-btn">' +
+                '<i data-lucide="qr-code"></i> QR-Code anzeigen' +
+              '</button>' +
+              '<button class="more-option-item download-file-btn" download>' +
+                '<i data-lucide="download"></i> .ics Datei herunterladen' +
+              '</button>' +
+              '<button class="more-option-item copy-btn">' +
+                '<i data-lucide="copy"></i> Link kopieren' +
+              '</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>';
     }).join('')}
   </div>
-
-  ${excelExists || pdfExists ? '<div class="download-section"><i data-lucide="download" style="width:40px;height:40px;color:var(--color-primary);margin-bottom:0.5rem;position:relative;"></i><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele aller Mannschaften chronologisch sortiert in einer Datei.</p><div class="download-buttons">' + (excelExists ? '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel-Datei</span><span class="download-btn-name">Gesamt-Spielplan.xlsx</span></div></a>' : '') + (pdfExists ? '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF-Datei</span><span class="download-btn-name">Gesamt-Spielplan.pdf</span></div></a>' : '') + '</div></div>' : ''}
 </main>
 
 <footer class="footer" id="main-footer" style="display:none;">
@@ -463,10 +476,30 @@ body {
   <i data-lucide="arrow-up"></i>
 </button>
 
-<div class="context-menu" id="context-menu">
-  <div class="context-menu-item" data-action="expand"><i data-lucide="chevron-down"></i><span>Aufklappen</span></div>
-  <div class="context-menu-item" data-action="favorite"><i data-lucide="heart"></i><span>Als Favorit markieren</span></div>
-  <div class="context-menu-item" data-action="copy-all"><i data-lucide="copy"></i><span>Link kopieren</span></div>
+<div class="qr-modal" id="qr-modal">
+  <div class="qr-modal-content">
+    <div class="qr-modal-title">QR-Code scannen</div>
+    <div class="qr-modal-subtitle">Öffne die Kamera-App deines Handys und scanne den Code</div>
+    <div class="qr-code-container" id="qr-code-container"></div>
+    <button class="qr-modal-close" id="qr-modal-close">Schließen</button>
+  </div>
+</div>
+
+<div class="my-calendar-modal" id="my-calendar-modal">
+  <div class="my-calendar-modal-content">
+    <div class="my-calendar-modal-title">Mein Kalender erstellen</div>
+    <div class="my-calendar-modal-subtitle">Wähle die Teams und den Kalender-Typ für deinen persönlichen Kalender</div>
+    <div class="team-checkbox-list" id="team-checkbox-list"></div>
+    <div class="calendar-type-selector">
+      <button class="calendar-type-btn active" data-type="all">Alle Spiele</button>
+      <button class="calendar-type-btn" data-type="home">Nur Heim</button>
+      <button class="calendar-type-btn" data-type="away">Nur Auswärts</button>
+    </div>
+    <div class="my-calendar-actions">
+      <button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button>
+      <button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast">
@@ -495,7 +528,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const grid = document.getElementById('teams-grid');
   const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-  let currentKeyboardIndex = -1;
 
   document.querySelectorAll('.team-card').forEach(card => {
     const teamId = card.getAttribute('data-team-id');
@@ -556,7 +588,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const pill = document.createElement('button');
       pill.className = 'quick-access-pill';
       pill.innerHTML = '<i data-lucide="basketball"></i> ' + teamName;
-      pill.addEventListener('click', () => {
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         card.classList.add('expanded');
         setTimeout(() => { document.querySelectorAll('.team-card').forEach(c => { if (c !== card) c.classList.remove('expanded'); }); }, 500);
@@ -565,53 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     lucide.createIcons();
   }
-
-  document.addEventListener('keydown', (e) => {
-    const cards = Array.from(grid.querySelectorAll('.team-card:not(.hidden)'));
-    if (cards.length === 0) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); currentKeyboardIndex = Math.min(currentKeyboardIndex + 1, cards.length - 1); updateKeyboardFocus(cards); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); currentKeyboardIndex = Math.max(currentKeyboardIndex - 1, 0); updateKeyboardFocus(cards); }
-    else if (e.key === 'Enter' && currentKeyboardIndex >= 0) { e.preventDefault(); cards[currentKeyboardIndex].classList.toggle('expanded'); cards[currentKeyboardIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    else if (e.key === 'f' && currentKeyboardIndex >= 0) { e.preventDefault(); cards[currentKeyboardIndex].querySelector('.favorite-btn').click(); }
-    else if (e.key === 'Escape') { document.querySelectorAll('.team-card').forEach(c => c.classList.remove('expanded', 'keyboard-focus')); currentKeyboardIndex = -1; }
-  });
-
-  function updateKeyboardFocus(cards) {
-    cards.forEach(c => c.classList.remove('keyboard-focus'));
-    if (currentKeyboardIndex >= 0 && currentKeyboardIndex < cards.length) {
-      cards[currentKeyboardIndex].classList.add('keyboard-focus');
-      cards[currentKeyboardIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }
-
-  const contextMenu = document.getElementById('context-menu');
-  let contextCard = null;
-  document.querySelectorAll('.team-card').forEach(card => {
-    card.addEventListener('contextmenu', (e) => {
-      e.preventDefault(); contextCard = card;
-      contextMenu.style.left = e.clientX + 'px'; contextMenu.style.top = e.clientY + 'px';
-      contextMenu.classList.add('active');
-      const isExpanded = card.classList.contains('expanded');
-      const isFavorite = card.classList.contains('favorite');
-      contextMenu.querySelector('[data-action="expand"] span').textContent = isExpanded ? 'Zuklappen' : 'Aufklappen';
-      contextMenu.querySelector('[data-action="favorite"] span').textContent = isFavorite ? 'Favorit entfernen' : 'Als Favorit markieren';
-      lucide.createIcons();
-    });
-  });
-  document.addEventListener('click', () => contextMenu.classList.remove('active'));
-  contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-      e.stopPropagation(); if (!contextCard) return;
-      const action = item.getAttribute('data-action');
-      if (action === 'expand') contextCard.classList.toggle('expanded');
-      else if (action === 'favorite') contextCard.querySelector('.favorite-btn').click();
-      else if (action === 'copy-all') {
-        const btn = contextCard.querySelector('.copy-btn');
-        if (btn) btn.click();
-      }
-      contextMenu.classList.remove('active');
-    });
-  });
 
   const scrollTopBtn = document.getElementById('scroll-top-btn');
   window.addEventListener('scroll', () => { scrollTopBtn.classList.toggle('active', window.scrollY > 300); });
@@ -664,26 +650,16 @@ document.addEventListener('DOMContentLoaded', () => {
         card.classList.add('hidden');
       }
     });
-
-    let emptyState = document.getElementById('empty-state');
-    if (visibleCount === 0 && query.length > 0) {
-      if (!emptyState) {
-        emptyState = document.createElement('div');
-        emptyState.id = 'empty-state';
-        emptyState.className = 'empty-state';
-        emptyState.innerHTML = '<i data-lucide="search-x" class="empty-state-icon"></i><div class="empty-state-title">Keine Teams gefunden</div><div class="empty-state-text">Versuche einen anderen Suchbegriff oder lösche die Suche.</div>';
-        grid.appendChild(emptyState);
-        lucide.createIcons();
-      }
-    } else if (emptyState) {
-      emptyState.remove();
-    }
   });
 
-  // TEAM-KARTE ÖFFNEN/SCHLIESSEN MIT RESET
-  document.querySelectorAll('.team-card-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const card = header.parentElement;
+  // TEAM-KARTE ÖFFNEN/SCHLIESSEN - KLICK AUF GESAMTE KARTE
+  document.querySelectorAll('.team-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      // Ignoriere Klicks auf Buttons, Links, Stats und Dropdown-Items
+      if (e.target.closest('button, a, .stat, .more-option-item, input, label')) {
+        return;
+      }
+      
       const isExpanded = card.classList.contains('expanded');
       
       document.querySelectorAll('.team-card').forEach(c => {
@@ -711,17 +687,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // KALENDER-TYP WECHSEL MIT HAPTISCHEM UND VISUELLEM FEEDBACK
   document.querySelectorAll('.stat').forEach(stat => {
     stat.addEventListener('click', (e) => {
       e.stopPropagation();
       const card = stat.closest('.team-card');
       const type = stat.getAttribute('data-type');
       
-      // Haptisches Feedback
-      if (navigator.vibrate) {
-        navigator.vibrate(30);
-      }
+      if (navigator.vibrate) navigator.vibrate(30);
       
       card.querySelectorAll('.stat').forEach(s => s.classList.remove('active'));
       stat.classList.add('active');
@@ -749,7 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const label = card.querySelector('.calendar-type-label');
     if (label) label.textContent = labels[type];
     
-    const appleLink = card.querySelector('.calendar-btn-apple');
+    const appleLink = card.querySelector('.calendar-link[data-platform="apple"]');
     if (appleLink) appleLink.href = webcalUrl;
     
     card.querySelectorAll('.calendar-link').forEach(link => {
@@ -762,8 +734,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadBtn = card.querySelector('.download-file-btn');
     if (downloadBtn) downloadBtn.href = url;
     
-    // VISUELLES FEEDBACK: Alle Buttons kurz aufleuchten lassen
-    const buttonsToFlash = card.querySelectorAll('.calendar-btn, .share-btn, .btn-copy, .btn-download');
+    const qrBtn = card.querySelector('.qr-btn');
+    if (qrBtn) qrBtn.setAttribute('data-url', webcalUrl);
+    
+    const buttonsToFlash = card.querySelectorAll('.btn, .more-option-item');
     buttonsToFlash.forEach(btn => {
       btn.classList.remove('flash');
       void btn.offsetWidth;
@@ -775,8 +749,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 400);
   }
 
+  document.querySelectorAll('.more-options-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = btn.nextElementSibling;
+      document.querySelectorAll('.more-options-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('active');
+      });
+      dropdown.classList.toggle('active');
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.more-options-dropdown').forEach(d => d.classList.remove('active'));
+  });
+
   document.querySelectorAll('.copy-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
       const icon = btn.querySelector('i');
       const originalIcon = icon.getAttribute('data-lucide');
       
@@ -794,14 +784,12 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.style.animation = '';
         lucide.createIcons();
         
-        const toast = document.getElementById('toast');
-        toast.classList.add('active');
+        showToast('Link kopiert!');
         
         setTimeout(() => {
           btn.classList.remove('success');
           icon.setAttribute('data-lucide', originalIcon);
           lucide.createIcons();
-          toast.classList.remove('active');
         }, 1500);
       } catch (err) {
         console.error('Kopieren fehlgeschlagen', err);
@@ -813,50 +801,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // KALENDER-BUTTONS MIT GOOGLE CALENDAR APP LINK
+  // KALENDER-BUTTONS MIT GOOGLE CALENDAR FIX
   document.querySelectorAll('.calendar-link').forEach(btn => {
     btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const platform = btn.getAttribute('data-platform');
       const url = btn.getAttribute('data-url');
       
       if (!url) return;
       
+      document.querySelectorAll('.more-options-dropdown').forEach(d => d.classList.remove('active'));
+      
       if (platform === 'apple') {
-        return;
+        window.location.href = url.replace('https://', 'webcal://');
       } else if (platform === 'google') {
-        e.preventDefault();
-        
+        // GOOGLE CALENDAR FIX: Link kopieren und Web-Seite öffnen
         try {
           await navigator.clipboard.writeText(url);
         } catch (err) {
           console.error('Kopieren fehlgeschlagen', err);
         }
         
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-        
-        if (isIOS) {
-          window.location.href = 'googlecalendar://';
-          setTimeout(() => {
-            window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
-            showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-          }, 1500);
-        } else if (isAndroid) {
-          const startTime = Date.now();
-          window.location.href = 'intent://calendar.google.com/calendar/u/0/r/settings/addbyurl#Intent;scheme=https;package=com.google.android.calendar;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.google.android.calendar;end';
-          
-          setTimeout(() => {
-            if (Date.now() - startTime < 2500) {
-              window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
-              showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-            }
-          }, 2000);
-        } else {
-          window.open('https://calendar.google.com/calendar/u/0/r/settings/addbyurl', '_blank');
-          showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
-        }
+        // Immer den Browser öffnen - funktioniert zuverlässig
+        window.open('https://calendar.google.com/calendar/r/settings/addbyurl', '_blank');
+        showToast('Link kopiert! Füge ihn bei Google Calendar ein.');
       } else if (platform === 'outlook') {
-        e.preventDefault();
         try {
           await navigator.clipboard.writeText(url);
           window.open('https://outlook.live.com/calendar/0/addfromweb', '_blank');
@@ -866,7 +836,6 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('Kopiere den Link und füge ihn bei Outlook ein.');
         }
       } else if (platform === 'share') {
-        e.preventDefault();
         const teamName = btn.closest('.team-card').querySelector('.team-name').textContent;
         const type = btn.closest('.team-card').querySelector('.stat.active').getAttribute('data-type');
         const typeLabels = { all: 'alle Spiele', home: 'Heimspiele', away: 'Auswärtsspiele' };
@@ -895,23 +864,116 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  document.querySelectorAll('.qr-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const url = btn.getAttribute('data-url');
+      const qrModal = document.getElementById('qr-modal');
+      const qrContainer = document.getElementById('qr-code-container');
+      
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, {
+        text: url,
+        width: 256,
+        height: 256,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      
+      qrModal.classList.add('active');
+      document.querySelectorAll('.more-options-dropdown').forEach(d => d.classList.remove('active'));
+    });
+  });
+
+  document.getElementById('qr-modal-close').addEventListener('click', () => {
+    document.getElementById('qr-modal').classList.remove('active');
+  });
+
+  document.getElementById('qr-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'qr-modal') {
+      document.getElementById('qr-modal').classList.remove('active');
+    }
+  });
+
+  const myCalendarBtn = document.getElementById('my-calendar-btn');
+  const myCalendarModal = document.getElementById('my-calendar-modal');
+  const teamCheckboxList = document.getElementById('team-checkbox-list');
+  let selectedCalendarType = 'all';
+
+  myCalendarBtn.addEventListener('click', () => {
+    teamCheckboxList.innerHTML = '';
+    const favs = JSON.parse(localStorage.getItem('favorites') || '[]');
+    
+    if (favs.length === 0) {
+      showToast('Bitte erstelle zuerst Favoriten!');
+      return;
+    }
+    
+    favs.forEach(teamId => {
+      const card = grid.querySelector('[data-team-id="' + teamId + '"]');
+      if (!card) return;
+      const teamName = card.querySelector('.team-name').textContent;
+      
+      const item = document.createElement('div');
+      item.className = 'team-checkbox-item';
+      item.innerHTML = '<input type="checkbox" id="team-' + teamId + '" value="' + teamId + '" checked><label for="team-' + teamId + '">' + teamName + '</label>';
+      teamCheckboxList.appendChild(item);
+    });
+    
+    myCalendarModal.classList.add('active');
+  });
+
+  document.querySelectorAll('.calendar-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.calendar-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedCalendarType = btn.getAttribute('data-type');
+    });
+  });
+
+  document.getElementById('my-calendar-cancel').addEventListener('click', () => {
+    myCalendarModal.classList.remove('active');
+  });
+
+  document.getElementById('my-calendar-create').addEventListener('click', () => {
+    const selectedTeams = Array.from(teamCheckboxList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+    
+    if (selectedTeams.length === 0) {
+      showToast('Bitte wähle mindestens ein Team aus!');
+      return;
+    }
+    
+    const customId = 'custom_' + selectedTeams.join('_') + '_' + selectedCalendarType;
+    const customUrl = makeWebcalLink(customId + '.ics');
+    
+    showToast('Mein Kalender wird erstellt...');
+    myCalendarModal.classList.remove('active');
+    
+    setTimeout(() => {
+      window.location.href = customUrl.replace('https://', 'webcal://');
+    }, 1000);
+  });
+
+  myCalendarModal.addEventListener('click', (e) => {
+    if (e.target.id === 'my-calendar-modal') {
+      myCalendarModal.classList.remove('active');
+    }
+  });
+
   function showToast(message) {
     const toast = document.getElementById('toast');
     document.getElementById('toast-text').textContent = message;
     toast.classList.add('active');
     setTimeout(() => toast.classList.remove('active'), 3000);
   }
-
-  document.getElementById('inst-toggle').addEventListener('click', () => { document.getElementById('inst-toggle').classList.toggle('active'); document.getElementById('inst-content').classList.toggle('active'); });
-
-  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
 });
 </script>
 </body>
 </html>`;
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit visuellem Feedback, Reset, Google Calendar Fix & Download-Button generiert.');
+  console.log('✅ index.html mit klickbarer Team-Karte & Google Calendar Fix generiert.');
 
   const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht für alle Teams", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
   fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
