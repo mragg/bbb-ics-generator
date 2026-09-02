@@ -37,7 +37,9 @@ jobs:
       - name: Generate ICS files
         run: npm run update
 
-      # NEU: Export-Dateien generieren (Excel & PDF)
+      - name: Generate Combined Calendar
+        run: node src/generateCustomCalendar.js
+  
       - name: Generate Master Export (Excel & PDF)
         run: npm run generate-export
         
