@@ -1,4 +1,4 @@
-// complete generator script — final version mit Herz-Fill & weißem Alle-Teams-Button
+// complete generator script — final version mit optimiertem Google Calendar Web-Flow
 const fs = require('fs');
 const path = require('path');
 
@@ -133,7 +133,6 @@ function genHTML() {
 '.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }\n' +
 '.download-btn-excel:hover { background: #217346; color: white; }\n' +
 '.download-btn-pdf:hover { background: #D32F2F; color: white; }\n' +
-/* ÄNDERUNG 2: Weißer Hintergrund für Alle Teams Button */
 '.download-btn-allteams { background: white; color: var(--color-text); }\n' +
 '.download-btn-allteams:hover { background: #F1F5F9; }\n' +
 '[data-theme="dark"] .download-btn-allteams { background: #334155; color: white; }\n' +
@@ -168,7 +167,6 @@ function genHTML() {
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
 '[data-theme="dark"] .favorite-btn { background: rgba(30,41,59,0.9); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); }\n' +
-/* ÄNDERUNG 1: Herz-Icon mit sauberem Umriss und goldener Füllung */
 '.favorite-btn i { color: var(--color-text-muted); fill: transparent; transition: color 0.3s ease, fill 0.3s ease, transform 0.3s ease; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
@@ -544,14 +542,36 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // Calendar buttons
+  // Calendar buttons (OPTIMIERT FÜR GOOGLE CALENDAR WEB)
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", async (e) => { e.preventDefault(); e.stopPropagation(); const p = btn.getAttribute("data-platform"); const url = btn.getAttribute("data-url"); if (!url) return;\n';
+  content += '    btn.addEventListener("click", async (e) => { \n';
+  content += '      e.preventDefault(); \n';
+  content += '      e.stopPropagation(); \n';
+  content += '      const p = btn.getAttribute("data-platform"); \n';
+  content += '      const url = btn.getAttribute("data-url"); \n';
+  content += '      if (!url) return;\n';
   content += '      closeAllDropdowns();\n';
-  content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
-  content += '      else if (p === "google") { try { await navigator.clipboard.writeText(url); } catch(err) {} window.open("https://calendar.google.com/calendar/r/settings/addbyurl","_blank"); showToast("Link kopiert! Füge ihn bei Google Calendar ein."); }\n';
-  content += '      else if (p === "outlook") { try { await navigator.clipboard.writeText(url); window.open("https://outlook.live.com/calendar/0/addfromweb","_blank"); showToast("Link kopiert! Füge ihn bei Outlook ein."); } catch(err) { window.open("https://outlook.live.com/calendar/0/addfromweb","_blank"); } }\n';
-  content += '      else if (p === "share") { const tn = btn.closest(".team-card").querySelector(".team-name").textContent; if (navigator.share) { try { await navigator.share({ title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url }); } catch(err) {} } else { try { await navigator.clipboard.writeText(url); showToast("Link kopiert!"); } catch(err) {} } }\n';
+  content += '      \n';
+  content += '      if (p === "apple") { \n';
+  content += '        window.location.href = url.replace("https://","webcal://"); \n';
+  content += '      } else if (p === "google") { \n';
+  content += '        // Zuerst Link kopieren, da die App das Einfügen oft blockiert\n';
+  content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
+  content += '        // Öffne die Web-Version von Google Calendar\n';
+  content += '        window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");\n';
+  content += '        showToast("Link kopiert! Bitte in der Google Calendar Website einfügen.");\n';
+  content += '      } else if (p === "outlook") { \n';
+  content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
+  content += '        window.open("https://outlook.live.com/calendar/0/addfromweb", "_blank"); \n';
+  content += '        showToast("Link kopiert! Füge ihn bei Outlook ein."); \n';
+  content += '      } else if (p === "share") { \n';
+  content += '        const tn = btn.closest(".team-card").querySelector(".team-name").textContent; \n';
+  content += '        if (navigator.share) { \n';
+  content += '          try { await navigator.share({ title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url }); } catch(err) {} \n';
+  content += '        } else { \n';
+  content += '          try { await navigator.clipboard.writeText(url); showToast("Link kopiert!"); } catch(err) {} \n';
+  content += '        } \n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
