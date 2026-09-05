@@ -1,4 +1,4 @@
-// complete generator script — final version mit optimiertem Google Calendar Web-Flow
+// complete generator script — optimiert für WordPress iFrame
 const fs = require('fs');
 const path = require('path');
 
@@ -59,16 +59,6 @@ function genHTML() {
 '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n' +
 '<title>TV Neunkirchen Baskets – Kalender</title>\n' +
 '<meta name="theme-color" content="#FF6B00">\n' +
-'<meta name="apple-mobile-web-app-capable" content="yes">\n' +
-'<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
-'<meta name="apple-mobile-web-app-title" content="TVN Baskets">\n' +
-'<link rel="manifest" href="manifest.json">\n' +
-'<link rel="apple-touch-icon" href="Logo.png">\n' +
-'<meta property="og:title" content="TV Neunkirchen Baskets – Kalender">\n' +
-'<meta property="og:description" content="Offizielle, immer aktuelle Spielpläne für alle Teams.">\n' +
-'<meta property="og:image" content="https://mragg.github.io/bbb-ics-generator/Logo.png">\n' +
-'<meta property="og:url" content="https://mragg.github.io/bbb-ics-generator/">\n' +
-'<meta property="og:type" content="website">\n' +
 '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
 '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
 '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">\n' +
@@ -95,16 +85,8 @@ function genHTML() {
 '.skeleton { background: linear-gradient(90deg, var(--color-border) 25%, var(--color-surface) 50%, var(--color-border) 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: var(--radius-md); }\n' +
 '@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }\n' +
 '.skeleton-card { height: 180px; margin-bottom: 1.5rem; }\n' +
-'.header { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white; padding: 2rem 1.5rem; position: relative; overflow: hidden; }\n' +
-'.header-inner { max-width: 1024px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }\n' +
-'.logo { height: 80px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }\n' +
-'.header-text { flex: 1; }\n' +
-'.header-text h1 { font-family: "Oswald", sans-serif; font-size: 2.25rem; font-weight: 700; text-transform: uppercase; }\n' +
-'.header-text p { color: #94A3B8; margin-top: 0.5rem; font-size: 0.95rem; }\n' +
-'.theme-toggle { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.6rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }\n' +
-'.theme-toggle:hover { background: rgba(255,255,255,0.2); }\n' +
-'.container { max-width: 1024px; margin: 0 auto; padding: 2rem 1.5rem; }\n' +
-'.quick-access { position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0.75rem 1.5rem; box-shadow: var(--shadow-sm); display: none; margin-bottom: 2rem; animation: slideDown 0.3s ease; }\n' +
+'.container { max-width: 1024px; margin: 0 auto; padding: 1rem; }\n' +
+'.quick-access { position: sticky; top: 0; z-index: 100; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0.75rem 1rem; box-shadow: var(--shadow-sm); display: none; margin-bottom: 1.5rem; animation: slideDown 0.3s ease; border-radius: var(--radius-md); }\n' +
 '.quick-access.active { display: block; }\n' +
 '@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }\n' +
 '.quick-access-inner { max-width: 1024px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }\n' +
@@ -121,15 +103,14 @@ function genHTML() {
 '.pill-text { display: flex; flex-direction: column; gap: 0.125rem; }\n' +
 '.pill-name { font-weight: 700; line-height: 1.2; }\n' +
 '.pill-age { font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500; }\n' +
-'.my-calendar-btn { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; }\n' +
+'.my-calendar-btn { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 99px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; margin-left: auto; }\n' +
 '.my-calendar-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }\n' +
 '.my-calendar-btn i { width: 14px; height: 14px; }\n' +
-'.download-section { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); border-radius: var(--radius-lg); padding: 2rem; text-align: center; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(255,107,0,0.2); }\n' +
-'.download-section::before { content: ""; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%; }\n' +
-'.download-section h2 { font-family: "Oswald", sans-serif; font-size: 1.75rem; color: white; margin-bottom: 0.5rem; position: relative; }\n' +
-'.download-section p { color: rgba(255,255,255,0.9); max-width: 500px; margin: 0 auto 1.5rem; position: relative; font-size: 1rem; }\n' +
-'.download-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }\n' +
-'.download-btn { display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 1.75rem; border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; background: white; color: var(--color-text); }\n' +
+'.download-section { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(255,107,0,0.2); }\n' +
+'.download-section h2 { font-family: "Oswald", sans-serif; font-size: 1.5rem; color: white; margin-bottom: 0.5rem; position: relative; }\n' +
+'.download-section p { color: rgba(255,255,255,0.9); max-width: 500px; margin: 0 auto 1rem; position: relative; font-size: 0.9rem; }\n' +
+'.download-buttons { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; position: relative; }\n' +
+'.download-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; background: white; color: var(--color-text); }\n' +
 '.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }\n' +
 '.download-btn-excel:hover { background: #217346; color: white; }\n' +
 '.download-btn-pdf:hover { background: #D32F2F; color: white; }\n' +
@@ -137,25 +118,24 @@ function genHTML() {
 '.download-btn-allteams:hover { background: #F1F5F9; }\n' +
 '[data-theme="dark"] .download-btn-allteams { background: #334155; color: white; }\n' +
 '[data-theme="dark"] .download-btn-allteams:hover { background: #475569; }\n' +
-'.download-btn i { width: 24px; height: 24px; }\n' +
+'.download-btn i { width: 20px; height: 20px; }\n' +
 '.download-btn-text { text-align: left; }\n' +
-'.download-btn-label { font-size: 0.75rem; opacity: 0.7; display: block; }\n' +
-'.download-btn-name { font-size: 1rem; font-weight: 700; display: block; }\n' +
+'.download-btn-label { font-size: 0.7rem; opacity: 0.7; display: block; }\n' +
+'.download-btn-name { font-size: 0.9rem; font-weight: 700; display: block; }\n' +
 '[data-theme="dark"] .download-btn { background: #334155; color: white; }\n' +
 '[data-theme="dark"] .download-btn:hover { background: #475569; }\n' +
 '[data-theme="dark"] .download-btn-excel:hover { background: #217346; }\n' +
 '[data-theme="dark"] .download-btn-pdf:hover { background: #D32F2F; }\n' +
-'.search-wrapper { margin-bottom: 2rem; position: relative; }\n' +
-'.search-input { width: 100%; padding: 0.875rem 1rem 0.875rem 3rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }\n' +
+'.search-wrapper { margin-bottom: 1.5rem; position: relative; }\n' +
+'.search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.15); }\n' +
-'.search-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }\n' +
-'.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }\n' +
-'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 100px; z-index: 1; }\n' +
+'.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
+'.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem; }\n' +
+'.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; }\n' +
 '.team-card.expanded { z-index: 50; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }\n' +
-'.team-card.keyboard-focus { outline: 3px solid var(--color-primary); outline-offset: 2px; }\n' +
 '.team-card.age-blue { border-left: 4px solid var(--color-blue); }\n' +
 '.team-card.age-blue .team-badge { background: var(--color-blue); }\n' +
 '.team-card.age-green { border-left: 4px solid var(--color-green); }\n' +
@@ -164,43 +144,44 @@ function genHTML() {
 '.team-card.age-purple .team-badge { background: var(--color-purple); }\n' +
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.team-card.age-orange .team-badge { background: var(--color-primary); }\n' +
-'.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
+'.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n' +
 '[data-theme="dark"] .favorite-btn { background: rgba(30,41,59,0.9); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); }\n' +
-'.favorite-btn i { color: var(--color-text-muted); fill: transparent; transition: color 0.3s ease, fill 0.3s ease, transform 0.3s ease; }\n' +
+'.favorite-btn i { color: var(--color-text-muted); fill: transparent; transition: color 0.3s ease, fill 0.3s ease, transform 0.3s ease; width: 18px; height: 18px; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
-'.team-card-header { padding: 1.25rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3.5rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }\n' +
+'.team-card-header { padding: 1rem; background: linear-gradient(to right, #FFF7ED, #FFFFFF); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; padding-right: 3rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }\n' +
 '[data-theme="dark"] .team-card-header { background: linear-gradient(to right, #1E293B, #334155); }\n' +
-'.team-name { font-family: "Oswald", sans-serif; font-size: 1.25rem; font-weight: 600; }\n' +
-'.team-badge { color: white; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 99px; }\n' +
-'.team-stats { display: flex; justify-content: space-around; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-border); background: #FAFAFA; }\n' +
+'.team-name { font-family: "Oswald", sans-serif; font-size: 1.15rem; font-weight: 600; }\n' +
+'.team-badge { color: white; font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 99px; }\n' +
+'.team-stats { display: flex; justify-content: space-around; padding: 0.75rem 1rem; border-bottom: 1px solid var(--color-border); background: #FAFAFA; }\n' +
 '[data-theme="dark"] .team-stats { background: #0F172A; }\n' +
-'.stat { text-align: center; transition: var(--transition); cursor: pointer; padding: 0.5rem; border-radius: var(--radius-sm); }\n' +
+'.stat { text-align: center; transition: var(--transition); cursor: pointer; padding: 0.4rem; border-radius: var(--radius-sm); }\n' +
 '.stat:hover { background: rgba(255,107,0,0.1); }\n' +
 '.stat.active { background: rgba(255,107,0,0.15); }\n' +
-'.stat-val { font-family: "Oswald", sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }\n' +
-'.stat-label { font-size: 0.75rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px; transition: var(--transition); }\n' +
+'.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }\n' +
+'.stat-label { font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; }\n' +
-'.team-card.expanded .team-actions { opacity: 1; max-height: 700px; pointer-events: auto; }\n' +
-'.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
+'.team-actions { padding: 1rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; overflow: hidden; }\n' +
+'.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
+'.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
 '.btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }\n' +
 '.btn-outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }\n' +
 '.btn-outline:hover { background: var(--color-surface); }\n' +
-'.primary-actions { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }\n' +
+'.primary-actions { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }\n' +
 '.primary-actions .btn { flex: 1; }\n' +
 '.more-options-wrapper { position: relative; }\n' +
-'.more-options-btn { background: #F1F5F9; color: var(--color-text); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; width: 100%; }\n' +
+'.more-options-btn { background: #F1F5F9; color: var(--color-text); padding: 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; }\n' +
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: fixed; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; }\n' +
+/* FIX: Dropdown ist jetzt absolut zum Wrapper positioniert, nicht fixed zum Window. Das ist in iFrames viel stabiler! */
+'.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
-'.more-option-item { padding: 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
+'.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: var(--color-text); text-align: left; width: 100%; }\n' +
 '.more-option-item:hover { background: var(--color-bg); }\n' +
 '.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
 '.btn-copy { background: #F1F5F9; color: var(--color-text); font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; }\n' +
@@ -210,65 +191,43 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,107,0,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
-'.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.875rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }\n' +
+'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 10000; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-'#konfetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }\n' +
-'.scroll-top-btn { position: fixed; bottom: 2rem; right: 2rem; width: 48px; height: 48px; background: var(--color-primary); color: white; border: none; border-radius: 50%; cursor: pointer; box-shadow: var(--shadow-lg); z-index: 90; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: var(--transition); }\n' +
-'.scroll-top-btn.active { opacity: 1; visibility: visible; }\n' +
-'.scroll-top-btn:hover { background: var(--color-primary-hover); transform: translateY(-4px); }\n' +
-'.scroll-top-btn i { width: 24px; height: 24px; }\n' +
-'.qr-modal, .my-calendar-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
+'.qr-modal, .my-calendar-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
 '.qr-modal.active, .my-calendar-modal.active { display: flex; }\n' +
-'.qr-modal-content, .my-calendar-modal-content { background: var(--color-surface); border-radius: var(--radius-lg); padding: 2rem; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }\n' +
+'.qr-modal-content, .my-calendar-modal-content { background: var(--color-surface); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }\n' +
 '.my-calendar-modal-content { max-height: 90vh; overflow-y: auto; text-align: left; }\n' +
-'.modal-title { font-family: "Oswald", sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; text-align: center; }\n' +
-'.modal-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; text-align: center; }\n' +
-'.qr-code-container { background: white; padding: 1.5rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1.5rem; }\n' +
-'.team-checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }\n' +
-'.team-checkbox-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }\n' +
+'.modal-title { font-family: "Oswald", sans-serif; font-size: 1.25rem; margin-bottom: 0.5rem; text-align: center; }\n' +
+'.modal-subtitle { color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }\n' +
+'.qr-code-container { background: white; padding: 1rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1rem; }\n' +
+'.team-checkbox-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }\n' +
+'.team-checkbox-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }\n' +
 '.team-checkbox-item:hover { background: var(--color-bg); }\n' +
-'.team-checkbox-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-primary); }\n' +
-'.team-checkbox-item label { flex: 1; cursor: pointer; font-weight: 500; }\n' +
-'.calendar-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }\n' +
-'.calendar-type-btn { flex: 1; padding: 0.75rem; border: 2px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); cursor: pointer; transition: var(--transition); font-weight: 600; text-align: center; color: var(--color-text); }\n' +
+'.team-checkbox-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--color-primary); }\n' +
+'.team-checkbox-item label { flex: 1; cursor: pointer; font-weight: 500; font-size: 0.9rem; }\n' +
+'.calendar-type-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; }\n' +
+'.calendar-type-btn { flex: 1; padding: 0.65rem; border: 2px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); cursor: pointer; transition: var(--transition); font-weight: 600; text-align: center; color: var(--color-text); font-size: 0.85rem; }\n' +
 '.calendar-type-btn.active { border-color: var(--color-primary); background: rgba(255,107,0,0.1); color: var(--color-primary); }\n' +
 '.modal-actions { display: flex; gap: 0.75rem; }\n' +
 '.modal-actions .btn { flex: 1; }\n' +
-'.modal-close-btn { background: var(--color-primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; width: 100%; }\n' +
+'.modal-close-btn { background: var(--color-primary); color: white; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; width: 100%; font-size: 0.9rem; }\n' +
 '.modal-close-btn:hover { background: var(--color-primary-hover); }\n' +
-'.footer { text-align: center; padding: 2rem 1.5rem; color: var(--color-text-muted); font-size: 0.875rem; border-top: 1px solid var(--color-border); }\n' +
-'.footer a { color: var(--color-primary); text-decoration: none; font-weight: 600; }\n' +
 '@media (max-width: 640px) {\n' +
-'  .header-inner { flex-direction: column; text-align: center; }\n' +
-'  .logo { height: 60px; }\n' +
 '  .teams-grid { grid-template-columns: 1fr; }\n' +
 '  .quick-access-inner { justify-content: center; }\n' +
-'  .scroll-top-btn { bottom: 1rem; right: 1rem; width: 44px; height: 44px; }\n' +
 '  .download-buttons { flex-direction: column; align-items: stretch; }\n' +
 '  .download-btn { justify-content: center; }\n' +
-'  .favorite-btn { width: 44px; height: 44px; }\n' +
 '  .primary-actions { flex-direction: column; }\n' +
 '  .calendar-type-selector { flex-direction: column; }\n' +
-'  .team-card { scroll-margin-top: 140px; }\n' +
+'  .team-card { scroll-margin-top: 120px; }\n' +
 '}\n' +
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
 '<div id="skeleton-loader"><div class="container"><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div></div></div>\n' +
-'<canvas id="konfetti-canvas"></canvas>\n' +
-'<header class="header" id="main-header" style="display:none;">\n' +
-'  <div class="header-inner">\n' +
-'    <img src="Logo.png" class="logo" alt="TVN Logo">\n' +
-'    <div class="header-text">\n' +
-'      <h1>TV Neunkirchen Baskets</h1>\n' +
-'      <p>Kalenderübersicht • Stand: ' + new Date().toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr</p>\n' +
-'    </div>\n' +
-'    <button class="theme-toggle" id="theme-toggle" aria-label="Theme wechseln"><i data-lucide="moon" id="theme-icon" style="width:20px;height:20px;"></i></button>\n' +
-'  </div>\n' +
-'</header>\n' +
 '<div class="quick-access" id="quick-access">\n' +
 '  <div class="quick-access-inner">\n' +
-'    <span class="quick-access-label">⭐ Deine Favoriten:</span>\n' +
+'    <span class="quick-access-label">⭐ Favoriten:</span>\n' +
 '    <div id="quick-access-pills"></div>\n' +
 '    <button class="my-calendar-btn" id="my-calendar-btn"><i data-lucide="calendar-plus"></i><span>Mein Kalender</span></button>\n' +
 '  </div>\n' +
@@ -287,16 +246,16 @@ function genHTML() {
     if (pdfExists) {
       dlButtons += '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF</span><span class="download-btn-name">Spielplan.pdf</span></div></a>';
     }
-    content += '<div class="download-section"><i data-lucide="download" style="width:48px;height:48px;color:white;margin-bottom:1rem;position:relative;"></i><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
+    content += '<div class="download-section"><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
   }
 
-  content += '<div class="search-wrapper"><i data-lucide="search" class="search-icon" style="width:20px;height:20px;"></i><input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)..."></div>\n';
+  content += '<div class="search-wrapper"><i data-lucide="search" class="search-icon"></i><input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)..."></div>\n';
   content += '<div class="teams-grid" id="teams-grid">\n';
 
   teams.forEach((t, index) => {
     const ageColor = getAgeGroupColor(t.name);
     content += '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
-      '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart" style="width:20px;height:20px;"></i></button>' +
+      '<button class="favorite-btn" aria-label="Als Favorit markieren"><i data-lucide="heart"></i></button>' +
       '<div class="team-card-header"><span class="team-name">' + t.name + '</span>' + (t.ageGroup ? '<span class="team-badge">' + t.ageGroup + '</span>' : '') + '</div>' +
       '<div class="team-stats">' +
         '<div class="stat active" data-type="all"><div class="stat-val" data-target="' + t.matchCount + '">0</div><div class="stat-label"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Gesamt</div></div>' +
@@ -304,7 +263,7 @@ function genHTML() {
         '<div class="stat" data-type="away"><div class="stat-val" data-target="' + t.awayMatchCount + '">0</div><div class="stat-label"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> Auswärts</div></div>' +
       '</div>' +
       '<div class="team-actions">' +
-        '<div class="calendar-type-label" style="margin-bottom:0.5rem;font-weight:600;font-size:0.9rem;">Alle Spiele:</div>' +
+        '<div class="calendar-type-label" style="margin-bottom:0.5rem;font-weight:600;font-size:0.85rem;">Alle Spiele:</div>' +
         '<div class="primary-actions">' +
           '<a href="#" class="btn btn-primary calendar-link" data-platform="apple"><i data-lucide="apple" style="width:16px;height:16px;"></i> Apple</a>' +
           '<button class="btn btn-outline calendar-link" data-platform="google"><i data-lucide="calendar" style="width:16px;height:16px;"></i> Google</button>' +
@@ -324,8 +283,6 @@ function genHTML() {
   });
 
   content += '</div></main>\n';
-  content += '<footer class="footer" id="main-footer" style="display:none;"><p>© ' + new Date().getFullYear() + ' TV Neunkirchen Baskets. <a href="https://www.tvn-baskets.de/teams/">Zurück zur Hauptseite</a></p></footer>\n';
-  content += '<button class="scroll-top-btn" id="scroll-top-btn" aria-label="Nach oben scrollen"><i data-lucide="arrow-up"></i></button>\n';
 
   content += '<div class="qr-modal" id="qr-modal"><div class="qr-modal-content"><div class="modal-title">QR-Code scannen</div><div class="modal-subtitle">Öffne die Kamera-App und scanne den Code</div><div class="qr-code-container" id="qr-code-container"></div><button class="modal-close-btn" id="qr-modal-close">Schließen</button></div></div>\n';
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
@@ -336,13 +293,10 @@ function genHTML() {
   content += 'document.addEventListener("DOMContentLoaded", () => {\n';
   content += '  setTimeout(() => {\n';
   content += '    document.getElementById("skeleton-loader").style.display = "none";\n';
-  content += '    document.getElementById("main-header").style.display = "block";\n';
   content += '    document.getElementById("main-content").style.display = "block";\n';
-  content += '    document.getElementById("main-footer").style.display = "block";\n';
   content += '    lucide.createIcons();\n';
-  content += '    if (!localStorage.getItem("konfetti_shown")) { startKonfetti(); localStorage.setItem("konfetti_shown", "true"); }\n';
   content += '    document.querySelectorAll(".team-card").forEach(card => updateCardLinks(card, "all"));\n';
-  content += '  }, 400);\n\n';
+  content += '  }, 300);\n\n';
 
   content += '  const grid = document.getElementById("teams-grid");\n';
   content += '  const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");\n\n';
@@ -425,26 +379,6 @@ function genHTML() {
   content += '    lucide.createIcons();\n';
   content += '  }\n\n';
 
-  content += '  const stb = document.getElementById("scroll-top-btn");\n';
-  content += '  window.addEventListener("scroll", () => { stb.classList.toggle("active", window.scrollY > 300); closeAllDropdowns(); });\n';
-  content += '  stb.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));\n\n';
-
-  content += '  function startKonfetti() {\n';
-  content += '    const c = document.getElementById("konfetti-canvas"); const ctx = c.getContext("2d");\n';
-  content += '    c.width = window.innerWidth; c.height = window.innerHeight;\n';
-  content += '    const p = []; const cols = ["#FF6B00","#FFD700","#FFFFFF","#E55A00"];\n';
-  content += '    for (let i = 0; i < 150; i++) p.push({ x: Math.random()*c.width, y: Math.random()*c.height-c.height, vx: (Math.random()-0.5)*4, vy: Math.random()*3+2, s: Math.random()*8+4, c: cols[Math.floor(Math.random()*cols.length)], r: Math.random()*360, rs: (Math.random()-0.5)*10 });\n';
-  content += '    let f = 0;\n';
-  content += '    function a() { if (f >= 180) { c.style.display = "none"; return; } ctx.clearRect(0,0,c.width,c.height); p.forEach(x => { x.x+=x.vx; x.y+=x.vy; x.vy+=0.1; x.r+=x.rs; ctx.save(); ctx.translate(x.x,x.y); ctx.rotate(x.r*Math.PI/180); ctx.fillStyle=x.c; ctx.fillRect(-x.s/2,-x.s/2,x.s,x.s); ctx.restore(); }); f++; requestAnimationFrame(a); }\n';
-  content += '    a();\n';
-  content += '  }\n\n';
-
-  content += '  const tt = document.getElementById("theme-toggle"); const ti = document.getElementById("theme-icon");\n';
-  content += '  if (localStorage.getItem("theme") === "dark") { document.documentElement.setAttribute("data-theme","dark"); ti.setAttribute("data-lucide","sun"); lucide.createIcons(); }\n';
-  content += '  tt.addEventListener("click", () => { const n = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme",n); localStorage.setItem("theme",n); ti.setAttribute("data-lucide", n==="dark"?"sun":"moon"); lucide.createIcons(); });\n\n';
-
-  content += '  document.querySelectorAll(".stat-val").forEach(el => { const t = parseInt(el.getAttribute("data-target"),10); let c = 0; const inc = t/30; const timer = setInterval(() => { c+=inc; if (c>=t) { el.textContent=t; clearInterval(timer); } else el.textContent=Math.floor(c); }, 20); });\n\n';
-
   content += '  document.getElementById("team-search").addEventListener("input", (e) => { const q = e.target.value.toLowerCase(); document.querySelectorAll(".team-card").forEach(card => { card.classList.toggle("hidden", !card.getAttribute("data-team-name").includes(q)); }); });\n\n';
 
   // TEAM-KARTE KLICKBAR
@@ -493,7 +427,7 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // DROPDOWN
+  // DROPDOWN (Vereinfacht und stabil für iFrames)
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
   content += '  }\n\n';
@@ -504,16 +438,9 @@ function genHTML() {
   content += '      const dropdown = btn.nextElementSibling;\n';
   content += '      const isActive = dropdown.classList.contains("active");\n';
   content += '      closeAllDropdowns();\n';
-  content += '      if (isActive) return;\n';
-  content += '      const rect = btn.getBoundingClientRect();\n';
-  content += '      let top = rect.bottom + 8;\n';
-  content += '      let left = rect.left;\n';
-  content += '      let width = rect.width;\n';
-  content += '      if (top + 250 > window.innerHeight) top = rect.top - 250;\n';
-  content += '      dropdown.style.top = top + "px";\n';
-  content += '      dropdown.style.left = left + "px";\n';
-  content += '      dropdown.style.width = width + "px";\n';
-  content += '      dropdown.classList.add("active");\n';
+  content += '      if (!isActive) {\n';
+  content += '        dropdown.classList.add("active");\n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -542,7 +469,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // Calendar buttons (OPTIMIERT FÜR GOOGLE CALENDAR WEB)
+  // Calendar buttons
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
   content += '      e.preventDefault(); \n';
@@ -555,9 +482,7 @@ function genHTML() {
   content += '      if (p === "apple") { \n';
   content += '        window.location.href = url.replace("https://","webcal://"); \n';
   content += '      } else if (p === "google") { \n';
-  content += '        // Zuerst Link kopieren, da die App das Einfügen oft blockiert\n';
   content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
-  content += '        // Öffne die Web-Version von Google Calendar\n';
   content += '        window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");\n';
   content += '        showToast("Link kopiert! Bitte in der Google Calendar Website einfügen.");\n';
   content += '      } else if (p === "outlook") { \n';
@@ -589,7 +514,7 @@ function genHTML() {
 
   // QR Code
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); closeAllDropdowns(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 256, height: 256, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); });\n';
+  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); closeAllDropdowns(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); });\n';
   content += '  });\n';
   content += '  document.getElementById("qr-modal-close").addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
   content += '  document.getElementById("qr-modal").addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
@@ -647,22 +572,18 @@ function genHTML() {
   content += '      if (allEvents.length === 0) { showToast("Keine Spiele gefunden!"); return; }\n';
   content += '      const ics = "BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TVN Baskets//DE\\r\\nCALSCALE:GREGORIAN\\r\\nMETHOD:PUBLISH\\r\\nX-WR-CALNAME:Mein TVN Kalender\\r\\nX-WR-TIMEZONE:Europe/Berlin\\r\\n" + allEvents.join("\\r\\n") + "\\r\\nEND:VCALENDAR";\n';
   content += '      const blob = new Blob([ics], { type: "text/calendar" });\n';
-  content += '      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mein_tvn_kalender.ics"; a.click(); URL.revokeObjectURL(a.href);\n';
+  content += '      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mein_tvn_kalender.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);\n';
   content += '      showToast("Kalender heruntergeladen! Importiere ihn in deine Kalender-App.");\n';
   content += '    } catch(err) { console.error(err); showToast("Fehler beim Erstellen des Kalenders."); }\n';
   content += '  });\n\n';
 
   content += '  function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").textContent = msg; t.classList.add("active"); setTimeout(() => t.classList.remove("active"), 3000); }\n';
   content += '});\n';
-  content += '<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>\n</body>\n</html>';
+  // HIER WIRD DAS IFRAME-RESIZER SCRIPT EINGEFÜGT
+  content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html generiert.');
-
-  const manifest = { name: "TV Neunkirchen Baskets – Kalender", short_name: "TVN Baskets", description: "Offizielle Kalenderübersicht", start_url: "/", display: "standalone", background_color: "#F8FAFC", theme_color: "#FF6B00", icons: [{ src: "Logo.png", sizes: "192x192", type: "image/png" }, { src: "Logo.png", sizes: "512x512", type: "image/png" }] };
-  fs.writeFileSync(path.resolve(__dirname, '../generated/manifest.json'), JSON.stringify(manifest, null, 2), 'utf8');
-  const sw = "const C='v1';const U=['/','/index.html','/Logo.png','/manifest.json'];self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(U)))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});";
-  fs.writeFileSync(path.resolve(__dirname, '../generated/sw.js'), sw, 'utf8');
+  console.log('✅ index.html für WordPress iFrame optimiert generiert.');
 }
 
 genHTML();
