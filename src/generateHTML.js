@@ -1,4 +1,4 @@
-// complete generator script — narrensicher für WordPress iFrame optimiert
+// complete generator script — narrensicher für WordPress iFrame optimiert (FIXED)
 const fs = require('fs');
 const path = require('path');
 
@@ -233,7 +233,6 @@ function genHTML() {
 '</div>\n' +
 '<main class="container" id="main-content" style="display:none;">\n';
 
-  // Download-Sektion
   if (excelExists || pdfExists || allTeamsIcsExists) {
     let dlButtons = '';
     if (allTeamsIcsExists) {
@@ -251,7 +250,6 @@ function genHTML() {
   content += '<div class="search-wrapper"><i data-lucide="search" class="search-icon"></i><input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)..."></div>\n';
   content += '<div class="teams-grid" id="teams-grid">\n';
 
-  // SCHUTZ: Wenn keine Teams da sind, zeige eine Nachricht statt einer leeren Seite
   if (teams.length === 0) {
     content += '<p style="text-align:center; padding: 2rem; color: var(--color-text-muted); grid-column: 1 / -1;">⚠️ Keine Teams gefunden. Bitte stelle sicher, dass das Update-Skript erfolgreich durchgelaufen ist.</p>';
   }
@@ -286,8 +284,8 @@ function genHTML() {
     '</div>\n';
   });
 
-  content += '</div>\n'; // closes teams-grid
-  content += '</main>\n'; // closes main-content
+  content += '</div>\n';
+  content += '</main>\n';
 
   content += '<div class="qr-modal" id="qr-modal"><div class="qr-modal-content"><div class="modal-title">QR-Code scannen</div><div class="modal-subtitle">Öffne die Kamera-App und scanne den Code</div><div class="qr-code-container" id="qr-code-container"></div><button class="modal-close-btn" id="qr-modal-close">Schließen</button></div></div>\n';
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
@@ -300,30 +298,12 @@ function genHTML() {
   content += '    try {\n';
   content += '      const skeleton = document.getElementById("skeleton-loader");\n';
   content += '      if (skeleton) skeleton.style.display = "none";\n';
-  content += '\n';
   content += '      const mainContent = document.getElementById("main-content");\n';
-  content += '      if (mainContent) {\n';
-  content += '        mainContent.style.display = "block";\n';
-  content += '      } else {\n';
-  content += '        console.error("main-content Element nicht gefunden!");\n';
-  content += '      }\n';
-  content += '\n';
-  content += '      if (typeof lucide !== "undefined") {\n';
-  content += '        lucide.createIcons();\n';
-  content += '      } else {\n';
-  content += '        console.warn("Lucide Icons konnten nicht geladen werden.");\n';
-  content += '      }\n';
-  content += '\n';
-  content += '      document.querySelectorAll(".team-card").forEach(card => {\n';
-  content += '        try {\n';
-  content += '          updateCardLinks(card, "all");\n';
-  content += '        } catch (e) {\n';
-  content += '          console.error("Fehler in updateCardLinks:", e);\n';
-  content += '        }\n';
-  content += '      });\n';
+  content += '      if (mainContent) mainContent.style.display = "block";\n';
+  content += '      if (typeof lucide !== "undefined") lucide.createIcons();\n';
+  content += '      document.querySelectorAll(".team-card").forEach(card => { try { updateCardLinks(card, "all"); } catch (e) { console.error(e); } });\n';
   content += '    } catch (err) {\n';
-  content += '      console.error("Fataler Fehler beim Initialisieren:", err);\n';
-  content += '      // Stelle sicher, dass der Inhalt trotzdem angezeigt wird, falls ein Fehler auftritt\n';
+  content += '      console.error("Fataler Fehler:", err);\n';
   content += '      const mainContent = document.getElementById("main-content");\n';
   content += '      if (mainContent) mainContent.style.display = "block";\n';
   content += '      const skeleton = document.getElementById("skeleton-loader");\n';
@@ -332,7 +312,7 @@ function genHTML() {
   content += '  }, 300);\n\n';
 
   content += '  const grid = document.getElementById("teams-grid");\n';
-  content += '  if (!grid) return; // Sicherheits-Exit, falls Grid nicht existiert\n';
+  content += '  if (!grid) return;\n';
   content += '  const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");\n\n';
 
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
@@ -379,12 +359,8 @@ function genHTML() {
   content += '      btn.classList.toggle("active");\n';
   content += '      if (navigator.vibrate) navigator.vibrate(50);\n';
   content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
-  content += '      if (card.classList.contains("favorite")) { \n';
-  content += '        if (!f.includes(teamId)) f.push(teamId); \n';
-  content += '      } else { \n';
-  content += '        const i = f.indexOf(teamId); \n';
-  content += '        if (i > -1) f.splice(i, 1); \n';
-  content += '      }\n';
+  content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); } \n';
+  content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
   content += '      const fp = getFirstPositions();\n';
   content += '      sortCards();\n';
@@ -449,26 +425,17 @@ function genHTML() {
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
   content += '      const isExpanded = card.classList.contains("expanded");\n';
   content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
-  content += '        if (c !== card) { \n';
-  content += '          c.classList.remove("expanded"); \n';
-  content += '          resetCardToAll(c); \n';
-  content += '        } \n';
+  content += '        if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } \n';
   content += '      });\n';
   content += '      if (!isExpanded) card.classList.add("expanded"); \n';
-  content += '      else { \n';
-  content += '        card.classList.remove("expanded"); \n';
-  content += '        resetCardToAll(card); \n';
-  content += '      }\n';
+  content += '      else { card.classList.remove("expanded"); resetCardToAll(card); }\n';
   content += '    });\n';
   content += '  });\n\n';
 
   content += '  function resetCardToAll(card) {\n';
   content += '    card.querySelectorAll(".stat").forEach(s => s.classList.remove("active"));\n';
   content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); \n';
-  content += '    if (a) { \n';
-  content += '      a.classList.add("active"); \n';
-  content += '      updateCardLinks(card, "all"); \n';
-  content += '    }\n';
+  content += '    if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
@@ -477,10 +444,7 @@ function genHTML() {
   content += '      const card = stat.closest(".team-card");\n';
   content += '      const type = stat.getAttribute("data-type");\n';
   content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
-  content += '        if (c !== card) { \n';
-  content += '          c.classList.remove("expanded"); \n';
-  content += '          resetCardToAll(c); \n';
-  content += '        } \n';
+  content += '        if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } \n';
   content += '      });\n';
   content += '      card.classList.add("expanded");\n';
   content += '      card.scrollIntoView({ behavior: "smooth", block: "center" });\n';
@@ -492,13 +456,9 @@ function genHTML() {
   content += '  });\n\n';
 
   content += '  function updateCardLinks(card, type) {\n';
-  content += '    const urls = { \n';
-  content += '      all: card.getAttribute("data-all-url"), \n';
-  content += '      home: card.getAttribute("data-home-url"), \n';
-  content += '      away: card.getAttribute("data-away-url") \n';
-  content += '    };\n';
+  content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
   content += '    const url = urls[type]; \n';
-  content += '    if (!url) return; // Schutz vor undefined\n';
+  content += '    if (!url) return;\n';
   content += '    const webcalUrl = url.replace("https://", "webcal://");\n';
   content += '    const labels = { all: "Alle Spiele:", home: "Nur Heimspiele:", away: "Nur Auswärtsspiele:" };\n';
   content += '    const label = card.querySelector(".calendar-type-label"); \n';
@@ -513,9 +473,7 @@ function genHTML() {
   content += '    const qb = card.querySelector(".qr-btn"); \n';
   content += '    if (qb) qb.setAttribute("data-url", webcalUrl);\n';
   content += '    card.querySelectorAll(".btn, .more-option-item").forEach(b => { \n';
-  content += '      b.classList.remove("flash"); \n';
-  content += '      void b.offsetWidth; \n';
-  content += '      b.classList.add("flash"); \n';
+  content += '      b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); \n';
   content += '    });\n';
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
@@ -530,56 +488,32 @@ function genHTML() {
   content += '      const dropdown = btn.nextElementSibling;\n';
   content += '      const isActive = dropdown.classList.contains("active");\n';
   content += '      closeAllDropdowns();\n';
-  content += '      if (!isActive) {\n';
-  content += '        dropdown.classList.add("active");\n';
-  content += '      }\n';
+  content += '      if (!isActive) dropdown.classList.add("active");\n';
   content += '    });\n';
   content += '  });\n\n';
 
   content += '  document.addEventListener("click", (e) => {\n';
-  content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) {\n';
-  content += '      closeAllDropdowns();\n';
-  content += '    }\n';
+  content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) closeAllDropdowns();\n';
   content += '  });\n\n';
 
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
-  content += '      e.preventDefault(); \n';
-  content += '      e.stopPropagation();\n';
+  content += '      e.preventDefault(); e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("data-copy");\n';
   content += '      if (!url) { showToast("Kein Link verfügbar"); return; }\n';
   content += '      const icon = btn.querySelector("i"); \n';
   content += '      const orig = icon ? icon.getAttribute("data-lucide") : "copy";\n';
   content += '      btn.classList.add("loading");\n';
-  content += '      if (icon) { \n';
-  content += '        icon.setAttribute("data-lucide","loader-2"); \n';
-  content += '        icon.style.animation="spin 1s linear infinite"; \n';
-  content += '        if (typeof lucide !== "undefined") lucide.createIcons(); \n';
-  content += '      }\n';
+  content += '      if (icon) { icon.setAttribute("data-lucide","loader-2"); icon.style.animation="spin 1s linear infinite"; if (typeof lucide !== "undefined") lucide.createIcons(); }\n';
   content += '      try {\n';
   content += '        await navigator.clipboard.writeText(url);\n';
-  content += '        btn.classList.remove("loading"); \n';
-  content += '        btn.classList.add("success");\n';
-  content += '        if (icon) { \n';
-  content += '          icon.setAttribute("data-lucide","check"); \n';
-  content += '          icon.style.animation=""; \n';
-  content += '          if (typeof lucide !== "undefined") lucide.createIcons(); \n';
-  content += '        }\n';
+  content += '        btn.classList.remove("loading"); btn.classList.add("success");\n';
+  content += '        if (icon) { icon.setAttribute("data-lucide","check"); icon.style.animation=""; if (typeof lucide !== "undefined") lucide.createIcons(); }\n';
   content += '        showToast("Link kopiert!");\n';
-  content += '        setTimeout(() => { \n';
-  content += '          btn.classList.remove("success"); \n';
-  content += '          if (icon) { \n';
-  content += '            icon.setAttribute("data-lucide",orig); \n';
-  content += '            if (typeof lucide !== "undefined") lucide.createIcons(); \n';
-  content += '          } \n';
-  content += '        }, 1500);\n';
+  content += '        setTimeout(() => { btn.classList.remove("success"); if (icon) { icon.setAttribute("data-lucide",orig); if (typeof lucide !== "undefined") lucide.createIcons(); } }, 1500);\n';
   content += '      } catch(err) { \n';
   content += '        btn.classList.remove("loading"); \n';
-  content += '        if (icon) { \n';
-  content += '          icon.setAttribute("data-lucide",orig); \n';
-  content += '          icon.style.animation=""; \n';
-  content += '          if (typeof lucide !== "undefined") lucide.createIcons(); \n';
-  content += '        } \n';
+  content += '        if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; if (typeof lucide !== "undefined") lucide.createIcons(); } \n';
   content += '        showToast("Kopieren fehlgeschlagen"); \n';
   content += '      }\n';
   content += '    });\n';
@@ -587,16 +521,13 @@ function genHTML() {
 
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
-  content += '      e.preventDefault(); \n';
-  content += '      e.stopPropagation(); \n';
+  content += '      e.preventDefault(); e.stopPropagation(); \n';
   content += '      const p = btn.getAttribute("data-platform"); \n';
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      if (!url) return;\n';
   content += '      closeAllDropdowns();\n';
-  content += '      \n';
-  content += '      if (p === "apple") { \n';
-  content += '        window.location.href = url.replace("https://","webcal://"); \n';
-  content += '      } else if (p === "google") { \n';
+  content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
+  content += '      else if (p === "google") { \n';
   content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
   content += '        window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");\n';
   content += '        showToast("Link kopiert! Bitte in der Google Calendar Website einfügen.");\n';
@@ -606,19 +537,15 @@ function genHTML() {
   content += '        showToast("Link kopiert! Füge ihn bei Outlook ein."); \n';
   content += '      } else if (p === "share") { \n';
   content += '        const tn = btn.closest(".team-card").querySelector(".team-name").textContent; \n';
-  content += '        if (navigator.share) { \n';
-  content += '          try { await navigator.share({ title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url }); } catch(err) {} \n';
-  content += '        } else { \n';
-  content += '          try { await navigator.clipboard.writeText(url); showToast("Link kopiert!"); } catch(err) {} \n';
-  content += '        } \n';
+  content += '        if (navigator.share) { try { await navigator.share({ title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url }); } catch(err) {} }\n';
+  content += '        else { try { await navigator.clipboard.writeText(url); showToast("Link kopiert!"); } catch(err) {} }\n';
   content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
   content += '  document.querySelectorAll(".download-file-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
-  content += '      e.preventDefault(); \n';
-  content += '      e.stopPropagation();\n';
+  content += '      e.preventDefault(); e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("href");\n';
   content += '      if (!url) { showToast("Kein Download verfügbar"); return; }\n';
   content += '      closeAllDropdowns();\n';
@@ -629,8 +556,7 @@ function genHTML() {
 
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
-  content += '      e.stopPropagation(); \n';
-  content += '      closeAllDropdowns(); \n';
+  content += '      e.stopPropagation(); closeAllDropdowns(); \n';
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      const qc = document.getElementById("qr-code-container"); \n';
   content += '      if (qc && typeof QRCode !== "undefined") {\n';
@@ -645,11 +571,7 @@ function genHTML() {
   content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
   
   content += '  const qrModal = document.getElementById("qr-modal");\n';
-  content += '  if (qrModal) {\n';
-  content += '    qrModal.addEventListener("click", (e) => { \n';
-  content += '      if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); \n';
-  content += '    });\n';
-  content += '  }\n\n';
+  content += '  if (qrModal) qrModal.addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
 
   content += '  const mcBtn = document.getElementById("my-calendar-btn");\n';
   content += '  const mcModal = document.getElementById("my-calendar-modal");\n';
@@ -686,11 +608,7 @@ function genHTML() {
   content += '  const mcCancel = document.getElementById("my-calendar-cancel");\n';
   content += '  if (mcCancel) mcCancel.addEventListener("click", () => { if (mcModal) mcModal.classList.remove("active"); });\n';
   
-  content += '  if (mcModal) {\n';
-  content += '    mcModal.addEventListener("click", (e) => { \n';
-  content += '      if (e.target.id === "my-calendar-modal") mcModal.classList.remove("active"); \n';
-  content += '    });\n';
-  content += '  }\n\n';
+  content += '  if (mcModal) mcModal.addEventListener("click", (e) => { if (e.target.id === "my-calendar-modal") mcModal.classList.remove("active"); });\n\n';
 
   content += '  const mcCreate = document.getElementById("my-calendar-create");\n';
   content += '  if (mcCreate) {\n';
@@ -711,17 +629,13 @@ function genHTML() {
   content += '          if (!res.ok) continue;\n';
   content += '          const text = await res.text();\n';
   content += '          const lines = text.split(/\\r?\\n/);\n';
-  content += '          let inEvent = false; \n';
-  content += '          let ev = [];\n';
+  content += '          let inEvent = false; let ev = [];\n';
   content += '          for (const line of lines) {\n';
   content += '            if (line === "BEGIN:VEVENT") { inEvent = true; ev = [line]; }\n';
   content += '            else if (line === "END:VEVENT") { \n';
   content += '              ev.push(line); \n';
   content += '              const uid = ev.join("\\n").match(/UID:(.+)/); \n';
-  content += '              if (!uid || !seenUIDs.has(uid[1])) { \n';
-  content += '                allEvents.push(ev.join("\\r\\n")); \n';
-  content += '                if (uid) seenUIDs.add(uid[1]); \n';
-  content += '              } \n';
+  content += '              if (!uid || !seenUIDs.has(uid[1])) { allEvents.push(ev.join("\\r\\n")); if (uid) seenUIDs.add(uid[1]); } \n';
   content += '              inEvent = false; \n';
   content += '            }\n';
   content += '            else if (inEvent) ev.push(line);\n';
@@ -738,10 +652,7 @@ function genHTML() {
   content += '        document.body.removeChild(a); \n';
   content += '        URL.revokeObjectURL(a.href);\n';
   content += '        showToast("Kalender heruntergeladen! Importiere ihn in deine Kalender-App.");\n';
-  content += '      } catch(err) { \n';
-  content += '        console.error(err); \n';
-  content += '        showToast("Fehler beim Erstellen des Kalenders."); \n';
-  content += '      }\n';
+  content += '      } catch(err) { console.error(err); showToast("Fehler beim Erstellen des Kalenders."); }\n';
   content += '    });\n';
   content += '  }\n\n';
 
@@ -754,11 +665,17 @@ function genHTML() {
   content += '      setTimeout(() => t.classList.remove("active"), 3000); \n';
   content += '    }\n';
   content += '  }\n';
+  
+  // HIER WAR DER FEHLER: Das schließende </script> Tag fehlte!
   content += '});\n';
-  content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n</body>\n</html>';
+  content += '<\/script>\n'; 
+  
+  // Jetzt erst das iFrame-Resizer Script einfügen
+  content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n';
+  content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html narrensicher generiert.');
+  console.log('✅ index.html narrensicher generiert (Syntax-Fehler behoben).');
 }
 
 genHTML();
