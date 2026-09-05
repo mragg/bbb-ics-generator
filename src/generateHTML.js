@@ -1,4 +1,4 @@
-// complete generator script — narrensicher für WordPress iFrame optimiert (FIXED)
+// complete generator script — narrensicher für WordPress iFrame optimiert (Counter-Fix)
 const fs = require('fs');
 const path = require('path');
 
@@ -301,6 +301,24 @@ function genHTML() {
   content += '      const mainContent = document.getElementById("main-content");\n';
   content += '      if (mainContent) mainContent.style.display = "block";\n';
   content += '      if (typeof lucide !== "undefined") lucide.createIcons();\n';
+  
+  // COUNTER-ANIMATION WIEDER EINGEBAUT!
+  content += '      document.querySelectorAll(".stat-val").forEach(el => {\n';
+  content += '        const target = parseInt(el.getAttribute("data-target"), 10);\n';
+  content += '        if (isNaN(target) || target === 0) return;\n';
+  content += '        let current = 0;\n';
+  content += '        const increment = target / 30;\n';
+  content += '        const timer = setInterval(() => {\n';
+  content += '          current += increment;\n';
+  content += '          if (current >= target) {\n';
+  content += '            el.textContent = target;\n';
+  content += '            clearInterval(timer);\n';
+  content += '          } else {\n';
+  content += '            el.textContent = Math.floor(current);\n';
+  content += '          }\n';
+  content += '        }, 20);\n';
+  content += '      });\n';
+  
   content += '      document.querySelectorAll(".team-card").forEach(card => { try { updateCardLinks(card, "all"); } catch (e) { console.error(e); } });\n';
   content += '    } catch (err) {\n';
   content += '      console.error("Fataler Fehler:", err);\n';
@@ -398,7 +416,7 @@ function genHTML() {
   content += '      const ac = ageColorMatch ? ageColorMatch[1] : "orange";\n';
   content += '      const pill = document.createElement("button"); \n';
   content += '      pill.className = "quick-access-pill";\n';
-  content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ac + \'"><i data-lucide="basketball"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
+  content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ac + \'"><i data-lucide="circle-dot"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
   content += '      pill.addEventListener("click", (e) => { \n';
   content += '        e.stopPropagation(); \n';
   content += '        card.scrollIntoView({ behavior: "smooth", block: "center" }); \n';
@@ -666,16 +684,13 @@ function genHTML() {
   content += '    }\n';
   content += '  }\n';
   
-  // HIER WAR DER FEHLER: Das schließende </script> Tag fehlte!
   content += '});\n';
-  content += '<\/script>\n'; 
-  
-  // Jetzt erst das iFrame-Resizer Script einfügen
+  content += '<\/script>\n';
   content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n';
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html narrensicher generiert (Syntax-Fehler behoben).');
+  console.log('✅ index.html narrensicher generiert (Counter-Fix).');
 }
 
 genHTML();
