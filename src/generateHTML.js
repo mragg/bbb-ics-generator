@@ -1,4 +1,4 @@
-// complete generator script — narrensicher für WordPress iFrame optimiert (Dropdown-Fix)
+// complete generator script — iFrame-kompatibel mit Fallbacks
 const fs = require('fs');
 const path = require('path');
 
@@ -190,11 +190,11 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,107,0,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(255,107,0,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
-'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 10000; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }\n' +
+'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-text); color: var(--color-surface); padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-'.qr-modal, .my-calendar-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
+'.qr-modal, .my-calendar-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
 '.qr-modal.active, .my-calendar-modal.active { display: flex; }\n' +
-'.qr-modal-content, .my-calendar-modal-content { background: var(--color-surface); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }\n' +
+'.qr-modal-content, .my-calendar-modal-content { background: var(--color-surface); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; z-index: 100000; }\n' +
 '.my-calendar-modal-content { max-height: 90vh; overflow-y: auto; text-align: left; }\n' +
 '.modal-title { font-family: "Oswald", sans-serif; font-size: 1.25rem; margin-bottom: 0.5rem; text-align: center; }\n' +
 '.modal-subtitle { color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }\n' +
@@ -291,8 +291,45 @@ function genHTML() {
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
   content += '<div class="toast" id="toast"><i data-lucide="check-circle" style="width:18px;height:18px;"></i><span id="toast-text">Link kopiert!</span></div>\n';
 
-  // JAVASCRIPT
+  // JAVASCRIPT MIT IFRAME-KOMPATIBLEN FALLBACKS
   content += '<script>\n';
+  
+  // FALLBACK: Clipboard-Funktion für iFrames
+  content += '  function copyToClipboard(text) {\n';
+  content += '    return new Promise((resolve, reject) => {\n';
+  content += '      // Versuche moderne Clipboard API zuerst\n';
+  content += '      if (navigator.clipboard && window.isSecureContext) {\n';
+  content += '        navigator.clipboard.writeText(text).then(resolve).catch(() => {\n';
+  content += '          // Fallback für iFrames\n';
+  content += '          fallbackCopy(text).then(resolve).catch(reject);\n';
+  content += '        });\n';
+  content += '      } else {\n';
+  content += '        // Fallback für iFrames oder unsichere Kontexte\n';
+  content += '        fallbackCopy(text).then(resolve).catch(reject);\n';
+  content += '      }\n';
+  content += '    });\n';
+  content += '  }\n\n';
+  
+  content += '  function fallbackCopy(text) {\n';
+  content += '    return new Promise((resolve, reject) => {\n';
+  content += '      const textArea = document.createElement("textarea");\n';
+  content += '      textArea.value = text;\n';
+  content += '      textArea.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none;";\n';
+  content += '      document.body.appendChild(textArea);\n';
+  content += '      textArea.focus();\n';
+  content += '      textArea.select();\n';
+  content += '      try {\n';
+  content += '        const success = document.execCommand("copy");\n';
+  content += '        document.body.removeChild(textArea);\n';
+  content += '        if (success) resolve();\n';
+  content += '        else reject(new Error("Copy failed"));\n';
+  content += '      } catch (err) {\n';
+  content += '        document.body.removeChild(textArea);\n';
+  content += '        reject(err);\n';
+  content += '      }\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
   content += 'document.addEventListener("DOMContentLoaded", () => {\n';
   content += '  setTimeout(() => {\n';
   content += '    try {\n';
@@ -513,6 +550,7 @@ function genHTML() {
   content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) closeAllDropdowns();\n';
   content += '  });\n\n';
 
+  // COPY-BUTTON MIT FALLBACK
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
   content += '      e.preventDefault(); e.stopPropagation();\n';
@@ -523,19 +561,21 @@ function genHTML() {
   content += '      btn.classList.add("loading");\n';
   content += '      if (icon) { icon.setAttribute("data-lucide","loader-2"); icon.style.animation="spin 1s linear infinite"; if (typeof lucide !== "undefined") lucide.createIcons(); }\n';
   content += '      try {\n';
-  content += '        await navigator.clipboard.writeText(url);\n';
+  content += '        await copyToClipboard(url);\n';
   content += '        btn.classList.remove("loading"); btn.classList.add("success");\n';
   content += '        if (icon) { icon.setAttribute("data-lucide","check"); icon.style.animation=""; if (typeof lucide !== "undefined") lucide.createIcons(); }\n';
   content += '        showToast("Link kopiert!");\n';
   content += '        setTimeout(() => { btn.classList.remove("success"); if (icon) { icon.setAttribute("data-lucide",orig); if (typeof lucide !== "undefined") lucide.createIcons(); } }, 1500);\n';
   content += '      } catch(err) { \n';
+  content += '        console.error("Copy error:", err);\n';
   content += '        btn.classList.remove("loading"); \n';
   content += '        if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; if (typeof lucide !== "undefined") lucide.createIcons(); } \n';
-  content += '        showToast("Kopieren fehlgeschlagen"); \n';
+  content += '        showToast("Kopieren fehlgeschlagen. Bitte manuell kopieren: " + url); \n';
   content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
+  // CALENDAR-BUTTONS MIT FALLBACK FÜR SHARE
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
   content += '      e.preventDefault(); e.stopPropagation(); \n';
@@ -545,17 +585,23 @@ function genHTML() {
   content += '      closeAllDropdowns();\n';
   content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
   content += '      else if (p === "google") { \n';
-  content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
+  content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
   content += '        window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");\n';
   content += '        showToast("Link kopiert! Bitte in der Google Calendar Website einfügen.");\n';
   content += '      } else if (p === "outlook") { \n';
-  content += '        try { await navigator.clipboard.writeText(url); } catch(err) {}\n';
+  content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
   content += '        window.open("https://outlook.live.com/calendar/0/addfromweb", "_blank"); \n';
   content += '        showToast("Link kopiert! Füge ihn bei Outlook ein."); \n';
   content += '      } else if (p === "share") { \n';
   content += '        const tn = btn.closest(".team-card").querySelector(".team-name").textContent; \n';
-  content += '        if (navigator.share) { try { await navigator.share({ title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url }); } catch(err) {} }\n';
-  content += '        else { try { await navigator.clipboard.writeText(url); showToast("Link kopiert!"); } catch(err) {} }\n';
+  content += '        const shareData = { title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url };\n';
+  content += '        if (navigator.share && window.top === window.self) { \n';
+  content += '          try { await navigator.share(shareData); } catch(err) { \n';
+  content += '            try { await copyToClipboard(url); showToast("Link kopiert: " + url); } catch(e2) { showToast("Teilen nicht möglich. Link: " + url); }\n';
+  content += '          }\n';
+  content += '        } else { \n';
+  content += '          try { await copyToClipboard(url); showToast("Link kopiert: " + url); } catch(err) { showToast("Link: " + url); }\n';
+  content += '        }\n';
   content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
@@ -571,24 +617,36 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
+  // QR-CODE MIT VERBESSERTER ANZEIGE
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
   content += '      e.stopPropagation(); closeAllDropdowns(); \n';
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      const qc = document.getElementById("qr-code-container"); \n';
+  content += '      const modal = document.getElementById("qr-modal");\n';
   content += '      if (qc && typeof QRCode !== "undefined") {\n';
   content += '        qc.innerHTML = ""; \n';
-  content += '        new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
+  content += '        try {\n';
+  content += '          new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
+  content += '          if (modal) {\n';
+  content += '            modal.style.display = "flex";\n';
+  content += '            modal.classList.add("active");\n';
+  content += '          }\n';
+  content += '        } catch(err) {\n';
+  content += '          console.error("QR Code error:", err);\n';
+  content += '          showToast("QR-Code konnte nicht erstellt werden");\n';
+  content += '        }\n';
+  content += '      } else {\n';
+  content += '        showToast("QR-Code-Bibliothek nicht geladen");\n';
   content += '      }\n';
-  content += '      document.getElementById("qr-modal").classList.add("active"); \n';
   content += '    });\n';
   content += '  });\n';
   
   content += '  const qrModalClose = document.getElementById("qr-modal-close");\n';
-  content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
+  content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => { const m = document.getElementById("qr-modal"); if (m) { m.classList.remove("active"); m.style.display = "none"; } });\n';
   
   content += '  const qrModal = document.getElementById("qr-modal");\n';
-  content += '  if (qrModal) qrModal.addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
+  content += '  if (qrModal) qrModal.addEventListener("click", (e) => { if (e.target.id === "qr-modal") { qrModal.classList.remove("active"); qrModal.style.display = "none"; } });\n\n';
 
   content += '  const mcBtn = document.getElementById("my-calendar-btn");\n';
   content += '  const mcModal = document.getElementById("my-calendar-modal");\n';
@@ -679,7 +737,7 @@ function genHTML() {
   content += '    if (t && txt) {\n';
   content += '      txt.textContent = msg; \n';
   content += '      t.classList.add("active"); \n';
-  content += '      setTimeout(() => t.classList.remove("active"), 3000); \n';
+  content += '      setTimeout(() => t.classList.remove("active"), 4000); \n';
   content += '    }\n';
   content += '  }\n';
   
@@ -689,7 +747,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html narrensicher generiert (Dropdown-Fix).');
+  console.log('✅ index.html mit iFrame-kompatiblen Fallbacks generiert.');
 }
 
 genHTML();
