@@ -1,4 +1,4 @@
-// complete generator script — narrensicher für WordPress iFrame optimiert (Counter-Fix)
+// complete generator script — narrensicher für WordPress iFrame optimiert (Dropdown-Fix)
 const fs = require('fs');
 const path = require('path');
 
@@ -132,7 +132,7 @@ function genHTML() {
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem; }\n' +
 '.team-card { background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; }\n' +
-'.team-card.expanded { z-index: 50; }\n' +
+'.team-card.expanded { z-index: 100; }\n' +
 '.team-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--color-primary); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }\n' +
@@ -163,7 +163,7 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--color-primary); transition: var(--transition); }\n' +
 '.stat-label { font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; overflow: hidden; }\n' +
+'.team-actions { padding: 1rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; }\n' +
 '.btn-primary { background: var(--color-primary); color: white; }\n' +
@@ -302,7 +302,6 @@ function genHTML() {
   content += '      if (mainContent) mainContent.style.display = "block";\n';
   content += '      if (typeof lucide !== "undefined") lucide.createIcons();\n';
   
-  // COUNTER-ANIMATION WIEDER EINGEBAUT!
   content += '      document.querySelectorAll(".stat-val").forEach(el => {\n';
   content += '        const target = parseInt(el.getAttribute("data-target"), 10);\n';
   content += '        if (isNaN(target) || target === 0) return;\n';
@@ -690,7 +689,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html narrensicher generiert (Counter-Fix).');
+  console.log('✅ index.html narrensicher generiert (Dropdown-Fix).');
 }
 
 genHTML();
