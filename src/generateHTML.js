@@ -1,4 +1,4 @@
-// complete generator script — optimiert für WordPress iFrame
+// complete generator script — narrensicher für WordPress iFrame optimiert
 const fs = require('fs');
 const path = require('path');
 
@@ -177,7 +177,6 @@ function genHTML() {
 '[data-theme="dark"] .more-options-btn { background: #334155; color: var(--color-text); }\n' +
 '.more-options-btn:hover { background: #E2E8F0; }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-/* FIX: Dropdown ist jetzt absolut zum Wrapper positioniert, nicht fixed zum Window. Das ist in iFrames viel stabiler! */
 '.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
@@ -252,6 +251,11 @@ function genHTML() {
   content += '<div class="search-wrapper"><i data-lucide="search" class="search-icon"></i><input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)..."></div>\n';
   content += '<div class="teams-grid" id="teams-grid">\n';
 
+  // SCHUTZ: Wenn keine Teams da sind, zeige eine Nachricht statt einer leeren Seite
+  if (teams.length === 0) {
+    content += '<p style="text-align:center; padding: 2rem; color: var(--color-text-muted); grid-column: 1 / -1;">⚠️ Keine Teams gefunden. Bitte stelle sicher, dass das Update-Skript erfolgreich durchgelaufen ist.</p>';
+  }
+
   teams.forEach((t, index) => {
     const ageColor = getAgeGroupColor(t.name);
     content += '<div class="team-card age-' + ageColor + '" data-team-id="' + t.teamId + '" data-team-name="' + t.name.toLowerCase() + ' ' + t.ageGroup.toLowerCase() + '" data-original-index="' + index + '" data-all-url="' + makeWebcalLink(t.teamId + '_all.ics') + '" data-home-url="' + makeWebcalLink(t.teamId + '_home.ics') + '" data-away-url="' + makeWebcalLink(t.teamId + '_away.ics') + '">' +
@@ -282,7 +286,8 @@ function genHTML() {
     '</div>\n';
   });
 
-  content += '</div></main>\n';
+  content += '</div>\n'; // closes teams-grid
+  content += '</main>\n'; // closes main-content
 
   content += '<div class="qr-modal" id="qr-modal"><div class="qr-modal-content"><div class="modal-title">QR-Code scannen</div><div class="modal-subtitle">Öffne die Kamera-App und scanne den Code</div><div class="qr-code-container" id="qr-code-container"></div><button class="modal-close-btn" id="qr-modal-close">Schließen</button></div></div>\n';
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
@@ -292,13 +297,42 @@ function genHTML() {
   content += '<script>\n';
   content += 'document.addEventListener("DOMContentLoaded", () => {\n';
   content += '  setTimeout(() => {\n';
-  content += '    document.getElementById("skeleton-loader").style.display = "none";\n';
-  content += '    document.getElementById("main-content").style.display = "block";\n';
-  content += '    lucide.createIcons();\n';
-  content += '    document.querySelectorAll(".team-card").forEach(card => updateCardLinks(card, "all"));\n';
+  content += '    try {\n';
+  content += '      const skeleton = document.getElementById("skeleton-loader");\n';
+  content += '      if (skeleton) skeleton.style.display = "none";\n';
+  content += '\n';
+  content += '      const mainContent = document.getElementById("main-content");\n';
+  content += '      if (mainContent) {\n';
+  content += '        mainContent.style.display = "block";\n';
+  content += '      } else {\n';
+  content += '        console.error("main-content Element nicht gefunden!");\n';
+  content += '      }\n';
+  content += '\n';
+  content += '      if (typeof lucide !== "undefined") {\n';
+  content += '        lucide.createIcons();\n';
+  content += '      } else {\n';
+  content += '        console.warn("Lucide Icons konnten nicht geladen werden.");\n';
+  content += '      }\n';
+  content += '\n';
+  content += '      document.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '        try {\n';
+  content += '          updateCardLinks(card, "all");\n';
+  content += '        } catch (e) {\n';
+  content += '          console.error("Fehler in updateCardLinks:", e);\n';
+  content += '        }\n';
+  content += '      });\n';
+  content += '    } catch (err) {\n';
+  content += '      console.error("Fataler Fehler beim Initialisieren:", err);\n';
+  content += '      // Stelle sicher, dass der Inhalt trotzdem angezeigt wird, falls ein Fehler auftritt\n';
+  content += '      const mainContent = document.getElementById("main-content");\n';
+  content += '      if (mainContent) mainContent.style.display = "block";\n';
+  content += '      const skeleton = document.getElementById("skeleton-loader");\n';
+  content += '      if (skeleton) skeleton.style.display = "none";\n';
+  content += '    }\n';
   content += '  }, 300);\n\n';
 
   content += '  const grid = document.getElementById("teams-grid");\n';
+  content += '  if (!grid) return; // Sicherheits-Exit, falls Grid nicht existiert\n';
   content += '  const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");\n\n';
 
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
@@ -307,7 +341,6 @@ function genHTML() {
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
 
-  // FLIP Animation
   content += '  function getFirstPositions() {\n';
   content += '    const positions = new Map();\n';
   content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
@@ -335,17 +368,23 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // Favorite buttons
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
-  content += '      const card = btn.closest(".team-card"); const teamId = card.getAttribute("data-team-id");\n';
-  content += '      btn.classList.add("animating"); setTimeout(() => btn.classList.remove("animating"), 500);\n';
-  content += '      card.classList.toggle("favorite"); btn.classList.toggle("active");\n';
+  content += '      const card = btn.closest(".team-card"); \n';
+  content += '      const teamId = card.getAttribute("data-team-id");\n';
+  content += '      btn.classList.add("animating"); \n';
+  content += '      setTimeout(() => btn.classList.remove("animating"), 500);\n';
+  content += '      card.classList.toggle("favorite"); \n';
+  content += '      btn.classList.toggle("active");\n';
   content += '      if (navigator.vibrate) navigator.vibrate(50);\n';
   content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
-  content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); }\n';
-  content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
+  content += '      if (card.classList.contains("favorite")) { \n';
+  content += '        if (!f.includes(teamId)) f.push(teamId); \n';
+  content += '      } else { \n';
+  content += '        const i = f.indexOf(teamId); \n';
+  content += '        if (i > -1) f.splice(i, 1); \n';
+  content += '      }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
   content += '      const fp = getFirstPositions();\n';
   content += '      sortCards();\n';
@@ -356,53 +395,93 @@ function genHTML() {
 
   content += '  function sortCards() {\n';
   content += '    const cards = Array.from(grid.querySelectorAll(".team-card"));\n';
-  content += '    cards.sort((a, b) => { const af = a.classList.contains("favorite") ? 0 : 1; const bf = b.classList.contains("favorite") ? 0 : 1; if (af !== bf) return af - bf; return parseInt(a.getAttribute("data-original-index")) - parseInt(b.getAttribute("data-original-index")); });\n';
+  content += '    cards.sort((a, b) => { \n';
+  content += '      const af = a.classList.contains("favorite") ? 0 : 1; \n';
+  content += '      const bf = b.classList.contains("favorite") ? 0 : 1; \n';
+  content += '      if (af !== bf) return af - bf; \n';
+  content += '      return parseInt(a.getAttribute("data-original-index")) - parseInt(b.getAttribute("data-original-index")); \n';
+  content += '    });\n';
   content += '    cards.forEach(card => grid.appendChild(card));\n';
   content += '  }\n\n';
 
   content += '  function updateQuickAccess() {\n';
-  content += '    const qa = document.getElementById("quick-access"); const pc = document.getElementById("quick-access-pills");\n';
+  content += '    const qa = document.getElementById("quick-access"); \n';
+  content += '    const pc = document.getElementById("quick-access-pills");\n';
+  content += '    if (!qa || !pc) return;\n';
   content += '    const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
   content += '    if (f.length === 0) { qa.classList.remove("active"); return; }\n';
-  content += '    qa.classList.add("active"); pc.innerHTML = "";\n';
+  content += '    qa.classList.add("active"); \n';
+  content += '    pc.innerHTML = "";\n';
   content += '    f.forEach(tid => {\n';
-  content += '      const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); if (!card) return;\n';
+  content += '      const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); \n';
+  content += '      if (!card) return;\n';
   content += '      const teamName = card.querySelector(".team-name").textContent;\n';
-  content += '      const ageGroup = card.querySelector(".team-badge") ? card.querySelector(".team-badge").textContent : "";\n';
-  content += '      const ageColor = card.className.match(/age-(blue|green|purple|orange)/);\n';
-  content += '      const ac = ageColor ? ageColor[1] : "orange";\n';
-  content += '      const pill = document.createElement("button"); pill.className = "quick-access-pill";\n';
+  content += '      const ageGroupEl = card.querySelector(".team-badge");\n';
+  content += '      const ageGroup = ageGroupEl ? ageGroupEl.textContent : "";\n';
+  content += '      const ageColorMatch = card.className.match(/age-(blue|green|purple|orange)/);\n';
+  content += '      const ac = ageColorMatch ? ageColorMatch[1] : "orange";\n';
+  content += '      const pill = document.createElement("button"); \n';
+  content += '      pill.className = "quick-access-pill";\n';
   content += '      pill.innerHTML = \'<div class="pill-icon age-\' + ac + \'"><i data-lucide="basketball"></i></div><div class="pill-text"><span class="pill-name">\' + teamName + \'</span>\' + (ageGroup ? \'<span class="pill-age">\' + ageGroup + \'</span>\' : \'\') + \'</div>\';\n';
-  content += '      pill.addEventListener("click", (e) => { e.stopPropagation(); card.scrollIntoView({ behavior: "smooth", block: "center" }); card.classList.add("expanded"); });\n';
+  content += '      pill.addEventListener("click", (e) => { \n';
+  content += '        e.stopPropagation(); \n';
+  content += '        card.scrollIntoView({ behavior: "smooth", block: "center" }); \n';
+  content += '        card.classList.add("expanded"); \n';
+  content += '      });\n';
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
-  content += '    lucide.createIcons();\n';
+  content += '    if (typeof lucide !== "undefined") lucide.createIcons();\n';
   content += '  }\n\n';
 
-  content += '  document.getElementById("team-search").addEventListener("input", (e) => { const q = e.target.value.toLowerCase(); document.querySelectorAll(".team-card").forEach(card => { card.classList.toggle("hidden", !card.getAttribute("data-team-name").includes(q)); }); });\n\n';
+  content += '  const searchInput = document.getElementById("team-search");\n';
+  content += '  if (searchInput) {\n';
+  content += '    searchInput.addEventListener("input", (e) => { \n';
+  content += '      const q = e.target.value.toLowerCase(); \n';
+  content += '      document.querySelectorAll(".team-card").forEach(card => { \n';
+  content += '        const name = card.getAttribute("data-team-name") || "";\n';
+  content += '        card.classList.toggle("hidden", !name.includes(q)); \n';
+  content += '      }); \n';
+  content += '    });\n';
+  content += '  }\n\n';
 
-  // TEAM-KARTE KLICKBAR
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    card.addEventListener("click", (e) => {\n';
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
   content += '      const isExpanded = card.classList.contains("expanded");\n';
-  content += '      document.querySelectorAll(".team-card").forEach(c => { if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } });\n';
-  content += '      if (!isExpanded) card.classList.add("expanded"); else { card.classList.remove("expanded"); resetCardToAll(card); }\n';
+  content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
+  content += '        if (c !== card) { \n';
+  content += '          c.classList.remove("expanded"); \n';
+  content += '          resetCardToAll(c); \n';
+  content += '        } \n';
+  content += '      });\n';
+  content += '      if (!isExpanded) card.classList.add("expanded"); \n';
+  content += '      else { \n';
+  content += '        card.classList.remove("expanded"); \n';
+  content += '        resetCardToAll(card); \n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
   content += '  function resetCardToAll(card) {\n';
   content += '    card.querySelectorAll(".stat").forEach(s => s.classList.remove("active"));\n';
-  content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
+  content += '    const a = card.querySelector(\'.stat[data-type="all"]\'); \n';
+  content += '    if (a) { \n';
+  content += '      a.classList.add("active"); \n';
+  content += '      updateCardLinks(card, "all"); \n';
+  content += '    }\n';
   content += '  }\n\n';
 
-  // Stat-Click
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
   content += '      const card = stat.closest(".team-card");\n';
   content += '      const type = stat.getAttribute("data-type");\n';
-  content += '      document.querySelectorAll(".team-card").forEach(c => { if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } });\n';
+  content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
+  content += '        if (c !== card) { \n';
+  content += '          c.classList.remove("expanded"); \n';
+  content += '          resetCardToAll(c); \n';
+  content += '        } \n';
+  content += '      });\n';
   content += '      card.classList.add("expanded");\n';
   content += '      card.scrollIntoView({ behavior: "smooth", block: "center" });\n';
   content += '      if (navigator.vibrate) navigator.vibrate(30);\n';
@@ -412,22 +491,35 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // updateCardLinks
   content += '  function updateCardLinks(card, type) {\n';
-  content += '    const urls = { all: card.getAttribute("data-all-url"), home: card.getAttribute("data-home-url"), away: card.getAttribute("data-away-url") };\n';
-  content += '    const url = urls[type]; const webcalUrl = url.replace("https://", "webcal://");\n';
+  content += '    const urls = { \n';
+  content += '      all: card.getAttribute("data-all-url"), \n';
+  content += '      home: card.getAttribute("data-home-url"), \n';
+  content += '      away: card.getAttribute("data-away-url") \n';
+  content += '    };\n';
+  content += '    const url = urls[type]; \n';
+  content += '    if (!url) return; // Schutz vor undefined\n';
+  content += '    const webcalUrl = url.replace("https://", "webcal://");\n';
   content += '    const labels = { all: "Alle Spiele:", home: "Nur Heimspiele:", away: "Nur Auswärtsspiele:" };\n';
-  content += '    const label = card.querySelector(".calendar-type-label"); if (label) label.textContent = labels[type];\n';
-  content += '    const al = card.querySelector(\'.calendar-link[data-platform="apple"]\'); if (al) al.href = webcalUrl;\n';
+  content += '    const label = card.querySelector(".calendar-type-label"); \n';
+  content += '    if (label) label.textContent = labels[type];\n';
+  content += '    const al = card.querySelector(\'.calendar-link[data-platform="apple"]\'); \n';
+  content += '    if (al) al.href = webcalUrl;\n';
   content += '    card.querySelectorAll(".calendar-link").forEach(l => l.setAttribute("data-url", url));\n';
-  content += '    const cb = card.querySelector(".copy-btn"); if (cb) cb.setAttribute("data-copy", url);\n';
-  content += '    const db = card.querySelector(".download-file-btn"); if (db) db.setAttribute("href", url);\n';
-  content += '    const qb = card.querySelector(".qr-btn"); if (qb) qb.setAttribute("data-url", webcalUrl);\n';
-  content += '    card.querySelectorAll(".btn, .more-option-item").forEach(b => { b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash"); });\n';
+  content += '    const cb = card.querySelector(".copy-btn"); \n';
+  content += '    if (cb) cb.setAttribute("data-copy", url);\n';
+  content += '    const db = card.querySelector(".download-file-btn"); \n';
+  content += '    if (db) db.setAttribute("href", url);\n';
+  content += '    const qb = card.querySelector(".qr-btn"); \n';
+  content += '    if (qb) qb.setAttribute("data-url", webcalUrl);\n';
+  content += '    card.querySelectorAll(".btn, .more-option-item").forEach(b => { \n';
+  content += '      b.classList.remove("flash"); \n';
+  content += '      void b.offsetWidth; \n';
+  content += '      b.classList.add("flash"); \n';
+  content += '    });\n';
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // DROPDOWN (Vereinfacht und stabil für iFrames)
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
   content += '  }\n\n';
@@ -450,26 +542,49 @@ function genHTML() {
   content += '    }\n';
   content += '  });\n\n';
 
-  // Copy-Button
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
-  content += '      e.preventDefault(); e.stopPropagation();\n';
+  content += '      e.preventDefault(); \n';
+  content += '      e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("data-copy");\n';
   content += '      if (!url) { showToast("Kein Link verfügbar"); return; }\n';
-  content += '      const icon = btn.querySelector("i"); const orig = icon ? icon.getAttribute("data-lucide") : "copy";\n';
+  content += '      const icon = btn.querySelector("i"); \n';
+  content += '      const orig = icon ? icon.getAttribute("data-lucide") : "copy";\n';
   content += '      btn.classList.add("loading");\n';
-  content += '      if (icon) { icon.setAttribute("data-lucide","loader-2"); icon.style.animation="spin 1s linear infinite"; lucide.createIcons(); }\n';
+  content += '      if (icon) { \n';
+  content += '        icon.setAttribute("data-lucide","loader-2"); \n';
+  content += '        icon.style.animation="spin 1s linear infinite"; \n';
+  content += '        if (typeof lucide !== "undefined") lucide.createIcons(); \n';
+  content += '      }\n';
   content += '      try {\n';
   content += '        await navigator.clipboard.writeText(url);\n';
-  content += '        btn.classList.remove("loading"); btn.classList.add("success");\n';
-  content += '        if (icon) { icon.setAttribute("data-lucide","check"); icon.style.animation=""; lucide.createIcons(); }\n';
+  content += '        btn.classList.remove("loading"); \n';
+  content += '        btn.classList.add("success");\n';
+  content += '        if (icon) { \n';
+  content += '          icon.setAttribute("data-lucide","check"); \n';
+  content += '          icon.style.animation=""; \n';
+  content += '          if (typeof lucide !== "undefined") lucide.createIcons(); \n';
+  content += '        }\n';
   content += '        showToast("Link kopiert!");\n';
-  content += '        setTimeout(() => { btn.classList.remove("success"); if (icon) { icon.setAttribute("data-lucide",orig); lucide.createIcons(); } }, 1500);\n';
-  content += '      } catch(err) { btn.classList.remove("loading"); if (icon) { icon.setAttribute("data-lucide",orig); icon.style.animation=""; lucide.createIcons(); } showToast("Kopieren fehlgeschlagen"); }\n';
+  content += '        setTimeout(() => { \n';
+  content += '          btn.classList.remove("success"); \n';
+  content += '          if (icon) { \n';
+  content += '            icon.setAttribute("data-lucide",orig); \n';
+  content += '            if (typeof lucide !== "undefined") lucide.createIcons(); \n';
+  content += '          } \n';
+  content += '        }, 1500);\n';
+  content += '      } catch(err) { \n';
+  content += '        btn.classList.remove("loading"); \n';
+  content += '        if (icon) { \n';
+  content += '          icon.setAttribute("data-lucide",orig); \n';
+  content += '          icon.style.animation=""; \n';
+  content += '          if (typeof lucide !== "undefined") lucide.createIcons(); \n';
+  content += '        } \n';
+  content += '        showToast("Kopieren fehlgeschlagen"); \n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
-  // Calendar buttons
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
   content += '      e.preventDefault(); \n';
@@ -500,10 +615,10 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // Download-Button
   content += '  document.querySelectorAll(".download-file-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
-  content += '      e.preventDefault(); e.stopPropagation();\n';
+  content += '      e.preventDefault(); \n';
+  content += '      e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("href");\n';
   content += '      if (!url) { showToast("Kein Download verfügbar"); return; }\n';
   content += '      closeAllDropdowns();\n';
@@ -512,78 +627,138 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // QR Code
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", (e) => { e.stopPropagation(); closeAllDropdowns(); const url = btn.getAttribute("data-url"); const qc = document.getElementById("qr-code-container"); qc.innerHTML = ""; new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById("qr-modal").classList.add("active"); });\n';
+  content += '    btn.addEventListener("click", (e) => { \n';
+  content += '      e.stopPropagation(); \n';
+  content += '      closeAllDropdowns(); \n';
+  content += '      const url = btn.getAttribute("data-url"); \n';
+  content += '      const qc = document.getElementById("qr-code-container"); \n';
+  content += '      if (qc && typeof QRCode !== "undefined") {\n';
+  content += '        qc.innerHTML = ""; \n';
+  content += '        new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
+  content += '      }\n';
+  content += '      document.getElementById("qr-modal").classList.add("active"); \n';
+  content += '    });\n';
   content += '  });\n';
-  content += '  document.getElementById("qr-modal-close").addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
-  content += '  document.getElementById("qr-modal").addEventListener("click", (e) => { if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); });\n\n';
+  
+  content += '  const qrModalClose = document.getElementById("qr-modal-close");\n';
+  content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => document.getElementById("qr-modal").classList.remove("active"));\n';
+  
+  content += '  const qrModal = document.getElementById("qr-modal");\n';
+  content += '  if (qrModal) {\n';
+  content += '    qrModal.addEventListener("click", (e) => { \n';
+  content += '      if (e.target.id === "qr-modal") document.getElementById("qr-modal").classList.remove("active"); \n';
+  content += '    });\n';
+  content += '  }\n\n';
 
-  // Mein Kalender
   content += '  const mcBtn = document.getElementById("my-calendar-btn");\n';
   content += '  const mcModal = document.getElementById("my-calendar-modal");\n';
   content += '  const mcList = document.getElementById("team-checkbox-list");\n';
   content += '  let mcType = "all";\n\n';
 
-  content += '  mcBtn.addEventListener("click", () => {\n';
-  content += '    mcList.innerHTML = "";\n';
-  content += '    const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
-  content += '    if (f.length === 0) { showToast("Bitte markiere zuerst Teams als Favoriten!"); return; }\n';
-  content += '    f.forEach(tid => {\n';
-  content += '      const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); if (!card) return;\n';
-  content += '      const tn = card.querySelector(".team-name").textContent;\n';
-  content += '      const item = document.createElement("div"); item.className = "team-checkbox-item";\n';
-  content += '      item.innerHTML = \'<input type="checkbox" id="mc-\' + tid + \'" value="\' + tid + \'" checked><label for="mc-\' + tid + \'">\' + tn + \'</label>\';\n';
-  content += '      mcList.appendChild(item);\n';
+  content += '  if (mcBtn) {\n';
+  content += '    mcBtn.addEventListener("click", () => {\n';
+  content += '      if (!mcList) return;\n';
+  content += '      mcList.innerHTML = "";\n';
+  content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
+  content += '      if (f.length === 0) { showToast("Bitte markiere zuerst Teams als Favoriten!"); return; }\n';
+  content += '      f.forEach(tid => {\n';
+  content += '        const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\'); \n';
+  content += '        if (!card) return;\n';
+  content += '        const tn = card.querySelector(".team-name").textContent;\n';
+  content += '        const item = document.createElement("div"); \n';
+  content += '        item.className = "team-checkbox-item";\n';
+  content += '        item.innerHTML = \'<input type="checkbox" id="mc-\' + tid + \'" value="\' + tid + \'" checked><label for="mc-\' + tid + \'">\' + tn + \'</label>\';\n';
+  content += '        mcList.appendChild(item);\n';
+  content += '      });\n';
+  content += '      if (mcModal) mcModal.classList.add("active");\n';
   content += '    });\n';
-  content += '    mcModal.classList.add("active");\n';
-  content += '  });\n\n';
+  content += '  }\n\n';
 
   content += '  document.querySelectorAll(".calendar-type-btn").forEach(btn => {\n';
-  content += '    btn.addEventListener("click", () => { document.querySelectorAll(".calendar-type-btn").forEach(b => b.classList.remove("active")); btn.classList.add("active"); mcType = btn.getAttribute("data-type"); });\n';
+  content += '    btn.addEventListener("click", () => { \n';
+  content += '      document.querySelectorAll(".calendar-type-btn").forEach(b => b.classList.remove("active")); \n';
+  content += '      btn.classList.add("active"); \n';
+  content += '      mcType = btn.getAttribute("data-type"); \n';
+  content += '    });\n';
   content += '  });\n\n';
 
-  content += '  document.getElementById("my-calendar-cancel").addEventListener("click", () => mcModal.classList.remove("active"));\n';
-  content += '  mcModal.addEventListener("click", (e) => { if (e.target.id === "my-calendar-modal") mcModal.classList.remove("active"); });\n\n';
+  content += '  const mcCancel = document.getElementById("my-calendar-cancel");\n';
+  content += '  if (mcCancel) mcCancel.addEventListener("click", () => { if (mcModal) mcModal.classList.remove("active"); });\n';
+  
+  content += '  if (mcModal) {\n';
+  content += '    mcModal.addEventListener("click", (e) => { \n';
+  content += '      if (e.target.id === "my-calendar-modal") mcModal.classList.remove("active"); \n';
+  content += '    });\n';
+  content += '  }\n\n';
 
-  content += '  document.getElementById("my-calendar-create").addEventListener("click", async () => {\n';
-  content += '    const selected = Array.from(mcList.querySelectorAll("input:checked")).map(cb => cb.value);\n';
-  content += '    if (selected.length === 0) { showToast("Bitte wähle mindestens ein Team!"); return; }\n';
-  content += '    showToast("Kalender wird erstellt...");\n';
-  content += '    mcModal.classList.remove("active");\n\n';
-  content += '    try {\n';
-  content += '      let allEvents = [];\n';
-  content += '      const seenUIDs = new Set();\n';
-  content += '      for (const tid of selected) {\n';
-  content += '        const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\');\n';
-  content += '        const url = card ? card.getAttribute("data-" + mcType + "-url") : "";\n';
-  content += '        if (!url) continue;\n';
-  content += '        const res = await fetch(url);\n';
-  content += '        if (!res.ok) continue;\n';
-  content += '        const text = await res.text();\n';
-  content += '        const lines = text.split(/\\r?\\n/);\n';
-  content += '        let inEvent = false; let ev = [];\n';
-  content += '        for (const line of lines) {\n';
-  content += '          if (line === "BEGIN:VEVENT") { inEvent = true; ev = [line]; }\n';
-  content += '          else if (line === "END:VEVENT") { ev.push(line); const uid = ev.join("\\n").match(/UID:(.+)/); if (!uid || !seenUIDs.has(uid[1])) { allEvents.push(ev.join("\\r\\n")); if (uid) seenUIDs.add(uid[1]); } inEvent = false; }\n';
-  content += '          else if (inEvent) ev.push(line);\n';
+  content += '  const mcCreate = document.getElementById("my-calendar-create");\n';
+  content += '  if (mcCreate) {\n';
+  content += '    mcCreate.addEventListener("click", async () => {\n';
+  content += '      if (!mcList) return;\n';
+  content += '      const selected = Array.from(mcList.querySelectorAll("input:checked")).map(cb => cb.value);\n';
+  content += '      if (selected.length === 0) { showToast("Bitte wähle mindestens ein Team!"); return; }\n';
+  content += '      showToast("Kalender wird erstellt...");\n';
+  content += '      if (mcModal) mcModal.classList.remove("active");\n\n';
+  content += '      try {\n';
+  content += '        let allEvents = [];\n';
+  content += '        const seenUIDs = new Set();\n';
+  content += '        for (const tid of selected) {\n';
+  content += '          const card = grid.querySelector(\'[data-team-id="\' + tid + \'"]\');\n';
+  content += '          const url = card ? card.getAttribute("data-" + mcType + "-url") : "";\n';
+  content += '          if (!url) continue;\n';
+  content += '          const res = await fetch(url);\n';
+  content += '          if (!res.ok) continue;\n';
+  content += '          const text = await res.text();\n';
+  content += '          const lines = text.split(/\\r?\\n/);\n';
+  content += '          let inEvent = false; \n';
+  content += '          let ev = [];\n';
+  content += '          for (const line of lines) {\n';
+  content += '            if (line === "BEGIN:VEVENT") { inEvent = true; ev = [line]; }\n';
+  content += '            else if (line === "END:VEVENT") { \n';
+  content += '              ev.push(line); \n';
+  content += '              const uid = ev.join("\\n").match(/UID:(.+)/); \n';
+  content += '              if (!uid || !seenUIDs.has(uid[1])) { \n';
+  content += '                allEvents.push(ev.join("\\r\\n")); \n';
+  content += '                if (uid) seenUIDs.add(uid[1]); \n';
+  content += '              } \n';
+  content += '              inEvent = false; \n';
+  content += '            }\n';
+  content += '            else if (inEvent) ev.push(line);\n';
+  content += '          }\n';
   content += '        }\n';
+  content += '        if (allEvents.length === 0) { showToast("Keine Spiele gefunden!"); return; }\n';
+  content += '        const ics = "BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TVN Baskets//DE\\r\\nCALSCALE:GREGORIAN\\r\\nMETHOD:PUBLISH\\r\\nX-WR-CALNAME:Mein TVN Kalender\\r\\nX-WR-TIMEZONE:Europe/Berlin\\r\\n" + allEvents.join("\\r\\n") + "\\r\\nEND:VCALENDAR";\n';
+  content += '        const blob = new Blob([ics], { type: "text/calendar" });\n';
+  content += '        const a = document.createElement("a"); \n';
+  content += '        a.href = URL.createObjectURL(blob); \n';
+  content += '        a.download = "mein_tvn_kalender.ics"; \n';
+  content += '        document.body.appendChild(a); \n';
+  content += '        a.click(); \n';
+  content += '        document.body.removeChild(a); \n';
+  content += '        URL.revokeObjectURL(a.href);\n';
+  content += '        showToast("Kalender heruntergeladen! Importiere ihn in deine Kalender-App.");\n';
+  content += '      } catch(err) { \n';
+  content += '        console.error(err); \n';
+  content += '        showToast("Fehler beim Erstellen des Kalenders."); \n';
   content += '      }\n';
-  content += '      if (allEvents.length === 0) { showToast("Keine Spiele gefunden!"); return; }\n';
-  content += '      const ics = "BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//TVN Baskets//DE\\r\\nCALSCALE:GREGORIAN\\r\\nMETHOD:PUBLISH\\r\\nX-WR-CALNAME:Mein TVN Kalender\\r\\nX-WR-TIMEZONE:Europe/Berlin\\r\\n" + allEvents.join("\\r\\n") + "\\r\\nEND:VCALENDAR";\n';
-  content += '      const blob = new Blob([ics], { type: "text/calendar" });\n';
-  content += '      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mein_tvn_kalender.ics"; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);\n';
-  content += '      showToast("Kalender heruntergeladen! Importiere ihn in deine Kalender-App.");\n';
-  content += '    } catch(err) { console.error(err); showToast("Fehler beim Erstellen des Kalenders."); }\n';
-  content += '  });\n\n';
+  content += '    });\n';
+  content += '  }\n\n';
 
-  content += '  function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").textContent = msg; t.classList.add("active"); setTimeout(() => t.classList.remove("active"), 3000); }\n';
+  content += '  function showToast(msg) { \n';
+  content += '    const t = document.getElementById("toast"); \n';
+  content += '    const txt = document.getElementById("toast-text");\n';
+  content += '    if (t && txt) {\n';
+  content += '      txt.textContent = msg; \n';
+  content += '      t.classList.add("active"); \n';
+  content += '      setTimeout(() => t.classList.remove("active"), 3000); \n';
+  content += '    }\n';
+  content += '  }\n';
   content += '});\n';
-  // HIER WIRD DAS IFRAME-RESIZER SCRIPT EINGEFÜGT
   content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html für WordPress iFrame optimiert generiert.');
+  console.log('✅ index.html narrensicher generiert.');
 }
 
 genHTML();
