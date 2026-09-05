@@ -654,7 +654,7 @@ function genHTML() {
 
   content += '  function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").textContent = msg; t.classList.add("active"); setTimeout(() => t.classList.remove("active"), 3000); }\n';
   content += '});\n';
-  content += '<\/script>\n</body>\n</html>';
+  content += '<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"></script>\n</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
   console.log('✅ index.html generiert.');
