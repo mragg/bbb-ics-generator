@@ -1,4 +1,4 @@
-// complete generator script — NAHTLOS TVN BASKETS DESIGN
+// complete generator script — iFrame-kompatibel mit funktionierendem Dropdown
 const fs = require('fs');
 const path = require('path');
 
@@ -138,9 +138,11 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; }\n' +
-'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: hidden; min-height: 220px; display: flex; flex-direction: column; }\n' +
-'.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; }\n' +
-'.team-card.expanded { z-index: 100; }\n' +
+// WICHTIG: overflow: visible statt hidden, damit das Dropdown nicht abgeschnitten wird
+'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; }\n' +
+'.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
+// WICHTIG: Sehr hoher z-index für expandierte Karten
+'.team-card.expanded { z-index: 9999; }\n' +
 '.team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 1px solid var(--color-gold); box-shadow: 0 0 20px rgba(232,163,61,0.2); }\n' +
@@ -164,7 +166,8 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; transition: var(--transition); }\n' +
 '.stat-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: #9FA9BE; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); letter-spacing: 0.05em; }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); }\n' +
+// WICHTIG: overflow: visible statt hidden
+'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; }\n' +
 '.btn-primary { background: var(--color-primary); color: var(--color-dark); }\n' +
@@ -177,7 +180,8 @@ function genHTML() {
 '.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; }\n' +
 '.more-options-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 9999; width: 100%; }\n' +
+// Dropdown mit position: absolute und sehr hohem z-index
+'.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
 '.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; }\n' +
@@ -732,7 +736,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html im TVN Baskets Design generiert.');
+  console.log('✅ index.html mit funktionierendem Dropdown generiert.');
 }
 
 genHTML();
