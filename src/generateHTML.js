@@ -351,7 +351,6 @@ function genHTML() {
           '<button class="more-options-btn"><i data-lucide="more-horizontal"></i> Mehr Optionen</button>' +
           '<div class="more-options-dropdown">' +
             '<button class="more-option-item calendar-link" data-platform="outlook"><i data-lucide="mail"></i> Outlook</button>' +
-            '<button class="more-option-item calendar-link" data-platform="share"><i data-lucide="share-2"></i> Teilen</button>' +
             '<button class="more-option-item qr-btn"><i data-lucide="qr-code"></i> QR-Code</button>' +
             '<button class="more-option-item download-file-btn"><i data-lucide="download"></i> .ics herunterladen</button>' +
             '<button class="more-option-item copy-btn"><i data-lucide="copy"></i> Link kopieren</button>' +
@@ -692,17 +691,6 @@ function genHTML() {
   content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
   content += '        window.open("https://outlook.live.com/calendar/0/addfromweb", "_blank"); \n';
   content += '        showToast("Link kopiert! Füge ihn bei Outlook ein."); \n';
-  content += '      } else if (p === "share") { \n';
-  content += '        const tn = btn.closest(".team-card").querySelector(".team-name").textContent; \n';
-  content += '        const shareData = { title: "TVN Baskets - "+tn, text: "Spielplan für "+tn, url: url };\n';
-  content += '        if (navigator.share && window.top === window.self) { \n';
-  content += '          try { await navigator.share(shareData); } catch(err) { \n';
-  content += '            try { await copyToClipboard(url); showToast("Link kopiert: " + url); } catch(e2) { showToast("Teilen nicht möglich. Link: " + url); }\n';
-  content += '          }\n';
-  content += '        } else { \n';
-  content += '          try { await copyToClipboard(url); showToast("Link kopiert: " + url); } catch(err) { showToast("Link: " + url); }\n';
-  content += '        }\n';
-  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
