@@ -1,4 +1,4 @@
-// complete generator script — iFrame-kompatibel mit funktionierendem Dropdown, Herz-Fill & Fullscreen-Modals
+// complete generator script — mit Herz-Fill via JS, iFrame-optimierten Modals & dynamischem Dropdown
 const fs = require('fs');
 const path = require('path');
 
@@ -150,9 +150,8 @@ function genHTML() {
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
-// FIX: !important hinzugefügt, damit Lucide das fill nicht überschreibt
-'.favorite-btn i { color: #9FA9BE; fill: transparent !important; transition: all 0.3s ease; width: 18px; height: 18px; }\n' +
-'.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold) !important; }\n' +
+'.favorite-btn i { color: #9FA9BE; transition: all 0.3s ease; width: 18px; height: 18px; }\n' +
+'.favorite-btn.active i { color: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
 '.team-card-header { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; padding-right: 3rem; z-index: 1; position: relative; }\n' +
@@ -178,7 +177,7 @@ function genHTML() {
 '.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; }\n' +
 '.more-options-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-'.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
+'.more-options-dropdown { position: absolute; left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
 '.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; }\n' +
@@ -190,12 +189,11 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; border-color: #10B981; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(232,163,61,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
-'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 2147483647; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
+'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-// FIX: Modals nutzen 100vw/100vh, um aus dem iFrame auszubrechen und den ganzen Bildschirm abzudecken
-'.qr-modal, .my-calendar-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 2147483647; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
+'.qr-modal, .my-calendar-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
 '.qr-modal.active, .my-calendar-modal.active { display: flex; }\n' +
-'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 2147483648; color: #fff; }\n' +
+'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 100000; color: #fff; }\n' +
 '.my-calendar-modal-content { max-height: 90vh; overflow-y: auto; text-align: left; }\n' +
 '.modal-title { font-family: "Oswald", sans-serif; font-size: 1.25rem; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
 '.modal-subtitle { color: #9FA9BE; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }\n' +
@@ -364,7 +362,13 @@ function genHTML() {
 
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    const teamId = card.getAttribute("data-team-id");\n';
-  content += '    if (favorites.includes(teamId)) { card.classList.add("favorite"); card.querySelector(".favorite-btn").classList.add("active"); }\n';
+  content += '    if (favorites.includes(teamId)) { \n';
+  content += '      card.classList.add("favorite"); \n';
+  content += '      const btn = card.querySelector(".favorite-btn");\n';
+  content += '      btn.classList.add("active");\n';
+  content += '      const icon = btn.querySelector("i");\n';
+  content += '      if (icon) icon.setAttribute("fill", "currentColor");\n';
+  content += '    }\n';
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
 
@@ -395,6 +399,7 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
+  // FIX: Herz-Füllung via JavaScript
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -404,6 +409,14 @@ function genHTML() {
   content += '      setTimeout(() => btn.classList.remove("animating"), 500);\n';
   content += '      card.classList.toggle("favorite"); \n';
   content += '      btn.classList.toggle("active");\n';
+  content += '      const icon = btn.querySelector("i");\n';
+  content += '      if (icon) {\n';
+  content += '        if (btn.classList.contains("active")) {\n';
+  content += '          icon.setAttribute("fill", "currentColor");\n';
+  content += '        } else {\n';
+  content += '          icon.setAttribute("fill", "none");\n';
+  content += '        }\n';
+  content += '      }\n';
   content += '      if (navigator.vibrate) navigator.vibrate(50);\n';
   content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); } \n';
@@ -525,8 +538,13 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
+  // FIX: Dynamische Dropdown-Positionierung
   content += '  function closeAllDropdowns() {\n';
-  content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => d.classList.remove("active"));\n';
+  content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => {\n';
+  content += '      d.classList.remove("active");\n';
+  content += '      d.style.top = "";\n';
+  content += '      d.style.bottom = "";\n';
+  content += '    });\n';
   content += '  }\n\n';
 
   content += '  document.querySelectorAll(".more-options-btn").forEach(btn => {\n';
@@ -535,7 +553,19 @@ function genHTML() {
   content += '      const dropdown = btn.nextElementSibling;\n';
   content += '      const isActive = dropdown.classList.contains("active");\n';
   content += '      closeAllDropdowns();\n';
-  content += '      if (!isActive) dropdown.classList.add("active");\n';
+  content += '      if (!isActive) {\n';
+  content += '        const btnRect = btn.getBoundingClientRect();\n';
+  content += '        const dropdownHeight = 250;\n';
+  content += '        const viewportHeight = window.innerHeight;\n';
+  content += '        if (btnRect.bottom + dropdownHeight > viewportHeight) {\n';
+  content += '          dropdown.style.bottom = "calc(100% + 6px)";\n';
+  content += '          dropdown.style.top = "auto";\n';
+  content += '        } else {\n';
+  content += '          dropdown.style.top = "calc(100% + 6px)";\n';
+  content += '          dropdown.style.bottom = "auto";\n';
+  content += '        }\n';
+  content += '        dropdown.classList.add("active");\n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -734,7 +764,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Herz-Fill & Fullscreen-Modals generiert.');
+  console.log('✅ index.html mit allen Fixes generiert.');
 }
 
 genHTML();
