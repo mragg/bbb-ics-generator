@@ -668,15 +668,21 @@ function genHTML() {
 
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
-  content += '      e.stopPropagation(); closeAllDropdowns(); \n';
+  content += '      e.stopPropagation();\n';
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      const qc = document.getElementById("qr-code-container"); \n';
   content += '      const modal = document.getElementById("qr-modal");\n';
-  content += '      if (qc && typeof QRCode !== "undefined" && modal) {\n';
+  content += '      const dropdown = btn.closest(".more-options-dropdown");\n';
+  content += '      if (qc && typeof QRCode !== "undefined" && modal && dropdown) {\n';
   content += '        qc.innerHTML = ""; \n';
   content += '        try {\n';
   content += '          new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
-  content += '          positionModalAtButton(modal, btn);\n';
+  content += '          const dropdownRect = dropdown.getBoundingClientRect();\n';
+  content += '          modal.style.position = "fixed";\n';
+  content += '          modal.style.top = dropdownRect.top + "px";\n';
+  content += '          modal.style.left = dropdownRect.left + "px";\n';
+  content += '          modal.style.width = dropdownRect.width + "px";\n';
+  content += '          modal.style.padding = "0";\n';
   content += '          modal.classList.add("active");\n';
   content += '        } catch(err) {\n';
   content += '          console.error("QR Code error:", err);\n';
