@@ -1,4 +1,4 @@
-// complete generator script — iFrame-kompatibel mit funktionierendem Dropdown
+// complete generator script — iFrame-kompatibel mit funktionierendem Dropdown, Herz-Fill & Fullscreen-Modals
 const fs = require('fs');
 const path = require('path');
 
@@ -138,10 +138,8 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; }\n' +
-// WICHTIG: overflow: visible statt hidden, damit das Dropdown nicht abgeschnitten wird
 '.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; }\n' +
 '.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
-// WICHTIG: Sehr hoher z-index für expandierte Karten
 '.team-card.expanded { z-index: 9999; }\n' +
 '.team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
@@ -152,8 +150,9 @@ function genHTML() {
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
-'.favorite-btn i { color: #9FA9BE; fill: transparent; transition: all 0.3s ease; width: 18px; height: 18px; }\n' +
-'.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold); }\n' +
+// FIX: !important hinzugefügt, damit Lucide das fill nicht überschreibt
+'.favorite-btn i { color: #9FA9BE; fill: transparent !important; transition: all 0.3s ease; width: 18px; height: 18px; }\n' +
+'.favorite-btn.active i { color: var(--color-gold); fill: var(--color-gold) !important; }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
 '.team-card-header { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; padding-right: 3rem; z-index: 1; position: relative; }\n' +
@@ -166,7 +165,6 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; transition: var(--transition); }\n' +
 '.stat-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: #9FA9BE; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); letter-spacing: 0.05em; }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-// WICHTIG: overflow: visible statt hidden
 '.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; }\n' +
@@ -180,7 +178,6 @@ function genHTML() {
 '.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; }\n' +
 '.more-options-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
-// Dropdown mit position: absolute und sehr hohem z-index
 '.more-options-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
@@ -193,11 +190,12 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; border-color: #10B981; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(232,163,61,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
-'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
+'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 2147483647; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-'.qr-modal, .my-calendar-modal { position: fixed; inset: 0; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
+// FIX: Modals nutzen 100vw/100vh, um aus dem iFrame auszubrechen und den ganzen Bildschirm abzudecken
+'.qr-modal, .my-calendar-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 2147483647; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
 '.qr-modal.active, .my-calendar-modal.active { display: flex; }\n' +
-'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 100000; color: #fff; }\n' +
+'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 2147483648; color: #fff; }\n' +
 '.my-calendar-modal-content { max-height: 90vh; overflow-y: auto; text-align: left; }\n' +
 '.modal-title { font-family: "Oswald", sans-serif; font-size: 1.25rem; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
 '.modal-subtitle { color: #9FA9BE; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }\n' +
@@ -736,7 +734,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit funktionierendem Dropdown generiert.');
+  console.log('✅ index.html mit Herz-Fill & Fullscreen-Modals generiert.');
 }
 
 genHTML();
