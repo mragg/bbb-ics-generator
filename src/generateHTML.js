@@ -1,4 +1,4 @@
-// complete generator script — Desktop-optimiert + Mobile-Enhancements
+// complete generator script — ohne Teilen-Feature
 const fs = require('fs');
 const path = require('path');
 
@@ -105,7 +105,6 @@ function genHTML() {
 '@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }\n' +
 '.quick-access-inner { max-width: 1180px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }\n' +
 '.quick-access-label { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--color-text-muted); font-weight: 500; margin-right: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }\n' +
-// MOBILE: Quick-Access Pills scrollbar
 '.quick-access-pills { display: flex; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; padding: 0.25rem 0; }\n' +
 '.quick-access-pills::-webkit-scrollbar { display: none; }\n' +
 '.quick-access-pill { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; flex-shrink: 0; }\n' +
@@ -215,40 +214,28 @@ function genHTML() {
 '.modal-actions .btn { flex: 1; }\n' +
 '.modal-close-btn { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; width: 100%; font-size: 0.9rem; transition: var(--transition); }\n' +
 '.modal-close-btn:hover { background: rgba(255,255,255,0.2); }\n' +
-
-// ==================== MOBILE OPTIMIERUNGEN ====================
 '@media (max-width: 600px) {\n' +
-// Container
 '  .container { padding: 0 12px 40px; }\n' +
-// Team Cards
 '  .teams-grid { grid-template-columns: 1fr; gap: 16px; }\n' +
 '  .team-card { min-height: auto; scroll-margin-top: 100px; }\n' +
-'  .team-card:hover { transform: none; } /* Kein Hover-Effekt auf Touch */\n' +
-// Favorite Button größer für Touch
+'  .team-card:hover { transform: none; }\n' +
 '  .favorite-btn { width: 44px; height: 44px; top: 10px; right: 10px; }\n' +
 '  .favorite-btn i { width: 22px; height: 22px; }\n' +
-// Team Header
 '  .team-card-header { padding: 0.9rem 1rem; padding-right: 3.5rem; }\n' +
 '  .team-name { font-size: 1.2em; }\n' +
 '  .team-badge { font-size: 0.7em; padding: 3px 8px; }\n' +
-// Stats größer für Touch
 '  .team-stats { padding: 0.6rem 0.5rem; }\n' +
 '  .stat { padding: 0.5rem 0.3rem; min-width: 60px; }\n' +
 '  .stat-val { font-size: 1.2rem; }\n' +
 '  .stat-label { font-size: 0.65rem; gap: 2px; }\n' +
-// Actions
 '  .team-actions { padding: 1rem; gap: 0.6rem; }\n' +
 '  .calendar-type-label { font-size: 0.75rem !important; }\n' +
-// Buttons größer für Touch (min 44px Höhe)
 '  .btn { padding: 0.75rem 1rem; font-size: 0.9rem; min-height: 44px; }\n' +
 '  .primary-actions { flex-direction: column; gap: 0.5rem; }\n' +
 '  .more-options-btn { padding: 0.75rem; font-size: 0.9rem; min-height: 44px; }\n' +
-// Dropdown Items größer
 '  .more-option-item { padding: 0.75rem; font-size: 0.9rem; min-height: 44px; }\n' +
 '  .more-option-item i { width: 18px; height: 18px; }\n' +
-// Copy Button
 '  .btn-copy { padding: 0.6rem 0.85rem; font-size: 0.85rem; min-height: 40px; }\n' +
-// Quick Access
 '  .quick-access { padding: 0.6rem 0.75rem; margin-bottom: 1rem; }\n' +
 '  .quick-access-inner { gap: 0.4rem; }\n' +
 '  .quick-access-label { font-size: 0.7rem; margin-right: 0.3rem; }\n' +
@@ -258,45 +245,34 @@ function genHTML() {
 '  .pill-name { font-size: 0.8rem; }\n' +
 '  .pill-age { font-size: 0.65rem; }\n' +
 '  .my-calendar-btn { padding: 0.4rem 0.75rem; font-size: 0.8rem; }\n' +
-// Download Section
 '  .download-section { padding: 1.2rem; }\n' +
 '  .download-section h2 { font-size: 1.2rem; }\n' +
 '  .download-section p { font-size: 0.8rem; margin-bottom: 0.75rem; }\n' +
 '  .download-buttons { flex-direction: column; gap: 0.5rem; }\n' +
 '  .download-btn { justify-content: center; padding: 0.7rem 1rem; min-height: 44px; }\n' +
-// Search
 '  .search-wrapper { margin-bottom: 1rem; }\n' +
-'  .search-input { padding: 0.7rem 1rem 0.7rem 2.5rem; font-size: 16px; } /* 16px verhindert Zoom auf iOS */\n' +
+'  .search-input { padding: 0.7rem 1rem 0.7rem 2.5rem; font-size: 16px; }\n' +
 '  .search-icon { left: 0.75rem; width: 16px; height: 16px; }\n' +
-// Modals - zentriert auf Mobile
 '  .qr-modal, .my-calendar-modal { padding: 0.75rem; }\n' +
 '  .qr-modal-content, .my-calendar-modal-content { padding: 1.2rem; max-width: 100%; }\n' +
 '  .my-calendar-modal-content { max-height: 85vh; }\n' +
 '  .modal-title { font-size: 1.1rem; }\n' +
 '  .modal-subtitle { font-size: 0.8rem; }\n' +
 '  .modal-close-btn { padding: 0.75rem 1rem; min-height: 44px; }\n' +
-// Calendar Type Selector
 '  .calendar-type-selector { flex-direction: column; gap: 0.4rem; }\n' +
 '  .calendar-type-btn { padding: 0.7rem; min-height: 44px; font-size: 0.85rem; }\n' +
-// Checkbox Items
 '  .team-checkbox-item { padding: 0.7rem; min-height: 44px; }\n' +
 '  .team-checkbox-item input[type="checkbox"] { width: 22px; height: 22px; }\n' +
 '  .team-checkbox-item label { font-size: 0.85rem; }\n' +
-// Toast
 '  .toast { bottom: 1rem; padding: 0.65rem 1rem; font-size: 0.85rem; }\n' +
 '}\n' +
-
-// Tablet
 '@media (min-width: 601px) and (max-width: 900px) {\n' +
 '  .teams-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }\n' +
 '  .team-card { min-height: 200px; }\n' +
 '}\n' +
-
-// Desktop - keine Änderungen, alles bleibt wie oben definiert
 '@media (min-width: 901px) {\n' +
 '  .teams-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; }\n' +
 '}\n' +
-
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
@@ -471,7 +447,6 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // Herz-Füllung via JavaScript
   content += '  function updateHeartIcon(btn, isActive) {\n';
   content += '    const svg = btn.querySelector("svg");\n';
   content += '    if (svg) {\n';
@@ -616,7 +591,6 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // Dropdown mit dynamischer Position
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => {\n';
   content += '      d.classList.remove("active");\n';
@@ -691,6 +665,7 @@ function genHTML() {
   content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
   content += '        window.open("https://outlook.live.com/calendar/0/addfromweb", "_blank"); \n';
   content += '        showToast("Link kopiert! Füge ihn bei Outlook ein."); \n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -705,7 +680,6 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // QR-Code Modal - Mobile zentriert, Desktop am Dropdown
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
   content += '      e.stopPropagation();\n';
@@ -883,7 +857,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Mobile-Optimierungen generiert.');
+  console.log('✅ index.html ohne Teilen-Feature generiert.');
 }
 
-genHTML();
+genHTML(); 
