@@ -1,4 +1,4 @@
-// complete generator script — Modals an Button-Position & Herz-Fill via SVG
+// complete generator script — Desktop-optimiert + Mobile-Enhancements
 const fs = require('fs');
 const path = require('path');
 
@@ -105,7 +105,10 @@ function genHTML() {
 '@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }\n' +
 '.quick-access-inner { max-width: 1180px; margin: 0 auto; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }\n' +
 '.quick-access-label { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--color-text-muted); font-weight: 500; margin-right: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }\n' +
-'.quick-access-pill { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; }\n' +
+// MOBILE: Quick-Access Pills scrollbar
+'.quick-access-pills { display: flex; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; padding: 0.25rem 0; }\n' +
+'.quick-access-pills::-webkit-scrollbar { display: none; }\n' +
+'.quick-access-pill { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-text); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; flex-shrink: 0; }\n' +
 '.quick-access-pill:hover { border-color: var(--color-primary); color: var(--color-primary); transform: translateY(-2px); }\n' +
 '.pill-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }\n' +
 '.pill-icon i { width: 14px; height: 14px; color: white; }\n' +
@@ -116,7 +119,7 @@ function genHTML() {
 '.pill-text { display: flex; flex-direction: column; gap: 0.125rem; }\n' +
 '.pill-name { font-weight: 700; line-height: 1.2; }\n' +
 '.pill-age { font-size: 0.7rem; color: var(--color-text-muted); font-weight: 500; }\n' +
-'.my-calendar-btn { background: var(--color-primary); color: var(--color-dark); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; margin-left: auto; }\n' +
+'.my-calendar-btn { background: var(--color-primary); color: var(--color-dark); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; margin-left: auto; flex-shrink: 0; }\n' +
 '.my-calendar-btn:hover { background: #fff; transform: translateY(-1px); }\n' +
 '.my-calendar-btn i { width: 16px; height: 16px; }\n' +
 '.download-section { background: var(--color-dark); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }\n' +
@@ -151,7 +154,6 @@ function genHTML() {
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
 '.favorite-btn i { color: #9FA9BE; transition: color 0.3s ease; width: 18px; height: 18px; }\n' +
-// FIX: SVG-Element direkt ansprechen für fill
 '.favorite-btn svg { transition: fill 0.3s ease, stroke 0.3s ease; }\n' +
 '.favorite-btn.active svg { fill: var(--color-gold) !important; stroke: var(--color-gold) !important; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); }\n' +
@@ -192,9 +194,8 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; border-color: #10B981; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(232,163,61,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
-'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
+'.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); max-width: 90vw; }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-// FIX: Modals sind jetzt positionierbar an Button-Position
 '.qr-modal, .my-calendar-modal { position: fixed; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; padding: 1rem; }\n' +
 '.qr-modal.active, .my-calendar-modal.active { display: block; }\n' +
 '.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 100000; color: #fff; }\n' +
@@ -214,18 +215,88 @@ function genHTML() {
 '.modal-actions .btn { flex: 1; }\n' +
 '.modal-close-btn { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 0.65rem 1.25rem; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; width: 100%; font-size: 0.9rem; transition: var(--transition); }\n' +
 '.modal-close-btn:hover { background: rgba(255,255,255,0.2); }\n' +
-'@media (max-width: 900px) {\n' +
-'  .teams-grid { grid-template-columns: repeat(2, 1fr); }\n' +
-'}\n' +
+
+// ==================== MOBILE OPTIMIERUNGEN ====================
 '@media (max-width: 600px) {\n' +
-'  .teams-grid { grid-template-columns: 1fr; }\n' +
-'  .quick-access-inner { justify-content: center; }\n' +
-'  .download-buttons { flex-direction: column; align-items: stretch; }\n' +
-'  .download-btn { justify-content: center; }\n' +
-'  .primary-actions { flex-direction: column; }\n' +
-'  .calendar-type-selector { flex-direction: column; }\n' +
-'  .team-card { scroll-margin-top: 120px; }\n' +
+// Container
+'  .container { padding: 0 12px 40px; }\n' +
+// Team Cards
+'  .teams-grid { grid-template-columns: 1fr; gap: 16px; }\n' +
+'  .team-card { min-height: auto; scroll-margin-top: 100px; }\n' +
+'  .team-card:hover { transform: none; } /* Kein Hover-Effekt auf Touch */\n' +
+// Favorite Button größer für Touch
+'  .favorite-btn { width: 44px; height: 44px; top: 10px; right: 10px; }\n' +
+'  .favorite-btn i { width: 22px; height: 22px; }\n' +
+// Team Header
+'  .team-card-header { padding: 0.9rem 1rem; padding-right: 3.5rem; }\n' +
+'  .team-name { font-size: 1.2em; }\n' +
+'  .team-badge { font-size: 0.7em; padding: 3px 8px; }\n' +
+// Stats größer für Touch
+'  .team-stats { padding: 0.6rem 0.5rem; }\n' +
+'  .stat { padding: 0.5rem 0.3rem; min-width: 60px; }\n' +
+'  .stat-val { font-size: 1.2rem; }\n' +
+'  .stat-label { font-size: 0.65rem; gap: 2px; }\n' +
+// Actions
+'  .team-actions { padding: 1rem; gap: 0.6rem; }\n' +
+'  .calendar-type-label { font-size: 0.75rem !important; }\n' +
+// Buttons größer für Touch (min 44px Höhe)
+'  .btn { padding: 0.75rem 1rem; font-size: 0.9rem; min-height: 44px; }\n' +
+'  .primary-actions { flex-direction: column; gap: 0.5rem; }\n' +
+'  .more-options-btn { padding: 0.75rem; font-size: 0.9rem; min-height: 44px; }\n' +
+// Dropdown Items größer
+'  .more-option-item { padding: 0.75rem; font-size: 0.9rem; min-height: 44px; }\n' +
+'  .more-option-item i { width: 18px; height: 18px; }\n' +
+// Copy Button
+'  .btn-copy { padding: 0.6rem 0.85rem; font-size: 0.85rem; min-height: 40px; }\n' +
+// Quick Access
+'  .quick-access { padding: 0.6rem 0.75rem; margin-bottom: 1rem; }\n' +
+'  .quick-access-inner { gap: 0.4rem; }\n' +
+'  .quick-access-label { font-size: 0.7rem; margin-right: 0.3rem; }\n' +
+'  .quick-access-pill { padding: 0.4rem 0.75rem; font-size: 0.8rem; }\n' +
+'  .pill-icon { width: 20px; height: 20px; }\n' +
+'  .pill-icon i { width: 12px; height: 12px; }\n' +
+'  .pill-name { font-size: 0.8rem; }\n' +
+'  .pill-age { font-size: 0.65rem; }\n' +
+'  .my-calendar-btn { padding: 0.4rem 0.75rem; font-size: 0.8rem; }\n' +
+// Download Section
+'  .download-section { padding: 1.2rem; }\n' +
+'  .download-section h2 { font-size: 1.2rem; }\n' +
+'  .download-section p { font-size: 0.8rem; margin-bottom: 0.75rem; }\n' +
+'  .download-buttons { flex-direction: column; gap: 0.5rem; }\n' +
+'  .download-btn { justify-content: center; padding: 0.7rem 1rem; min-height: 44px; }\n' +
+// Search
+'  .search-wrapper { margin-bottom: 1rem; }\n' +
+'  .search-input { padding: 0.7rem 1rem 0.7rem 2.5rem; font-size: 16px; } /* 16px verhindert Zoom auf iOS */\n' +
+'  .search-icon { left: 0.75rem; width: 16px; height: 16px; }\n' +
+// Modals - zentriert auf Mobile
+'  .qr-modal, .my-calendar-modal { padding: 0.75rem; }\n' +
+'  .qr-modal-content, .my-calendar-modal-content { padding: 1.2rem; max-width: 100%; }\n' +
+'  .my-calendar-modal-content { max-height: 85vh; }\n' +
+'  .modal-title { font-size: 1.1rem; }\n' +
+'  .modal-subtitle { font-size: 0.8rem; }\n' +
+'  .modal-close-btn { padding: 0.75rem 1rem; min-height: 44px; }\n' +
+// Calendar Type Selector
+'  .calendar-type-selector { flex-direction: column; gap: 0.4rem; }\n' +
+'  .calendar-type-btn { padding: 0.7rem; min-height: 44px; font-size: 0.85rem; }\n' +
+// Checkbox Items
+'  .team-checkbox-item { padding: 0.7rem; min-height: 44px; }\n' +
+'  .team-checkbox-item input[type="checkbox"] { width: 22px; height: 22px; }\n' +
+'  .team-checkbox-item label { font-size: 0.85rem; }\n' +
+// Toast
+'  .toast { bottom: 1rem; padding: 0.65rem 1rem; font-size: 0.85rem; }\n' +
 '}\n' +
+
+// Tablet
+'@media (min-width: 601px) and (max-width: 900px) {\n' +
+'  .teams-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }\n' +
+'  .team-card { min-height: 200px; }\n' +
+'}\n' +
+
+// Desktop - keine Änderungen, alles bleibt wie oben definiert
+'@media (min-width: 901px) {\n' +
+'  .teams-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; }\n' +
+'}\n' +
+
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
@@ -233,7 +304,7 @@ function genHTML() {
 '<div class="quick-access" id="quick-access">\n' +
 '  <div class="quick-access-inner">\n' +
 '    <span class="quick-access-label">⭐ Favoriten:</span>\n' +
-'    <div id="quick-access-pills"></div>\n' +
+'    <div class="quick-access-pills" id="quick-access-pills"></div>\n' +
 '    <button class="my-calendar-btn" id="my-calendar-btn"><i data-lucide="calendar-plus"></i><span>Mein Kalender</span></button>\n' +
 '  </div>\n' +
 '</div>\n' +
@@ -401,7 +472,7 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // FIX: Herz-Füllung via JavaScript - SVG direkt manipulieren
+  // Herz-Füllung via JavaScript
   content += '  function updateHeartIcon(btn, isActive) {\n';
   content += '    const svg = btn.querySelector("svg");\n';
   content += '    if (svg) {\n';
@@ -546,6 +617,7 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
+  // Dropdown mit dynamischer Position
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => {\n';
   content += '      d.classList.remove("active");\n';
@@ -645,27 +717,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // FIX: QR-Code Modal an Button-Position öffnen
-  content += '  function positionModalAtButton(modal, button) {\n';
-  content += '    const btnRect = button.getBoundingClientRect();\n';
-  content += '    const modalContent = modal.querySelector(".qr-modal-content, .my-calendar-modal-content");\n';
-  content += '    const modalWidth = 400;\n';
-  content += '    const modalHeight = modalContent ? modalContent.offsetHeight : 300;\n';
-  content += '    const viewportWidth = window.innerWidth;\n';
-  content += '    const viewportHeight = window.innerHeight;\n';
-  content += '    let left = btnRect.left + (btnRect.width / 2) - (modalWidth / 2);\n';
-  content += '    let top = btnRect.bottom + 10;\n';
-  content += '    if (left < 10) left = 10;\n';
-  content += '    if (left + modalWidth > viewportWidth - 10) left = viewportWidth - modalWidth - 10;\n';
-  content += '    if (top + modalHeight > viewportHeight - 10) {\n';
-  content += '      top = btnRect.top - modalHeight - 10;\n';
-  content += '    }\n';
-  content += '    if (top < 10) top = 10;\n';
-  content += '    modal.style.left = left + "px";\n';
-  content += '    modal.style.top = top + "px";\n';
-  content += '    modal.style.width = modalWidth + "px";\n';
-  content += '  }\n\n';
-
+  // QR-Code Modal - Mobile zentriert, Desktop am Dropdown
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
   content += '      e.stopPropagation();\n';
@@ -677,12 +729,24 @@ function genHTML() {
   content += '        qc.innerHTML = ""; \n';
   content += '        try {\n';
   content += '          new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
-  content += '          const dropdownRect = dropdown.getBoundingClientRect();\n';
-  content += '          modal.style.position = "fixed";\n';
-  content += '          modal.style.top = dropdownRect.top + "px";\n';
-  content += '          modal.style.left = dropdownRect.left + "px";\n';
-  content += '          modal.style.width = dropdownRect.width + "px";\n';
-  content += '          modal.style.padding = "0";\n';
+  content += '          const isMobile = window.innerWidth < 600;\n';
+  content += '          if (isMobile) {\n';
+  content += '            modal.style.position = "fixed";\n';
+  content += '            modal.style.top = "50%";\n';
+  content += '            modal.style.left = "50%";\n';
+  content += '            modal.style.transform = "translate(-50%, -50%)";\n';
+  content += '            modal.style.width = "90%";\n';
+  content += '            modal.style.maxWidth = "400px";\n';
+  content += '            modal.style.padding = "0";\n';
+  content += '          } else {\n';
+  content += '            const dropdownRect = dropdown.getBoundingClientRect();\n';
+  content += '            modal.style.position = "fixed";\n';
+  content += '            modal.style.top = dropdownRect.top + "px";\n';
+  content += '            modal.style.left = dropdownRect.left + "px";\n';
+  content += '            modal.style.width = dropdownRect.width + "px";\n';
+  content += '            modal.style.padding = "0";\n';
+  content += '            modal.style.transform = "none";\n';
+  content += '          }\n';
   content += '          modal.classList.add("active");\n';
   content += '        } catch(err) {\n';
   content += '          console.error("QR Code error:", err);\n';
@@ -705,7 +769,6 @@ function genHTML() {
   content += '  const mcList = document.getElementById("team-checkbox-list");\n';
   content += '  let mcType = "all";\n\n';
 
-  // FIX: Mein Kalender Modal an Button-Position öffnen
   content += '  if (mcBtn && mcModal) {\n';
   content += '    mcBtn.addEventListener("click", () => {\n';
   content += '      if (!mcList) return;\n';
@@ -721,9 +784,40 @@ function genHTML() {
   content += '        item.innerHTML = \'<input type="checkbox" id="mc-\' + tid + \'" value="\' + tid + \'" checked><label for="mc-\' + tid + \'">\' + tn + \'</label>\';\n';
   content += '        mcList.appendChild(item);\n';
   content += '      });\n';
-  content += '      positionModalAtButton(mcModal, mcBtn);\n';
+  content += '      const isMobile = window.innerWidth < 600;\n';
+  content += '      if (isMobile) {\n';
+  content += '        mcModal.style.position = "fixed";\n';
+  content += '        mcModal.style.top = "50%";\n';
+  content += '        mcModal.style.left = "50%";\n';
+  content += '        mcModal.style.transform = "translate(-50%, -50%)";\n';
+  content += '        mcModal.style.width = "90%";\n';
+  content += '        mcModal.style.maxWidth = "500px";\n';
+  content += '      } else {\n';
+  content += '        positionModalAtButton(mcModal, mcBtn);\n';
+  content += '      }\n';
   content += '      mcModal.classList.add("active");\n';
   content += '    });\n';
+  content += '  }\n\n';
+
+  content += '  function positionModalAtButton(modal, button) {\n';
+  content += '    const btnRect = button.getBoundingClientRect();\n';
+  content += '    const modalContent = modal.querySelector(".my-calendar-modal-content");\n';
+  content += '    const modalWidth = 400;\n';
+  content += '    const modalHeight = modalContent ? modalContent.offsetHeight : 300;\n';
+  content += '    const viewportWidth = window.innerWidth;\n';
+  content += '    const viewportHeight = window.innerHeight;\n';
+  content += '    let left = btnRect.left + (btnRect.width / 2) - (modalWidth / 2);\n';
+  content += '    let top = btnRect.bottom + 10;\n';
+  content += '    if (left < 10) left = 10;\n';
+  content += '    if (left + modalWidth > viewportWidth - 10) left = viewportWidth - modalWidth - 10;\n';
+  content += '    if (top + modalHeight > viewportHeight - 10) {\n';
+  content += '      top = btnRect.top - modalHeight - 10;\n';
+  content += '    }\n';
+  content += '    if (top < 10) top = 10;\n';
+  content += '    modal.style.left = left + "px";\n';
+  content += '    modal.style.top = top + "px";\n';
+  content += '    modal.style.width = modalWidth + "px";\n';
+  content += '    modal.style.transform = "none";\n';
   content += '  }\n\n';
 
   content += '  document.querySelectorAll(".calendar-type-btn").forEach(btn => {\n';
@@ -801,7 +895,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit allen Fixes generiert.');
+  console.log('✅ index.html mit Mobile-Optimierungen generiert.');
 }
 
 genHTML();
