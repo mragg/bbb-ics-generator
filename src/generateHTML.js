@@ -1,4 +1,4 @@
-// complete generator script — mit Herz-Fill via JS, iFrame-optimierten Modals & dynamischem Dropdown
+// complete generator script — Modals an Button-Position & Herz-Fill via SVG
 const fs = require('fs');
 const path = require('path');
 
@@ -150,7 +150,10 @@ function genHTML() {
 '.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
-'.favorite-btn i { color: #9FA9BE; transition: all 0.3s ease; width: 18px; height: 18px; }\n' +
+'.favorite-btn i { color: #9FA9BE; transition: color 0.3s ease; width: 18px; height: 18px; }\n' +
+// FIX: SVG-Element direkt ansprechen für fill
+'.favorite-btn svg { transition: fill 0.3s ease, stroke 0.3s ease; }\n' +
+'.favorite-btn.active svg { fill: var(--color-gold) !important; stroke: var(--color-gold) !important; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); }\n' +
 '@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
 '.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
@@ -191,10 +194,11 @@ function genHTML() {
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
 '.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
-'.qr-modal, .my-calendar-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 1rem; }\n' +
-'.qr-modal.active, .my-calendar-modal.active { display: flex; }\n' +
-'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 100000; color: #fff; }\n' +
-'.my-calendar-modal-content { max-height: 90vh; overflow-y: auto; text-align: left; }\n' +
+// FIX: Modals sind jetzt positionierbar an Button-Position
+'.qr-modal, .my-calendar-modal { position: fixed; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; padding: 1rem; }\n' +
+'.qr-modal.active, .my-calendar-modal.active { display: block; }\n' +
+'.qr-modal-content, .my-calendar-modal-content { background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); position: relative; z-index: 100000; color: #fff; }\n' +
+'.my-calendar-modal-content { max-height: 80vh; overflow-y: auto; text-align: left; }\n' +
 '.modal-title { font-family: "Oswald", sans-serif; font-size: 1.25rem; margin-bottom: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
 '.modal-subtitle { color: #9FA9BE; font-size: 0.85rem; margin-bottom: 1rem; text-align: center; }\n' +
 '.qr-code-container { background: white; padding: 1rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1rem; }\n' +
@@ -293,7 +297,7 @@ function genHTML() {
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel" style="color:#fff; border-color:rgba(255,255,255,0.2);">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
   content += '<div class="toast" id="toast"><i data-lucide="check-circle" style="width:18px;height:18px;"></i><span id="toast-text">Link kopiert!</span></div>\n';
 
-  // JAVASCRIPT MIT IFRAME-KOMPATIBLEN FALLBACKS
+  // JAVASCRIPT
   content += '<script>\n';
   
   content += '  function copyToClipboard(text) {\n';
@@ -366,8 +370,6 @@ function genHTML() {
   content += '      card.classList.add("favorite"); \n';
   content += '      const btn = card.querySelector(".favorite-btn");\n';
   content += '      btn.classList.add("active");\n';
-  content += '      const icon = btn.querySelector("i");\n';
-  content += '      if (icon) icon.setAttribute("fill", "currentColor");\n';
   content += '    }\n';
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
@@ -399,7 +401,20 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // FIX: Herz-Füllung via JavaScript
+  // FIX: Herz-Füllung via JavaScript - SVG direkt manipulieren
+  content += '  function updateHeartIcon(btn, isActive) {\n';
+  content += '    const svg = btn.querySelector("svg");\n';
+  content += '    if (svg) {\n';
+  content += '      if (isActive) {\n';
+  content += '        svg.style.fill = "#E8A33D";\n';
+  content += '        svg.style.stroke = "#E8A33D";\n';
+  content += '      } else {\n';
+  content += '        svg.style.fill = "none";\n';
+  content += '        svg.style.stroke = "#9FA9BE";\n';
+  content += '      }\n';
+  content += '    }\n';
+  content += '  }\n\n';
+
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -409,14 +424,7 @@ function genHTML() {
   content += '      setTimeout(() => btn.classList.remove("animating"), 500);\n';
   content += '      card.classList.toggle("favorite"); \n';
   content += '      btn.classList.toggle("active");\n';
-  content += '      const icon = btn.querySelector("i");\n';
-  content += '      if (icon) {\n';
-  content += '        if (btn.classList.contains("active")) {\n';
-  content += '          icon.setAttribute("fill", "currentColor");\n';
-  content += '        } else {\n';
-  content += '          icon.setAttribute("fill", "none");\n';
-  content += '        }\n';
-  content += '      }\n';
+  content += '      updateHeartIcon(btn, btn.classList.contains("active"));\n';
   content += '      if (navigator.vibrate) navigator.vibrate(50);\n';
   content += '      const f = JSON.parse(localStorage.getItem("favorites") || "[]");\n';
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); } \n';
@@ -538,7 +546,6 @@ function genHTML() {
   content += '    setTimeout(() => card.querySelectorAll(".btn, .more-option-item").forEach(b => b.classList.remove("flash")), 400);\n';
   content += '  }\n\n';
 
-  // FIX: Dynamische Dropdown-Positionierung
   content += '  function closeAllDropdowns() {\n';
   content += '    document.querySelectorAll(".more-options-dropdown").forEach(d => {\n';
   content += '      d.classList.remove("active");\n';
@@ -638,17 +645,39 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
+  // FIX: QR-Code Modal an Button-Position öffnen
+  content += '  function positionModalAtButton(modal, button) {\n';
+  content += '    const btnRect = button.getBoundingClientRect();\n';
+  content += '    const modalContent = modal.querySelector(".qr-modal-content, .my-calendar-modal-content");\n';
+  content += '    const modalWidth = 400;\n';
+  content += '    const modalHeight = modalContent ? modalContent.offsetHeight : 300;\n';
+  content += '    const viewportWidth = window.innerWidth;\n';
+  content += '    const viewportHeight = window.innerHeight;\n';
+  content += '    let left = btnRect.left + (btnRect.width / 2) - (modalWidth / 2);\n';
+  content += '    let top = btnRect.bottom + 10;\n';
+  content += '    if (left < 10) left = 10;\n';
+  content += '    if (left + modalWidth > viewportWidth - 10) left = viewportWidth - modalWidth - 10;\n';
+  content += '    if (top + modalHeight > viewportHeight - 10) {\n';
+  content += '      top = btnRect.top - modalHeight - 10;\n';
+  content += '    }\n';
+  content += '    if (top < 10) top = 10;\n';
+  content += '    modal.style.left = left + "px";\n';
+  content += '    modal.style.top = top + "px";\n';
+  content += '    modal.style.width = modalWidth + "px";\n';
+  content += '  }\n\n';
+
   content += '  document.querySelectorAll(".qr-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => { \n';
   content += '      e.stopPropagation(); closeAllDropdowns(); \n';
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      const qc = document.getElementById("qr-code-container"); \n';
   content += '      const modal = document.getElementById("qr-modal");\n';
-  content += '      if (qc && typeof QRCode !== "undefined") {\n';
+  content += '      if (qc && typeof QRCode !== "undefined" && modal) {\n';
   content += '        qc.innerHTML = ""; \n';
   content += '        try {\n';
   content += '          new QRCode(qc, { text: url, width: 200, height: 200, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H }); \n';
-  content += '          if (modal) { modal.style.display = "flex"; modal.classList.add("active"); }\n';
+  content += '          positionModalAtButton(modal, btn);\n';
+  content += '          modal.classList.add("active");\n';
   content += '        } catch(err) {\n';
   content += '          console.error("QR Code error:", err);\n';
   content += '          showToast("QR-Code konnte nicht erstellt werden");\n';
@@ -660,17 +689,18 @@ function genHTML() {
   content += '  });\n';
   
   content += '  const qrModalClose = document.getElementById("qr-modal-close");\n';
-  content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => { const m = document.getElementById("qr-modal"); if (m) { m.classList.remove("active"); m.style.display = "none"; } });\n';
+  content += '  if (qrModalClose) qrModalClose.addEventListener("click", () => { const m = document.getElementById("qr-modal"); if (m) { m.classList.remove("active"); } });\n';
   
   content += '  const qrModal = document.getElementById("qr-modal");\n';
-  content += '  if (qrModal) qrModal.addEventListener("click", (e) => { if (e.target.id === "qr-modal") { qrModal.classList.remove("active"); qrModal.style.display = "none"; } });\n\n';
+  content += '  if (qrModal) qrModal.addEventListener("click", (e) => { if (e.target.id === "qr-modal") { qrModal.classList.remove("active"); } });\n\n';
 
   content += '  const mcBtn = document.getElementById("my-calendar-btn");\n';
   content += '  const mcModal = document.getElementById("my-calendar-modal");\n';
   content += '  const mcList = document.getElementById("team-checkbox-list");\n';
   content += '  let mcType = "all";\n\n';
 
-  content += '  if (mcBtn) {\n';
+  // FIX: Mein Kalender Modal an Button-Position öffnen
+  content += '  if (mcBtn && mcModal) {\n';
   content += '    mcBtn.addEventListener("click", () => {\n';
   content += '      if (!mcList) return;\n';
   content += '      mcList.innerHTML = "";\n';
@@ -685,7 +715,8 @@ function genHTML() {
   content += '        item.innerHTML = \'<input type="checkbox" id="mc-\' + tid + \'" value="\' + tid + \'" checked><label for="mc-\' + tid + \'">\' + tn + \'</label>\';\n';
   content += '        mcList.appendChild(item);\n';
   content += '      });\n';
-  content += '      if (mcModal) mcModal.classList.add("active");\n';
+  content += '      positionModalAtButton(mcModal, mcBtn);\n';
+  content += '      mcModal.classList.add("active");\n';
   content += '    });\n';
   content += '  }\n\n';
 
