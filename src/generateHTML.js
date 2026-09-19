@@ -1,4 +1,4 @@
-// complete generator script — ohne Teilen-Feature
+// complete generator script — mit ausklappbarer Anleitung
 const fs = require('fs');
 const path = require('path');
 
@@ -135,6 +135,19 @@ function genHTML() {
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; opacity: 0.8; display: block; text-transform: uppercase; }\n' +
 '.download-btn-name { font-size: 0.9rem; font-weight: 700; display: block; }\n' +
+'.instructions { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; }\n' +
+'.instructions-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: var(--transition); background: none; border: none; width: 100%; text-align: left; }\n' +
+'.instructions-toggle:hover { background: rgba(232,163,61,0.05); }\n' +
+'.instructions-toggle i { width: 20px; height: 20px; color: var(--color-primary); transition: transform 0.3s ease; flex-shrink: 0; }\n' +
+'.instructions-toggle.active i { transform: rotate(180deg); }\n' +
+'.instructions-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }\n' +
+'.instructions-content.active { max-height: 600px; }\n' +
+'.instructions-inner { padding: 0 1.25rem 1.25rem; color: var(--color-text); font-size: 0.9rem; line-height: 1.7; }\n' +
+'.instructions-inner h4 { font-family: "Oswald", sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--color-dark); margin: 1rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
+'.instructions-inner h4:first-child { margin-top: 0; }\n' +
+'.instructions-inner ol { margin: 0; padding-left: 1.25rem; }\n' +
+'.instructions-inner li { margin-bottom: 0.35rem; }\n' +
+'.instructions-inner p { margin: 0.75rem 0 0; font-style: italic; color: var(--color-text-muted); font-size: 0.85rem; }\n' +
 '.search-wrapper { margin-bottom: 1.5rem; position: relative; }\n' +
 '.search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 0.95rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); font-family: "Inter", sans-serif; }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
@@ -265,6 +278,9 @@ function genHTML() {
 '  .team-checkbox-item input[type="checkbox"] { width: 22px; height: 22px; }\n' +
 '  .team-checkbox-item label { font-size: 0.85rem; }\n' +
 '  .toast { bottom: 1rem; padding: 0.65rem 1rem; font-size: 0.85rem; }\n' +
+'  .instructions-toggle { padding: 0.85rem 1rem; font-size: 0.9rem; }\n' +
+'  .instructions-inner { padding: 0 1rem 1rem; font-size: 0.85rem; }\n' +
+'  .instructions-inner h4 { font-size: 0.85rem; }\n' +
 '}\n' +
 '@media (min-width: 601px) and (max-width: 900px) {\n' +
 '  .teams-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }\n' +
@@ -299,6 +315,31 @@ function genHTML() {
     }
     content += '<div class="download-section"><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
   }
+
+  content += '<div class="instructions">\n';
+  content += '  <button class="instructions-toggle" id="instructions-toggle">\n';
+  content += '    <span>📖 Anleitung: Kalender abonnieren</span>\n';
+  content += '    <i data-lucide="chevron-down"></i>\n';
+  content += '  </button>\n';
+  content += '  <div class="instructions-content" id="instructions-content">\n';
+  content += '    <div class="instructions-inner">\n';
+  content += '      <h4>Kalender abonnieren (Google Kalender)</h4>\n';
+  content += '      <ol>\n';
+  content += '        <li>Klicken Sie beim gewünschten Team auf <strong>Link kopieren</strong>.</li>\n';
+  content += '        <li>Klicken Sie anschließend auf <strong>Google Kalender</strong>.</li>\n';
+  content += '        <li>Fügen Sie den zuvor kopierten Link ein und klicken Sie auf <strong>Abonnieren</strong>.</li>\n';
+  content += '      </ol>\n';
+  content += '      <h4>Synchronisierung in der Google-Kalender-App aktivieren</h4>\n';
+  content += '      <ol>\n';
+  content += '        <li>Öffnen Sie die Google-Kalender-App.</li>\n';
+  content += '        <li>Tippen Sie oben links auf das Menü (☰) und anschließend ganz unten auf <strong>Einstellungen</strong>.</li>\n';
+  content += '        <li>Wählen Sie unter <strong>Weitere Anzeigen</strong> den zuvor abonnierten Kalender aus.</li>\n';
+  content += '        <li>Aktivieren Sie den Schalter <strong>Synchronisieren</strong>.</li>\n';
+  content += '      </ol>\n';
+  content += '      <p>Der abonnierte Kalender wird nun automatisch synchronisiert, aktualisiert und in der Google-Kalender-App angezeigt.</p>\n';
+  content += '    </div>\n';
+  content += '  </div>\n';
+  content += '</div>\n';
 
   content += '<div class="search-wrapper"><i data-lucide="search" class="search-icon"></i><input type="text" class="search-input" id="team-search" placeholder="Team suchen (z.B. U14, Herren, Damen)..."></div>\n';
   content += '<div class="teams-grid" id="teams-grid">\n';
@@ -520,6 +561,16 @@ function genHTML() {
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
   content += '    if (typeof lucide !== "undefined") lucide.createIcons();\n';
+  content += '  }\n\n';
+
+  // Anleitung Toggle
+  content += '  const instrToggle = document.getElementById("instructions-toggle");\n';
+  content += '  const instrContent = document.getElementById("instructions-content");\n';
+  content += '  if (instrToggle && instrContent) {\n';
+  content += '    instrToggle.addEventListener("click", () => {\n';
+  content += '      instrToggle.classList.toggle("active");\n';
+  content += '      instrContent.classList.toggle("active");\n';
+  content += '    });\n';
   content += '  }\n\n';
 
   content += '  const searchInput = document.getElementById("team-search");\n';
@@ -857,7 +908,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html ohne Teilen-Feature generiert.');
+  console.log('✅ index.html mit Anleitung generiert.');
 }
 
-genHTML(); 
+genHTML();
