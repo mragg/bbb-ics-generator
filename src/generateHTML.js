@@ -1,4 +1,4 @@
-// complete generator script — mit ausklappbarer Anleitung
+// complete generator script — mit automatischem Link-Kopieren bei Google Calendar
 const fs = require('fs');
 const path = require('path');
 
@@ -316,6 +316,7 @@ function genHTML() {
     content += '<div class="download-section"><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
   }
 
+  // ANLEITUNG MIT ANGEPASSTEM TEXT
   content += '<div class="instructions">\n';
   content += '  <button class="instructions-toggle" id="instructions-toggle">\n';
   content += '    <span>📖 Anleitung: Kalender abonnieren</span>\n';
@@ -325,9 +326,9 @@ function genHTML() {
   content += '    <div class="instructions-inner">\n';
   content += '      <h4>Kalender abonnieren (Google Kalender)</h4>\n';
   content += '      <ol>\n';
-  content += '        <li>Klicken Sie beim gewünschten Team auf <strong>Link kopieren</strong>.</li>\n';
-  content += '        <li>Klicken Sie anschließend auf <strong>Google Kalender</strong>.</li>\n';
-  content += '        <li>Fügen Sie den zuvor kopierten Link ein und klicken Sie auf <strong>Abonnieren</strong>.</li>\n';
+  content += '        <li>Klicken Sie beim gewünschten Team auf <strong>Google Kalender</strong>. Der Link wird automatisch in die Zwischenablage kopiert.</li>\n';
+  content += '        <li>Fügen Sie den kopierten Link in das Feld bei Google Calendar ein (mit <strong>Strg+V</strong> bzw. auf dem Handy durch langes Drücken und <strong>Einfügen</strong>).</li>\n';
+  content += '        <li>Klicken Sie auf <strong>Abonnieren</strong>.</li>\n';
   content += '      </ol>\n';
   content += '      <h4>Synchronisierung in der Google-Kalender-App aktivieren</h4>\n';
   content += '      <ol>\n';
@@ -700,6 +701,7 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
+  // GOOGLE CALENDAR MIT AUTOMATISCHEM LINK-KOPIEREN
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
   content += '      e.preventDefault(); e.stopPropagation(); \n';
@@ -709,9 +711,19 @@ function genHTML() {
   content += '      closeAllDropdowns();\n';
   content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
   content += '      else if (p === "google") { \n';
-  content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
+  content += '        let copied = false;\n';
+  content += '        try { \n';
+  content += '          await copyToClipboard(url); \n';
+  content += '          copied = true;\n';
+  content += '        } catch(err) { \n';
+  content += '          console.log("Clipboard fallback needed"); \n';
+  content += '        }\n';
   content += '        window.open("https://calendar.google.com/calendar/u/0/r/settings/addbyurl", "_blank");\n';
-  content += '        showToast("Link kopiert! Bitte in der Google Calendar Website einfügen.");\n';
+  content += '        if (copied) {\n';
+  content += '          showToast("Link automatisch kopiert! Füge ihn bei Google Calendar ein (Strg+V).");\n';
+  content += '        } else {\n';
+  content += '          showToast("Bitte kopiere den Link manuell und füge ihn bei Google Calendar ein.");\n';
+  content += '        }\n';
   content += '      } else if (p === "outlook") { \n';
   content += '        try { await copyToClipboard(url); } catch(err) { console.log("Clipboard fallback needed"); }\n';
   content += '        window.open("https://outlook.live.com/calendar/0/addfromweb", "_blank"); \n';
@@ -908,7 +920,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Anleitung generiert.');
+  console.log('✅ index.html mit Google Calendar Auto-Copy generiert.');
 }
 
 genHTML();
