@@ -1,4 +1,4 @@
-// complete generator script — mit Apple Kalender iFrame-Fix
+// complete generator script — mit stark verbesserter Favoriten-Optik
 const fs = require('fs');
 const path = require('path');
 
@@ -75,7 +75,7 @@ function genHTML() {
 '  --color-border: #E1DCCF;\n' +
 '  --color-dark: #10203B;\n' +
 '  --color-dark-hover: #182B4D;\n' +
-'  --color-gold: #E8A33D;\n' +
+'  --color-gold: #FFD700;\n' +
 '  --color-blue: #3B82F6;\n' +
 '  --color-green: #10B981;\n' +
 '  --color-purple: #8B5CF6;\n' +
@@ -155,10 +155,13 @@ function genHTML() {
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; }\n' +
 '.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; }\n' +
 '.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
+'.team-card.favorite::before { background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, transparent 50%), radial-gradient(circle at 88% 8%, rgba(255,215,0,0.35), transparent 50%); }\n' +
 '.team-card.expanded { z-index: 9999; }\n' +
 '.team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
-'.team-card.favorite { border: 1px solid var(--color-gold); box-shadow: 0 0 20px rgba(232,163,61,0.2); }\n' +
+'.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); }\n' +
+'.team-card.favorite::after { content: "⭐"; position: absolute; top: 0.75rem; left: 0.75rem; font-size: 1.2rem; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: starPulse 2s ease-in-out infinite; }\n' +
+'@keyframes starPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }\n' +
 '.team-card.age-blue { border-left: 4px solid var(--color-blue); }\n' +
 '.team-card.age-green { border-left: 4px solid var(--color-green); }\n' +
 '.team-card.age-purple { border-left: 4px solid var(--color-purple); }\n' +
@@ -232,6 +235,7 @@ function genHTML() {
 '  .teams-grid { grid-template-columns: 1fr; gap: 16px; }\n' +
 '  .team-card { min-height: auto; scroll-margin-top: 100px; }\n' +
 '  .team-card:hover { transform: none; }\n' +
+'  .team-card.favorite::after { font-size: 1.4rem; top: 12px; left: 12px; }\n' +
 '  .favorite-btn { width: 44px; height: 44px; top: 10px; right: 10px; }\n' +
 '  .favorite-btn i { width: 22px; height: 22px; }\n' +
 '  .team-card-header { padding: 0.9rem 1rem; padding-right: 3.5rem; }\n' +
@@ -491,8 +495,8 @@ function genHTML() {
   content += '    const svg = btn.querySelector("svg");\n';
   content += '    if (svg) {\n';
   content += '      if (isActive) {\n';
-  content += '        svg.style.fill = "#E8A33D";\n';
-  content += '        svg.style.stroke = "#E8A33D";\n';
+  content += '        svg.style.fill = "#FFD700";\n';
+  content += '        svg.style.stroke = "#FFD700";\n';
   content += '      } else {\n';
   content += '        svg.style.fill = "none";\n';
   content += '        svg.style.stroke = "#9FA9BE";\n';
@@ -916,7 +920,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Apple Kalender iFrame-Fix generiert.');
+  console.log('✅ index.html mit verbesserter Favoriten-Optik generiert.');
 }
 
 genHTML();
