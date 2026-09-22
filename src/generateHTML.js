@@ -1,4 +1,4 @@
-// complete generator script — mit stark verbesserter Favoriten-Optik
+// complete generator script — mit Zeilen-Synchronisierung für alle Teams
 const fs = require('fs');
 const path = require('path');
 
@@ -160,8 +160,6 @@ function genHTML() {
 '.team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); }\n' +
-'.team-card.favorite::after { content: "⭐"; position: absolute; top: 0.75rem; left: 0.75rem; font-size: 1.2rem; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); animation: starPulse 2s ease-in-out infinite; }\n' +
-'@keyframes starPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }\n' +
 '.team-card.age-blue { border-left: 4px solid var(--color-blue); }\n' +
 '.team-card.age-green { border-left: 4px solid var(--color-green); }\n' +
 '.team-card.age-purple { border-left: 4px solid var(--color-purple); }\n' +
@@ -235,7 +233,6 @@ function genHTML() {
 '  .teams-grid { grid-template-columns: 1fr; gap: 16px; }\n' +
 '  .team-card { min-height: auto; scroll-margin-top: 100px; }\n' +
 '  .team-card:hover { transform: none; }\n' +
-'  .team-card.favorite::after { font-size: 1.4rem; top: 12px; left: 12px; }\n' +
 '  .favorite-btn { width: 44px; height: 44px; top: 10px; right: 10px; }\n' +
 '  .favorite-btn i { width: 22px; height: 22px; }\n' +
 '  .team-card-header { padding: 0.9rem 1rem; padding-right: 3.5rem; }\n' +
@@ -504,6 +501,27 @@ function genHTML() {
   content += '    }\n';
   content += '  }\n\n';
 
+  // NEU: Zeilen-Synchronisierung
+  content += '  function syncRowExpansion(expandedCard) {\n';
+  content += '    const allCards = Array.from(grid.querySelectorAll(".team-card"));\n';
+  content += '    const expandedTop = expandedCard.getBoundingClientRect().top;\n';
+  content += '    allCards.forEach(card => {\n';
+  content += '      if (card !== expandedCard) {\n';
+  content += '        const rect = card.getBoundingClientRect();\n';
+  content += '        if (Math.abs(rect.top - expandedTop) < 50) {\n';
+  content += '          card.classList.add("expanded");\n';
+  content += '        }\n';
+  content += '      }\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
+  content += '  function resetRowExpansion() {\n';
+  content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '      card.classList.remove("expanded");\n';
+  content += '      resetCardToAll(card);\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -586,15 +604,18 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
+  // GEÄNDERT: Team-Card Click mit Zeilen-Synchronisierung
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    card.addEventListener("click", (e) => {\n';
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
   content += '      const isExpanded = card.classList.contains("expanded");\n';
-  content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
-  content += '        if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } \n';
-  content += '      });\n';
-  content += '      if (!isExpanded) card.classList.add("expanded"); \n';
-  content += '      else { card.classList.remove("expanded"); resetCardToAll(card); }\n';
+  content += '      if (isExpanded) {\n';
+  content += '        resetRowExpansion();\n';
+  content += '      } else {\n';
+  content += '        resetRowExpansion();\n';
+  content += '        card.classList.add("expanded");\n';
+  content += '        setTimeout(() => syncRowExpansion(card), 50);\n';
+  content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -604,20 +625,20 @@ function genHTML() {
   content += '    if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
+  // GEÄNDERT: Stat Click mit Zeilen-Synchronisierung
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
   content += '      const card = stat.closest(".team-card");\n';
   content += '      const type = stat.getAttribute("data-type");\n';
-  content += '      document.querySelectorAll(".team-card").forEach(c => { \n';
-  content += '        if (c !== card) { c.classList.remove("expanded"); resetCardToAll(c); } \n';
-  content += '      });\n';
+  content += '      resetRowExpansion();\n';
   content += '      card.classList.add("expanded");\n';
   content += '      card.scrollIntoView({ behavior: "smooth", block: "center" });\n';
   content += '      if (navigator.vibrate) navigator.vibrate(30);\n';
   content += '      card.querySelectorAll(".stat").forEach(s => s.classList.remove("active"));\n';
   content += '      stat.classList.add("active");\n';
   content += '      updateCardLinks(card, type);\n';
+  content += '      setTimeout(() => syncRowExpansion(card), 50);\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -920,7 +941,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit verbesserter Favoriten-Optik generiert.');
+  console.log('✅ index.html mit Zeilen-Synchronisierung generiert.');
 }
 
 genHTML();
