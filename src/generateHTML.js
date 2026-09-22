@@ -1,4 +1,4 @@
-// complete generator script — mit automatischem Link-Kopieren bei Google Calendar
+// complete generator script — mit Apple Kalender iFrame-Fix
 const fs = require('fs');
 const path = require('path');
 
@@ -316,7 +316,6 @@ function genHTML() {
     content += '<div class="download-section"><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
   }
 
-  // ANLEITUNG MIT ANGEPASSTEM TEXT
   content += '<div class="instructions">\n';
   content += '  <button class="instructions-toggle" id="instructions-toggle">\n';
   content += '    <span>📖 Anleitung: Kalender abonnieren</span>\n';
@@ -385,7 +384,6 @@ function genHTML() {
   content += '<div class="my-calendar-modal" id="my-calendar-modal"><div class="my-calendar-modal-content"><div class="modal-title">📅 Mein Kalender</div><div class="modal-subtitle">Wähle Teams und Typ für deinen persönlichen Kalender</div><div class="team-checkbox-list" id="team-checkbox-list"></div><div class="calendar-type-selector"><button class="calendar-type-btn active" data-type="all">Alle Spiele</button><button class="calendar-type-btn" data-type="home">Nur Heim</button><button class="calendar-type-btn" data-type="away">Nur Auswärts</button></div><div class="modal-actions"><button class="btn btn-outline" id="my-calendar-cancel" style="color:#fff; border-color:rgba(255,255,255,0.2);">Abbrechen</button><button class="btn btn-primary" id="my-calendar-create">Kalender erstellen</button></div></div></div>\n';
   content += '<div class="toast" id="toast"><i data-lucide="check-circle" style="width:18px;height:18px;"></i><span id="toast-text">Link kopiert!</span></div>\n';
 
-  // JAVASCRIPT
   content += '<script>\n';
   
   content += '  function copyToClipboard(text) {\n';
@@ -564,7 +562,6 @@ function genHTML() {
   content += '    if (typeof lucide !== "undefined") lucide.createIcons();\n';
   content += '  }\n\n';
 
-  // Anleitung Toggle
   content += '  const instrToggle = document.getElementById("instructions-toggle");\n';
   content += '  const instrContent = document.getElementById("instructions-content");\n';
   content += '  if (instrToggle && instrContent) {\n';
@@ -701,7 +698,6 @@ function genHTML() {
   content += '    });\n';
   content += '  });\n\n';
 
-  // GOOGLE CALENDAR MIT AUTOMATISCHEM LINK-KOPIEREN
   content += '  document.querySelectorAll(".calendar-link").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => { \n';
   content += '      e.preventDefault(); e.stopPropagation(); \n';
@@ -709,7 +705,7 @@ function genHTML() {
   content += '      const url = btn.getAttribute("data-url"); \n';
   content += '      if (!url) return;\n';
   content += '      closeAllDropdowns();\n';
-  content += '      if (p === "apple") { window.location.href = url.replace("https://","webcal://"); }\n';
+  content += '      if (p === "apple") { window.open(url.replace("https://","webcal://"), "_blank"); }\n';
   content += '      else if (p === "google") { \n';
   content += '        let copied = false;\n';
   content += '        try { \n';
@@ -920,7 +916,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Google Calendar Auto-Copy generiert.');
+  console.log('✅ index.html mit Apple Kalender iFrame-Fix generiert.');
 }
 
 genHTML();
