@@ -1,4 +1,4 @@
-// complete generator script — mit Zeilen-Synchronisierung für alle Teams
+// complete generator script — mit Fix für Favoriten-Bug und iFrame-Zeilen-Sync
 const fs = require('fs');
 const path = require('path');
 
@@ -152,8 +152,8 @@ function genHTML() {
 '.search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 0.95rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); font-family: "Inter", sans-serif; }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
-'.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; }\n' +
-'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; }\n' +
+'.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; align-items: start; }\n' +
+'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; }\n' +
 '.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
 '.team-card.favorite::before { background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, transparent 50%), radial-gradient(circle at 88% 8%, rgba(255,215,0,0.35), transparent 50%); }\n' +
 '.team-card.expanded { z-index: 9999; }\n' +
@@ -501,27 +501,35 @@ function genHTML() {
   content += '    }\n';
   content += '  }\n\n';
 
-  // NEU: Zeilen-Synchronisierung
+  // FIX: Verbesserte Zeilen-Synchronisierung die auch im iFrame funktioniert
+  content += '  function getRowCards(card) {\n';
+  content += '    const allCards = Array.from(grid.querySelectorAll(".team-card:not(.hidden)"));\n';
+  content += '    const cardRect = card.getBoundingClientRect();\n';
+  content += '    const cardTop = cardRect.top;\n';
+  content += '    const rowCards = allCards.filter(c => {\n';
+  content += '      const rect = c.getBoundingClientRect();\n';
+  content += '      return Math.abs(rect.top - cardTop) < 10;\n';
+  content += '    });\n';
+  content += '    return rowCards;\n';
+  content += '  }\n\n';
+
   content += '  function syncRowExpansion(expandedCard) {\n';
-  content += '    const allCards = Array.from(grid.querySelectorAll(".team-card"));\n';
-  content += '    const expandedTop = expandedCard.getBoundingClientRect().top;\n';
-  content += '    allCards.forEach(card => {\n';
-  content += '      if (card !== expandedCard) {\n';
-  content += '        const rect = card.getBoundingClientRect();\n';
-  content += '        if (Math.abs(rect.top - expandedTop) < 50) {\n';
-  content += '          card.classList.add("expanded");\n';
-  content += '        }\n';
+  content += '    const rowCards = getRowCards(expandedCard);\n';
+  content += '    rowCards.forEach(card => {\n';
+  content += '      if (card !== expandedCard && !card.classList.contains("expanded")) {\n';
+  content += '        card.classList.add("expanded");\n';
   content += '      }\n';
   content += '    });\n';
   content += '  }\n\n';
 
   content += '  function resetRowExpansion() {\n';
-  content += '    grid.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '    grid.querySelectorAll(".team-card.expanded").forEach(card => {\n';
   content += '      card.classList.remove("expanded");\n';
   content += '      resetCardToAll(card);\n';
   content += '    });\n';
   content += '  }\n\n';
 
+  // FIX: Favoriten-Toggle mit korrektem Reset
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -537,6 +545,8 @@ function genHTML() {
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); } \n';
   content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
+  // FIX: Erst alle Zeilen zurücksetzen, dann sortieren
+  content += '      resetRowExpansion();\n';
   content += '      const fp = getFirstPositions();\n';
   content += '      sortCards();\n';
   content += '      animateWithFLIP(fp, 400);\n';
@@ -577,7 +587,9 @@ function genHTML() {
   content += '      pill.addEventListener("click", (e) => { \n';
   content += '        e.stopPropagation(); \n';
   content += '        card.scrollIntoView({ behavior: "smooth", block: "center" }); \n';
-  content += '        card.classList.add("expanded"); \n';
+  content += '        resetRowExpansion();\n';
+  content += '        card.classList.add("expanded");\n';
+  content += '        setTimeout(() => syncRowExpansion(card), 100);\n';
   content += '      });\n';
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
@@ -604,7 +616,7 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // GEÄNDERT: Team-Card Click mit Zeilen-Synchronisierung
+  // FIX: Team-Card Click mit verbessertem Reset
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    card.addEventListener("click", (e) => {\n';
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
@@ -625,7 +637,7 @@ function genHTML() {
   content += '    if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
-  // GEÄNDERT: Stat Click mit Zeilen-Synchronisierung
+  // FIX: Stat Click mit verbessertem Reset
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -941,7 +953,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Zeilen-Synchronisierung generiert.');
+  console.log('✅ index.html mit Fixes generiert.');
 }
 
 genHTML();
