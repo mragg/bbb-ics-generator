@@ -1,4 +1,4 @@
-// complete generator script — mit Fix für Favoriten-Bug und iFrame-Zeilen-Sync
+// complete generator script — mit einklappbarem Gesamt-Spielplan
 const fs = require('fs');
 const path = require('path');
 
@@ -121,9 +121,15 @@ function genHTML() {
 '.my-calendar-btn { background: var(--color-primary); color: var(--color-dark); padding: 0.5rem 1rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); border: none; display: flex; align-items: center; gap: 0.375rem; margin-left: auto; flex-shrink: 0; }\n' +
 '.my-calendar-btn:hover { background: #fff; transform: translateY(-1px); }\n' +
 '.my-calendar-btn i { width: 16px; height: 16px; }\n' +
-'.download-section { background: var(--color-dark); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }\n' +
-'.download-section h2 { font-family: "Oswald", sans-serif; font-size: 1.5rem; color: #fff; margin-bottom: 0.5rem; position: relative; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
-'.download-section p { color: #9FA9BE; max-width: 500px; margin: 0 auto 1rem; position: relative; font-size: 0.9rem; }\n' +
+'.download-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; }\n' +
+'.download-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: var(--transition); background: none; border: none; width: 100%; text-align: left; }\n' +
+'.download-toggle:hover { background: rgba(232,163,61,0.05); }\n' +
+'.download-toggle i { width: 20px; height: 20px; color: var(--color-primary); transition: transform 0.3s ease; flex-shrink: 0; }\n' +
+'.download-toggle.active i { transform: rotate(180deg); }\n' +
+'.download-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }\n' +
+'.download-content.active { max-height: 600px; }\n' +
+'.download-inner { padding: 0 1.25rem 1.25rem; }\n' +
+'.download-inner p { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1rem; }\n' +
 '.download-buttons { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; position: relative; }\n' +
 '.download-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; background: var(--color-dark-hover); color: #fff; }\n' +
 '.download-btn:hover { background: #fff; color: var(--color-dark); transform: translateY(-2px); }\n' +
@@ -259,9 +265,10 @@ function genHTML() {
 '  .pill-name { font-size: 0.8rem; }\n' +
 '  .pill-age { font-size: 0.65rem; }\n' +
 '  .my-calendar-btn { padding: 0.4rem 0.75rem; font-size: 0.8rem; }\n' +
-'  .download-section { padding: 1.2rem; }\n' +
-'  .download-section h2 { font-size: 1.2rem; }\n' +
-'  .download-section p { font-size: 0.8rem; margin-bottom: 0.75rem; }\n' +
+'  .download-toggle { padding: 0.85rem 1rem; font-size: 0.9rem; }\n' +
+'  .download-inner { padding: 0 1rem 1rem; }\n' +
+'  .download-inner p { font-size: 0.85rem; }\n' +
+'  .download-section { padding: 0; }\n' +
 '  .download-buttons { flex-direction: column; gap: 0.5rem; }\n' +
 '  .download-btn { justify-content: center; padding: 0.7rem 1rem; min-height: 44px; }\n' +
 '  .search-wrapper { margin-bottom: 1rem; }\n' +
@@ -304,17 +311,30 @@ function genHTML() {
 '<main class="container" id="main-content" style="display:none;">\n';
 
   if (excelExists || pdfExists || allTeamsIcsExists) {
-    let dlButtons = '';
+    content += '<div class="download-section">\n';
+    content += '  <button class="download-toggle" id="download-toggle">\n';
+    content += '    <span>📥 Gesamt-Spielplan herunterladen</span>\n';
+    content += '    <i data-lucide="chevron-down"></i>\n';
+    content += '  </button>\n';
+    content += '  <div class="download-content" id="download-content">\n';
+    content += '    <div class="download-inner">\n';
+    content += '      <p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p>\n';
+    content += '      <div class="download-buttons">\n';
+    
     if (allTeamsIcsExists) {
-      dlButtons += '<a href="all_teams.ics" download class="download-btn download-btn-allteams"><i data-lucide="calendar"></i><div class="download-btn-text"><span class="download-btn-label">Alle Teams</span><span class="download-btn-name">all_teams.ics</span></div></a>';
+      content += '<a href="all_teams.ics" download class="download-btn download-btn-allteams"><i data-lucide="calendar"></i><div class="download-btn-text"><span class="download-btn-label">Alle Teams</span><span class="download-btn-name">all_teams.ics</span></div></a>';
     }
     if (excelExists) {
-      dlButtons += '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel</span><span class="download-btn-name">Spielplan.xlsx</span></div></a>';
+      content += '<a href="Gesamt-Spielplan.xlsx" download class="download-btn download-btn-excel"><i data-lucide="table"></i><div class="download-btn-text"><span class="download-btn-label">Excel</span><span class="download-btn-name">Spielplan.xlsx</span></div></a>';
     }
     if (pdfExists) {
-      dlButtons += '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF</span><span class="download-btn-name">Spielplan.pdf</span></div></a>';
+      content += '<a href="Gesamt-Spielplan.pdf" download class="download-btn download-btn-pdf"><i data-lucide="file-text"></i><div class="download-btn-text"><span class="download-btn-label">PDF</span><span class="download-btn-name">Spielplan.pdf</span></div></a>';
     }
-    content += '<div class="download-section"><h2>Gesamt-Spielplan herunterladen</h2><p>Alle Spiele chronologisch sortiert – perfekt zum Ausdrucken oder Abonnieren.</p><div class="download-buttons">' + dlButtons + '</div></div>';
+    
+    content += '      </div>\n';
+    content += '    </div>\n';
+    content += '  </div>\n';
+    content += '</div>\n';
   }
 
   content += '<div class="instructions">\n';
@@ -501,7 +521,6 @@ function genHTML() {
   content += '    }\n';
   content += '  }\n\n';
 
-  // FIX: Verbesserte Zeilen-Synchronisierung die auch im iFrame funktioniert
   content += '  function getRowCards(card) {\n';
   content += '    const allCards = Array.from(grid.querySelectorAll(".team-card:not(.hidden)"));\n';
   content += '    const cardRect = card.getBoundingClientRect();\n';
@@ -529,7 +548,6 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // FIX: Favoriten-Toggle mit korrektem Reset
   content += '  document.querySelectorAll(".favorite-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -545,7 +563,6 @@ function genHTML() {
   content += '      if (card.classList.contains("favorite")) { if (!f.includes(teamId)) f.push(teamId); } \n';
   content += '      else { const i = f.indexOf(teamId); if (i > -1) f.splice(i, 1); }\n';
   content += '      localStorage.setItem("favorites", JSON.stringify(f));\n';
-  // FIX: Erst alle Zeilen zurücksetzen, dann sortieren
   content += '      resetRowExpansion();\n';
   content += '      const fp = getFirstPositions();\n';
   content += '      sortCards();\n';
@@ -596,6 +613,17 @@ function genHTML() {
   content += '    if (typeof lucide !== "undefined") lucide.createIcons();\n';
   content += '  }\n\n';
 
+  // Download Toggle
+  content += '  const downloadToggle = document.getElementById("download-toggle");\n';
+  content += '  const downloadContent = document.getElementById("download-content");\n';
+  content += '  if (downloadToggle && downloadContent) {\n';
+  content += '    downloadToggle.addEventListener("click", () => {\n';
+  content += '      downloadToggle.classList.toggle("active");\n';
+  content += '      downloadContent.classList.toggle("active");\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
+  // Instructions Toggle
   content += '  const instrToggle = document.getElementById("instructions-toggle");\n';
   content += '  const instrContent = document.getElementById("instructions-content");\n';
   content += '  if (instrToggle && instrContent) {\n';
@@ -616,7 +644,6 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // FIX: Team-Card Click mit verbessertem Reset
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    card.addEventListener("click", (e) => {\n';
   content += '      if (e.target.closest("button, a, .stat, .more-option-item, input, label, .more-options-dropdown")) return;\n';
@@ -637,7 +664,6 @@ function genHTML() {
   content += '    if (a) { a.classList.add("active"); updateCardLinks(card, "all"); }\n';
   content += '  }\n\n';
 
-  // FIX: Stat Click mit verbessertem Reset
   content += '  document.querySelectorAll(".stat").forEach(stat => {\n';
   content += '    stat.addEventListener("click", (e) => {\n';
   content += '      e.stopPropagation();\n';
@@ -953,7 +979,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Fixes generiert.');
+  console.log('✅ index.html mit einklappbarem Gesamt-Spielplan generiert.');
 }
 
 genHTML();
