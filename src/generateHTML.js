@@ -1,4 +1,4 @@
-// complete generator script — mit Book-Opening-Animation für Anleitung
+// complete generator script — mit allen Animationen und Fixes
 const fs = require('fs');
 const path = require('path');
 
@@ -143,7 +143,6 @@ function genHTML() {
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; opacity: 0.8; display: block; text-transform: uppercase; }\n' +
 '.download-btn-name { font-size: 0.9rem; font-weight: 700; display: block; }\n' +
-// ANLEITUNG MIT BOOK-OPENING-ANIMATION
 '.instructions { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; perspective: 1000px; }\n' +
 '.instructions-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: all 0.3s ease; background: none; border: none; width: 100%; text-align: left; border-left: 3px solid transparent; }\n' +
 '.instructions-toggle:hover { background: rgba(232,163,61,0.05); }\n' +
@@ -176,7 +175,8 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; align-items: start; }\n' +
-'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.6s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; opacity: 0; transform: translateY(30px); }\n' +
+// FIX: Team-Card Transition mit cubic-bezier
+'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.6s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; opacity: 0; transform: translateY(30px); }\n' +
 '.team-card.revealed { opacity: 1; transform: translateY(0); }\n' +
 '.team-card.favorite { opacity: 1; transform: translateY(0); }\n' +
 '.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
@@ -187,12 +187,16 @@ function genHTML() {
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); animation: favorite-glow 3s ease-in-out infinite; }\n' +
 '@keyframes favorite-glow { 0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.25); } }\n' +
-'.team-card.age-blue { border-left: 4px solid var(--color-blue); }\n' +
-'.team-card.age-green { border-left: 4px solid var(--color-green); }\n' +
-'.team-card.age-purple { border-left: 4px solid var(--color-purple); }\n' +
-'.team-card.age-orange { border-left: 4px solid var(--color-primary); }\n' +
+// FIX: Age-Color nur für nicht-favorisierte Cards
+'.team-card.age-blue:not(.favorite) { border-left: 4px solid var(--color-blue); }\n' +
+'.team-card.age-green:not(.favorite) { border-left: 4px solid var(--color-green); }\n' +
+'.team-card.age-purple:not(.favorite) { border-left: 4px solid var(--color-purple); }\n' +
+'.team-card.age-orange:not(.favorite) { border-left: 4px solid var(--color-primary); }\n' +
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
+// FIX: Focus-Ring entfernen
+'.favorite-btn:focus { outline: none; }\n' +
+'.favorite-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }\n' +
 '.favorite-btn i { color: #9FA9BE; transition: color 0.3s ease; width: 18px; height: 18px; }\n' +
 '.favorite-btn svg { transition: fill 0.3s ease, stroke 0.3s ease; }\n' +
 '.favorite-btn.active svg { fill: var(--color-gold) !important; stroke: var(--color-gold) !important; }\n' +
@@ -209,7 +213,8 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; transition: var(--transition); }\n' +
 '.stat-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: #9FA9BE; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); letter-spacing: 0.05em; }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
+// FIX: Team-Actions Transition mit cubic-bezier
+'.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; position: relative; overflow: hidden; }\n' +
 '.btn-primary { background: var(--color-primary); color: var(--color-dark); }\n' +
@@ -568,11 +573,14 @@ function genHTML() {
   content += '    return rowCards;\n';
   content += '  }\n\n';
 
+  // FIX: Synchronere Öffnung mit 30ms Verzögerung
   content += '  function syncRowExpansion(expandedCard) {\n';
   content += '    const rowCards = getRowCards(expandedCard);\n';
-  content += '    rowCards.forEach(card => {\n';
+  content += '    rowCards.forEach((card, index) => {\n';
   content += '      if (card !== expandedCard && !card.classList.contains("expanded")) {\n';
-  content += '        card.classList.add("expanded");\n';
+  content += '        setTimeout(() => {\n';
+  content += '          card.classList.add("expanded");\n';
+  content += '        }, index * 30);\n';
   content += '      }\n';
   content += '    });\n';
   content += '  }\n\n';
@@ -1100,7 +1108,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Book-Opening-Animation generiert.');
+  console.log('✅ index.html mit allen Fixes generiert.');
 }
 
 genHTML();
