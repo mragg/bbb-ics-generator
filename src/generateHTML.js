@@ -1,4 +1,4 @@
-// complete generator script — mit einklappbarem Gesamt-Spielplan
+// complete generator script — mit Animationen (Ripple, Scroll-Reveal, Basketball-Bounce, 3D-Tilt, Typing-Effekt)
 const fs = require('fs');
 const path = require('path');
 
@@ -159,13 +159,17 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; align-items: start; }\n' +
-'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; }\n' +
+'.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.6s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; opacity: 0; transform: translateY(30px); }\n' +
+'.team-card.revealed { opacity: 1; transform: translateY(0); }\n' +
+'.team-card.favorite { opacity: 1; transform: translateY(0); }\n' +
 '.team-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 88% 8%, rgba(232,163,61,0.22), transparent 42%); z-index: 0; pointer-events: none; border-radius: var(--radius-lg); }\n' +
 '.team-card.favorite::before { background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, transparent 50%), radial-gradient(circle at 88% 8%, rgba(255,215,0,0.35), transparent 50%); }\n' +
 '.team-card.expanded { z-index: 9999; }\n' +
 '.team-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }\n' +
+'.team-card.revealed:hover { transform: translateY(-3px); }\n' +
 '.team-card.hidden { display: none !important; }\n' +
-'.team-card.favorite { border: 2px solid var(--color-gold); box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); }\n' +
+'.team-card.favorite { border: 2px solid var(--color-gold); animation: favorite-glow 3s ease-in-out infinite; }\n' +
+'@keyframes favorite-glow { 0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.25); } }\n' +
 '.team-card.age-blue { border-left: 4px solid var(--color-blue); }\n' +
 '.team-card.age-green { border-left: 4px solid var(--color-green); }\n' +
 '.team-card.age-purple { border-left: 4px solid var(--color-purple); }\n' +
@@ -176,8 +180,8 @@ function genHTML() {
 '.favorite-btn svg { transition: fill 0.3s ease, stroke 0.3s ease; }\n' +
 '.favorite-btn.active svg { fill: var(--color-gold) !important; stroke: var(--color-gold) !important; }\n' +
 '.favorite-btn.active i { color: var(--color-gold); }\n' +
-'@keyframes heart-pop { 0% { transform: scale(1); } 30% { transform: scale(1.4); } 60% { transform: scale(0.9); } 100% { transform: scale(1); } }\n' +
-'.favorite-btn.animating i { animation: heart-pop 0.5s ease; }\n' +
+'@keyframes basketball-bounce { 0% { transform: translateY(0) scale(1, 1); } 10% { transform: translateY(-25px) scale(0.95, 1.05); } 30% { transform: translateY(0) scale(1.1, 0.9); } 40% { transform: translateY(-12px) scale(0.98, 1.02); } 60% { transform: translateY(0) scale(1.03, 0.97); } 75% { transform: translateY(-5px) scale(1, 1); } 100% { transform: translateY(0) scale(1, 1); } }\n' +
+'.favorite-btn.animating i { animation: basketball-bounce 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97); }\n' +
 '.team-card-header { padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; padding-right: 3rem; z-index: 1; position: relative; }\n' +
 '.team-name { font-family: "Oswald", sans-serif; font-size: 1.4em; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.01em; margin-top: 0 !important; margin-bottom: 0 !important; }\n' +
 '.team-badge { font-family: "JetBrains Mono", monospace; color: var(--color-primary); background: rgba(232,163,61,0.15); padding: 4px 10px; border-radius: 6px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }\n' +
@@ -190,7 +194,7 @@ function genHTML() {
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
 '.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.3s ease, max-height 0.3s ease; pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
-'.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; }\n' +
+'.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; position: relative; overflow: hidden; }\n' +
 '.btn-primary { background: var(--color-primary); color: var(--color-dark); }\n' +
 '.btn-primary:hover { background: #fff; transform: translateY(-1px); }\n' +
 '.btn-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.2); }\n' +
@@ -198,13 +202,13 @@ function genHTML() {
 '.primary-actions { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }\n' +
 '.primary-actions .btn { flex: 1; }\n' +
 '.more-options-wrapper { position: relative; }\n' +
-'.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; }\n' +
+'.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; position: relative; overflow: hidden; }\n' +
 '.more-options-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }\n' +
 '.more-options-btn i { width: 16px; height: 16px; }\n' +
 '.more-options-dropdown { position: absolute; left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
 '.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
 '@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
-'.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; }\n' +
+'.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; position: relative; overflow: hidden; }\n' +
 '.more-option-item:hover { background: rgba(255,255,255,0.05); }\n' +
 '.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
 '.btn-copy { background: rgba(255,255,255,0.05); color: #fff; font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; border: 1px solid rgba(255,255,255,0.1); }\n' +
@@ -213,6 +217,8 @@ function genHTML() {
 '.btn-copy.success { background: #10B981; color: white; border-color: #10B981; }\n' +
 '@keyframes calendar-flash { 0% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } 50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(232,163,61,0.4); } 100% { transform: scale(1); box-shadow: 0 0 0 rgba(232,163,61,0); } }\n' +
 '.btn.flash { animation: calendar-flash 0.4s ease; border-color: var(--color-primary) !important; }\n' +
+'.ripple-effect { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.5); transform: scale(0); animation: ripple-animation 0.6s ease-out; pointer-events: none; }\n' +
+'@keyframes ripple-animation { to { transform: scale(4); opacity: 0; } }\n' +
 '.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--color-dark); color: #fff; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.1); max-width: 90vw; }\n' +
 '.toast.active { opacity: 1; transform: translateX(-50%) translateY(0); }\n' +
 '.qr-modal, .my-calendar-modal { position: fixed; background: rgba(11,22,38,0.85); backdrop-filter: blur(4px); z-index: 99999; display: none; padding: 1rem; }\n' +
@@ -239,6 +245,7 @@ function genHTML() {
 '  .teams-grid { grid-template-columns: 1fr; gap: 16px; }\n' +
 '  .team-card { min-height: auto; scroll-margin-top: 100px; }\n' +
 '  .team-card:hover { transform: none; }\n' +
+'  .team-card.revealed:hover { transform: none; }\n' +
 '  .favorite-btn { width: 44px; height: 44px; top: 10px; right: 10px; }\n' +
 '  .favorite-btn i { width: 22px; height: 22px; }\n' +
 '  .team-card-header { padding: 0.9rem 1rem; padding-right: 3.5rem; }\n' +
@@ -296,6 +303,9 @@ function genHTML() {
 '}\n' +
 '@media (min-width: 901px) {\n' +
 '  .teams-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; }\n' +
+'  .team-card.tilt-enabled { transition: transform 0.1s ease-out, box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.6s ease; transform-style: preserve-3d; }\n' +
+'  .team-card.tilt-enabled:hover { box-shadow: 0 20px 40px rgba(11,22,38,0.4); }\n' +
+'  .team-card.tilt-enabled.revealed:hover { transform: translateY(-5px); }\n' +
 '}\n' +
 '</style>\n' +
 '</head>\n' +
@@ -475,6 +485,7 @@ function genHTML() {
   content += '    const teamId = card.getAttribute("data-team-id");\n';
   content += '    if (favorites.includes(teamId)) { \n';
   content += '      card.classList.add("favorite"); \n';
+  content += '      card.classList.add("revealed");\n';
   content += '      const btn = card.querySelector(".favorite-btn");\n';
   content += '      btn.classList.add("active");\n';
   content += '    }\n';
@@ -554,7 +565,7 @@ function genHTML() {
   content += '      const card = btn.closest(".team-card"); \n';
   content += '      const teamId = card.getAttribute("data-team-id");\n';
   content += '      btn.classList.add("animating"); \n';
-  content += '      setTimeout(() => btn.classList.remove("animating"), 500);\n';
+  content += '      setTimeout(() => btn.classList.remove("animating"), 900);\n';
   content += '      card.classList.toggle("favorite"); \n';
   content += '      btn.classList.toggle("active");\n';
   content += '      updateHeartIcon(btn, btn.classList.contains("active"));\n';
@@ -613,7 +624,6 @@ function genHTML() {
   content += '    if (typeof lucide !== "undefined") lucide.createIcons();\n';
   content += '  }\n\n';
 
-  // Download Toggle
   content += '  const downloadToggle = document.getElementById("download-toggle");\n';
   content += '  const downloadContent = document.getElementById("download-content");\n';
   content += '  if (downloadToggle && downloadContent) {\n';
@@ -623,7 +633,6 @@ function genHTML() {
   content += '    });\n';
   content += '  }\n\n';
 
-  // Instructions Toggle
   content += '  const instrToggle = document.getElementById("instructions-toggle");\n';
   content += '  const instrContent = document.getElementById("instructions-content");\n';
   content += '  if (instrToggle && instrContent) {\n';
@@ -736,6 +745,91 @@ function genHTML() {
   content += '  document.addEventListener("click", (e) => {\n';
   content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) closeAllDropdowns();\n';
   content += '  });\n\n';
+
+  // ANIMATIONEN
+  content += '  function createRipple(event) {\n';
+  content += '    const button = event.currentTarget;\n';
+  content += '    const rect = button.getBoundingClientRect();\n';
+  content += '    const size = Math.max(rect.width, rect.height);\n';
+  content += '    const x = event.clientX - rect.left - size / 2;\n';
+  content += '    const y = event.clientY - rect.top - size / 2;\n';
+  content += '    const ripple = document.createElement("span");\n';
+  content += '    ripple.className = "ripple-effect";\n';
+  content += '    ripple.style.width = ripple.style.height = size + "px";\n';
+  content += '    ripple.style.left = x + "px";\n';
+  content += '    ripple.style.top = y + "px";\n';
+  content += '    button.appendChild(ripple);\n';
+  content += '    setTimeout(() => ripple.remove(), 600);\n';
+  content += '  }\n\n';
+
+  content += '  document.querySelectorAll(".btn, .download-btn, .quick-access-pill, .my-calendar-btn, .more-options-btn, .more-option-item").forEach(btn => {\n';
+  content += '    btn.addEventListener("click", createRipple);\n';
+  content += '  });\n\n';
+
+  content += '  const revealObserver = new IntersectionObserver((entries) => {\n';
+  content += '    entries.forEach((entry, index) => {\n';
+  content += '      if (entry.isIntersecting) {\n';
+  content += '        setTimeout(() => {\n';
+  content += '          entry.target.classList.add("revealed");\n';
+  content += '        }, index * 50);\n';
+  content += '        revealObserver.unobserve(entry.target);\n';
+  content += '      }\n';
+  content += '    });\n';
+  content += '  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });\n\n';
+
+  content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '    revealObserver.observe(card);\n';
+  content += '  });\n\n';
+
+  content += '  const isDesktop = window.matchMedia("(min-width: 901px)").matches;\n';
+  content += '  if (isDesktop) {\n';
+  content += '    document.querySelectorAll(".team-card").forEach(card => {\n';
+  content += '      card.classList.add("tilt-enabled");\n';
+  content += '      card.addEventListener("mousemove", (e) => {\n';
+  content += '        const rect = card.getBoundingClientRect();\n';
+  content += '        const x = e.clientX - rect.left;\n';
+  content += '        const y = e.clientY - rect.top;\n';
+  content += '        const centerX = rect.width / 2;\n';
+  content += '        const centerY = rect.height / 2;\n';
+  content += '        const rotateX = ((y - centerY) / centerY) * -5;\n';
+  content += '        const rotateY = ((x - centerX) / centerX) * 5;\n';
+  content += '        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;\n';
+  content += '      });\n';
+  content += '      card.addEventListener("mouseleave", () => {\n';
+  content += '        card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) translateY(0)";\n';
+  content += '      });\n';
+  content += '    });\n';
+  content += '  }\n\n';
+
+  content += '  if (searchInput) {\n';
+  content += '    const placeholders = [\n';
+  content += '      "Team suchen (z.B. U14, Herren, Damen)...",\n';
+  content += '      "Finde dein Lieblingsteam...",\n';
+  content += '      "Suche nach Altersklasse..."\n';
+  content += '    ];\n';
+  content += '    let placeholderIndex = 0;\n';
+  content += '    let charIndex = 0;\n';
+  content += '    let isDeleting = false;\n';
+  content += '    function typePlaceholder() {\n';
+  content += '      const current = placeholders[placeholderIndex];\n';
+  content += '      if (!isDeleting) {\n';
+  content += '        searchInput.setAttribute("placeholder", current.substring(0, charIndex++));\n';
+  content += '        if (charIndex > current.length) {\n';
+  content += '          isDeleting = true;\n';
+  content += '          setTimeout(typePlaceholder, 2000);\n';
+  content += '          return;\n';
+  content += '        }\n';
+  content += '      } else {\n';
+  content += '        searchInput.setAttribute("placeholder", current.substring(0, charIndex--));\n';
+  content += '        if (charIndex < 0) {\n';
+  content += '          isDeleting = false;\n';
+  content += '          placeholderIndex = (placeholderIndex + 1) % placeholders.length;\n';
+  content += '        }\n';
+  content += '      }\n';
+  content += '      setTimeout(typePlaceholder, isDeleting ? 30 : 80);\n';
+  content += '    }\n';
+  content += '    setTimeout(typePlaceholder, 1500);\n';
+  content += '  }\n\n';
 
   content += '  document.querySelectorAll(".copy-btn").forEach(btn => {\n';
   content += '    btn.addEventListener("click", async (e) => {\n';
@@ -979,7 +1073,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit einklappbarem Gesamt-Spielplan generiert.');
+  console.log('✅ index.html mit Animationen generiert.');
 }
 
 genHTML();
