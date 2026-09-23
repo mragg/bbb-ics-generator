@@ -1,4 +1,4 @@
-// complete generator script — mit Animationen (Ripple, Scroll-Reveal, Basketball-Bounce, 3D-Tilt, Typing-Effekt)
+// complete generator script — mit Book-Opening-Animation für Anleitung
 const fs = require('fs');
 const path = require('path');
 
@@ -122,13 +122,15 @@ function genHTML() {
 '.my-calendar-btn:hover { background: #fff; transform: translateY(-1px); }\n' +
 '.my-calendar-btn i { width: 16px; height: 16px; }\n' +
 '.download-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; }\n' +
-'.download-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: var(--transition); background: none; border: none; width: 100%; text-align: left; }\n' +
+'.download-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: all 0.3s ease; background: none; border: none; width: 100%; text-align: left; border-left: 3px solid transparent; }\n' +
 '.download-toggle:hover { background: rgba(232,163,61,0.05); }\n' +
 '.download-toggle i { width: 20px; height: 20px; color: var(--color-primary); transition: transform 0.3s ease; flex-shrink: 0; }\n' +
+'.download-toggle.active { border-left-color: var(--color-primary); background: rgba(232,163,61,0.05); }\n' +
 '.download-toggle.active i { transform: rotate(180deg); }\n' +
-'.download-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }\n' +
+'.download-content { max-height: 0; overflow: hidden; transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1); }\n' +
 '.download-content.active { max-height: 600px; }\n' +
-'.download-inner { padding: 0 1.25rem 1.25rem; }\n' +
+'.download-inner { opacity: 0; transform: translateY(-15px); transition: opacity 0.4s ease 0.1s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s; padding: 0 1.25rem 1.25rem; }\n' +
+'.download-content.active .download-inner { opacity: 1; transform: translateY(0); }\n' +
 '.download-inner p { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1rem; }\n' +
 '.download-buttons { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; position: relative; }\n' +
 '.download-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: 1px solid rgba(255,255,255,0.08); cursor: pointer; background: var(--color-dark-hover); color: #fff; }\n' +
@@ -141,19 +143,34 @@ function genHTML() {
 '.download-btn-text { text-align: left; }\n' +
 '.download-btn-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; opacity: 0.8; display: block; text-transform: uppercase; }\n' +
 '.download-btn-name { font-size: 0.9rem; font-weight: 700; display: block; }\n' +
-'.instructions { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; }\n' +
-'.instructions-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: var(--transition); background: none; border: none; width: 100%; text-align: left; }\n' +
+// ANLEITUNG MIT BOOK-OPENING-ANIMATION
+'.instructions { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; perspective: 1000px; }\n' +
+'.instructions-toggle { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; font-family: "Oswald", sans-serif; font-size: 1rem; font-weight: 600; color: var(--color-dark); text-transform: uppercase; letter-spacing: 0.01em; transition: all 0.3s ease; background: none; border: none; width: 100%; text-align: left; border-left: 3px solid transparent; }\n' +
 '.instructions-toggle:hover { background: rgba(232,163,61,0.05); }\n' +
-'.instructions-toggle i { width: 20px; height: 20px; color: var(--color-primary); transition: transform 0.3s ease; flex-shrink: 0; }\n' +
-'.instructions-toggle.active i { transform: rotate(180deg); }\n' +
-'.instructions-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }\n' +
-'.instructions-content.active { max-height: 600px; }\n' +
-'.instructions-inner { padding: 0 1.25rem 1.25rem; color: var(--color-text); font-size: 0.9rem; line-height: 1.7; }\n' +
-'.instructions-inner h4 { font-family: "Oswald", sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--color-dark); margin: 1rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.01em; }\n' +
-'.instructions-inner h4:first-child { margin-top: 0; }\n' +
+'.instructions-toggle i { width: 20px; height: 20px; color: var(--color-primary); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; }\n' +
+'.instructions-toggle.active { border-left-color: var(--color-primary); background: rgba(232,163,61,0.05); }\n' +
+'.instructions-toggle.active i { transform: rotate(180deg) scale(1.2); }\n' +
+'.instructions-content { max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }\n' +
+'.instructions-content.active { max-height: 800px; }\n' +
+'.instructions-inner { padding: 0 1.25rem 1.25rem; color: var(--color-text); font-size: 0.9rem; line-height: 1.7; transform-origin: top center; }\n' +
+'.instructions-content.active .instructions-inner { animation: bookOpen 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }\n' +
+'@keyframes bookOpen { 0% { opacity: 0; transform: rotateX(-90deg) translateY(-20px); } 50% { opacity: 0.5; transform: rotateX(-15deg) translateY(-5px); } 100% { opacity: 1; transform: rotateX(0) translateY(0); } }\n' +
+'.instructions-inner h4 { font-family: "Oswald", sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--color-dark); margin: 1rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.01em; opacity: 0; transform: translateX(-20px); transition: opacity 0.4s ease, transform 0.4s ease; }\n' +
+'.instructions-content.active .instructions-inner h4:nth-of-type(1) { animation: slideInLeft 0.4s ease 0.2s forwards; }\n' +
+'.instructions-content.active .instructions-inner h4:nth-of-type(2) { animation: slideInLeft 0.4s ease 0.4s forwards; }\n' +
+'@keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }\n' +
 '.instructions-inner ol { margin: 0; padding-left: 1.25rem; }\n' +
-'.instructions-inner li { margin-bottom: 0.35rem; }\n' +
-'.instructions-inner p { margin: 0.75rem 0 0; font-style: italic; color: var(--color-text-muted); font-size: 0.85rem; }\n' +
+'.instructions-inner li { margin-bottom: 0.35rem; opacity: 0; transform: translateX(-15px); }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(1) li:nth-child(1) { animation: slideInLeft 0.3s ease 0.3s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(1) li:nth-child(2) { animation: slideInLeft 0.3s ease 0.35s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(1) li:nth-child(3) { animation: slideInLeft 0.3s ease 0.4s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(2) li:nth-child(1) { animation: slideInLeft 0.3s ease 0.5s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(2) li:nth-child(2) { animation: slideInLeft 0.3s ease 0.55s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(2) li:nth-child(3) { animation: slideInLeft 0.3s ease 0.6s forwards; }\n' +
+'.instructions-content.active .instructions-inner ol:nth-of-type(2) li:nth-child(4) { animation: slideInLeft 0.3s ease 0.65s forwards; }\n' +
+'.instructions-inner p { margin: 0.75rem 0 0; font-style: italic; color: var(--color-text-muted); font-size: 0.85rem; opacity: 0; }\n' +
+'.instructions-content.active .instructions-inner p { animation: fadeIn 0.4s ease 0.7s forwards; }\n' +
+'@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }\n' +
 '.search-wrapper { margin-bottom: 1.5rem; position: relative; }\n' +
 '.search-input { width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: 0.95rem; background: var(--color-surface); color: var(--color-text); transition: var(--transition); font-family: "Inter", sans-serif; }\n' +
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
@@ -204,13 +221,21 @@ function genHTML() {
 '.more-options-wrapper { position: relative; }\n' +
 '.more-options-btn { background: rgba(255,255,255,0.05); color: #fff; padding: 0.65rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; width: 100%; position: relative; overflow: hidden; }\n' +
 '.more-options-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }\n' +
-'.more-options-btn i { width: 16px; height: 16px; }\n' +
+'.more-options-btn i { width: 16px; height: 16px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }\n' +
+'.more-options-btn.active i { transform: rotate(90deg) scale(1.1); }\n' +
 '.more-options-dropdown { position: absolute; left: 0; right: 0; background: var(--color-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); display: none; flex-direction: column; gap: 0.25rem; padding: 0.5rem; z-index: 10000; width: 100%; }\n' +
-'.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.15s ease; }\n' +
-'@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }\n' +
-'.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; position: relative; overflow: hidden; }\n' +
+'.more-options-dropdown.active { display: flex; animation: dropdownFadeIn 0.2s ease; }\n' +
+'@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }\n' +
+'.more-option-item { padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 500; border: none; background: transparent; color: #fff; text-align: left; width: 100%; position: relative; overflow: hidden; opacity: 0; transform: translateX(-10px); animation: itemSlideIn 0.3s ease forwards; }\n' +
+'.more-options-dropdown.active .more-option-item:nth-child(1) { animation-delay: 0.05s; }\n' +
+'.more-options-dropdown.active .more-option-item:nth-child(2) { animation-delay: 0.1s; }\n' +
+'.more-options-dropdown.active .more-option-item:nth-child(3) { animation-delay: 0.15s; }\n' +
+'.more-options-dropdown.active .more-option-item:nth-child(4) { animation-delay: 0.2s; }\n' +
+'.more-options-dropdown.active .more-option-item:nth-child(5) { animation-delay: 0.25s; }\n' +
+'@keyframes itemSlideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }\n' +
 '.more-option-item:hover { background: rgba(255,255,255,0.05); }\n' +
-'.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); }\n' +
+'.more-option-item i { width: 16px; height: 16px; color: var(--color-primary); transition: transform 0.2s ease; }\n' +
+'.more-option-item:hover i { transform: scale(1.3) rotate(-10deg); }\n' +
 '.btn-copy { background: rgba(255,255,255,0.05); color: #fff; font-size: 0.8rem; padding: 0.5rem 0.75rem; width: auto; border: 1px solid rgba(255,255,255,0.1); }\n' +
 '.btn-copy:hover { background: rgba(255,255,255,0.1); }\n' +
 '.btn-copy.loading { pointer-events: none; opacity: 0.7; }\n' +
@@ -717,6 +742,8 @@ function genHTML() {
   content += '      d.classList.remove("active");\n';
   content += '      d.style.top = "";\n';
   content += '      d.style.bottom = "";\n';
+  content += '      const btn = d.previousElementSibling;\n';
+  content += '      if (btn) btn.classList.remove("active");\n';
   content += '    });\n';
   content += '  }\n\n';
 
@@ -727,6 +754,7 @@ function genHTML() {
   content += '      const isActive = dropdown.classList.contains("active");\n';
   content += '      closeAllDropdowns();\n';
   content += '      if (!isActive) {\n';
+  content += '        btn.classList.add("active");\n';
   content += '        const btnRect = btn.getBoundingClientRect();\n';
   content += '        const dropdownHeight = 250;\n';
   content += '        const viewportHeight = window.innerHeight;\n';
@@ -746,7 +774,6 @@ function genHTML() {
   content += '    if (!e.target.closest(".more-options-dropdown") && !e.target.closest(".more-options-btn")) closeAllDropdowns();\n';
   content += '  });\n\n';
 
-  // ANIMATIONEN
   content += '  function createRipple(event) {\n';
   content += '    const button = event.currentTarget;\n';
   content += '    const rect = button.getBoundingClientRect();\n';
@@ -1073,7 +1100,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit Animationen generiert.');
+  console.log('✅ index.html mit Book-Opening-Animation generiert.');
 }
 
 genHTML();
