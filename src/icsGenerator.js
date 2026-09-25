@@ -77,18 +77,15 @@ function getCancellationReason(match, matchInfo) {
   return [...new Set(reasons)].join(', ');
 }
 
-/*
- * NEU: Robuste HTML-Beschreibung, die dynamisch auf Ergebnisse und Absagen reagiert
- */
 function createHtmlDescription(match, feld, cancelled, cancellationReason) {
   const homeName = getTeamNameForDescription(match?.homeTeam || {});
   const guestName = getTeamNameForDescription(match?.guestTeam || {});
   const liga = match?.ligaData?.liganame || 'Unbekannt';
+  const ligaId = match?.ligaData?.ligaId || 'Unbekannt';
   const saison = match?.ligaData?.seasonName || 'Unbekannt';
   const dateStr = match?.kickoffDate;
   const timeStr = match?.kickoffTime;
   
-  // Prüfen, ob ein Ergebnis vorliegt (z.B. "58:83")
   const hasResult = match?.result && typeof match.result === 'string' && match.result.includes(':');
 
   let html = `<!DOCTYPE HTML><HTML><HEAD><META CHARSET="UTF-8"></HEAD><BODY style="font-family: sans-serif;">`;
@@ -100,7 +97,7 @@ function createHtmlDescription(match, feld, cancelled, cancellationReason) {
     html += `<p style="color: #198754; font-weight: bold; font-size: 1.1em;">✅ ERGEBNIS: ${match.result}</p>`;
   }
 
-  html += `<p><strong>Wettbewerb:</strong> ${liga}</p>`;
+  html += `<p><strong>Wettbewerb:</strong> ${liga} (ID: ${ligaId})</p>`;
   html += `<p><strong>Saison:</strong> ${saison}</p>`;
   html += `<p><strong>Heim:</strong> ${homeName}</p>`;
   html += `<p><strong>Gast:</strong> ${guestName}</p>`;
@@ -142,7 +139,6 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
   const cancelled = isCancelledMatch(match, matchInfo);
   const cancellationReason = cancelled ? getCancellationReason(match, matchInfo) : '';
 
-  // NEU: Ergebnis in den Titel integrieren
   const hasResult = match?.result && typeof match.result === 'string' && match.result.includes(':');
   
   let normalSummary = `${prefix}${homeNameSummary} vs. ${guestNameSummary}`;
@@ -169,7 +165,12 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     }
   }
 
+  // NEU: Liga-ID extrahieren
+  const ligaId = matchInfo?.ligaData?.ligaId || match?.ligaData?.ligaId || null;
+  const ligaName = matchInfo?.ligaData?.liganame || match?.ligaData?.liganame || 'Unbekannt';
+
   console.log(`[TIME DEBUG] ${homeNameSummary} vs ${guestNameSummary}: API = ${dateStr} ${timeStr}`);
+  console.log(`[LIGA DEBUG] Liga: ${ligaName} (ID: ${ligaId})`);
   console.log(`[CANCEL/RESULT DEBUG] ${homeNameSummary} vs ${guestNameSummary}: cancelled = ${cancelled}${cancelled ? ` | Grund: ${cancellationReason}` : ''}${hasResult ? ` | Ergebnis: ${match.result}` : ''}`);
 
   const start = kickoffToArr(dateStr, timeStr);
@@ -186,11 +187,11 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     ? `${feld.strasse}, ${feld.plz} ${feld.ort}, Deutschland`
     : 'Ort unbekannt';
 
-  // NEU: Ergebnis auch in die Text-Beschreibung aufnehmen
+  // NEU: Liga-ID in die Beschreibung aufnehmen
   const descriptionLines = [
     ...(cancelled ? ['❌ DIESES SPIEL IST AUSGEFALLEN / ABGESAGT.', `Grund: ${cancellationReason}`] : []),
     ...(hasResult ? [`✅ ERGEBNIS: ${match.result}`] : []),
-    `Wettbewerb: ${matchInfo?.ligaData?.liganame || match?.ligaData?.liganame || 'Unbekannt'}`,
+    `Wettbewerb: ${ligaName} (ID: ${ligaId || 'Unbekannt'})`,
     `Saison: ${matchInfo?.ligaData?.seasonName || match?.ligaData?.seasonName || 'Unbekannt'}`,
     `Heim: ${homeNameDesc || 'Unbekannt'}`,
     `Gast: ${guestNameDesc || 'Unbekannt'}`,
@@ -202,7 +203,6 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
 
   const description = descriptionLines.join('\n');
 
-  // NEU: Robuste HTML-Generierung übergeben
   const htmlDescription = createHtmlDescription(match, feld, cancelled, cancellationReason);
 
   const event = {
@@ -218,6 +218,8 @@ async function buildEvent(match, matchInfo, teamId, calendarType = 'all') {
     location,
     busyStatus: 'BUSY',
     htmlDescription,
+    // NEU: Liga-ID als interne Info speichern
+    _ligaId: ligaId,
   };
 
   return event;
@@ -248,7 +250,7 @@ async function generateICS(matches, details, teamId, type = 'all') {
   }
 
   events.forEach((e, i) => {
-    console.log(`[DEBUG] Event ${i}: "${e.title}" Start:`, e.start);
+    console.log(`[DEBUG] Event ${i}: "${e.title}" Start:`, e.start, `| Liga-ID: ${e._ligaId}`);
   });
 
   const teams = require('../teams.json');
@@ -259,7 +261,12 @@ async function generateICS(matches, details, teamId, type = 'all') {
   const calendarName = `${teamName}${typeLabel}`;
 
   const htmlDescriptions = events.map(e => e.htmlDescription);
-  events.forEach(e => delete e.htmlDescription);
+  // NEU: Liga-IDs extrahieren, bevor wir htmlDescription löschen
+  const ligaIds = events.map(e => e._ligaId);
+  events.forEach(e => {
+    delete e.htmlDescription;
+    delete e._ligaId;
+  });
 
   return new Promise((resolve, reject) => {
     createEvents(events, (error, value) => {
@@ -300,6 +307,10 @@ async function generateICS(matches, details, teamId, type = 'all') {
         }
 
         if (line === 'END:VEVENT') {
+          // NEU: X-LIGA-ID direkt vor END:VEVENT einfügen
+          if (inEvent && ligaIds[eventIndex]) {
+            modifiedLines.push(`X-LIGA-ID:${ligaIds[eventIndex]}`);
+          }
           inEvent = false;
         }
 
