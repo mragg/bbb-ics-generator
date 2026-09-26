@@ -1,4 +1,4 @@
-// complete generator script — mit allen Animationen und Fixes
+// complete generator script — mit URL-Team-Vorauswahl, Animationen & perfekter Sync
 const fs = require('fs');
 const path = require('path');
 
@@ -175,7 +175,6 @@ function genHTML() {
 '.search-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }\n' +
 '.search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; width: 18px; height: 18px; }\n' +
 '.teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; margin-bottom: 2rem; align-items: start; }\n' +
-// FIX: Team-Card Transition mit cubic-bezier
 '.team-card { background: linear-gradient(150deg, var(--color-dark) 0%, #0B1626 100%); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.6s ease; position: relative; cursor: pointer; scroll-margin-top: 80px; z-index: 1; overflow: visible; min-height: 220px; display: flex; flex-direction: column; align-self: start; opacity: 0; transform: translateY(30px); }\n' +
 '.team-card.revealed { opacity: 1; transform: translateY(0); }\n' +
 '.team-card.favorite { opacity: 1; transform: translateY(0); }\n' +
@@ -187,14 +186,12 @@ function genHTML() {
 '.team-card.hidden { display: none !important; }\n' +
 '.team-card.favorite { border: 2px solid var(--color-gold); animation: favorite-glow 3s ease-in-out infinite; }\n' +
 '@keyframes favorite-glow { 0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 0 60px rgba(255,215,0,0.15); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.25); } }\n' +
-// FIX: Age-Color nur für nicht-favorisierte Cards
 '.team-card.age-blue:not(.favorite) { border-left: 4px solid var(--color-blue); }\n' +
 '.team-card.age-green:not(.favorite) { border-left: 4px solid var(--color-green); }\n' +
 '.team-card.age-purple:not(.favorite) { border-left: 4px solid var(--color-purple); }\n' +
 '.team-card.age-orange:not(.favorite) { border-left: 4px solid var(--color-primary); }\n' +
 '.favorite-btn { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); backdrop-filter: blur(4px); }\n' +
 '.favorite-btn:hover { transform: scale(1.15); background: rgba(255,255,255,0.2); }\n' +
-// FIX: Focus-Ring entfernen
 '.favorite-btn:focus { outline: none; }\n' +
 '.favorite-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }\n' +
 '.favorite-btn i { color: #9FA9BE; transition: color 0.3s ease; width: 18px; height: 18px; }\n' +
@@ -213,7 +210,6 @@ function genHTML() {
 '.stat-val { font-family: "Oswald", sans-serif; font-size: 1.35rem; font-weight: 700; color: #fff; transition: var(--transition); }\n' +
 '.stat-label { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; color: #9FA9BE; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 3px; transition: var(--transition); letter-spacing: 0.05em; }\n' +
 '.stat.active .stat-label { color: var(--color-primary); font-weight: 600; }\n' +
-// FIX: Team-Actions Transition mit cubic-bezier
 '.team-actions { padding: 1.25rem; display: grid; gap: 0.75rem; opacity: 0; max-height: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; z-index: 1; position: relative; background: linear-gradient(180deg, rgba(11,22,38,0.25) 0%, rgba(11,22,38,0.93) 78%); overflow: visible; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }\n' +
 '.team-card.expanded .team-actions { opacity: 1; max-height: 600px; pointer-events: auto; }\n' +
 '.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.65rem 1rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: var(--transition); border: none; cursor: pointer; width: 100%; font-family: "Inter", sans-serif; position: relative; overflow: hidden; }\n' +
@@ -511,6 +507,15 @@ function genHTML() {
   content += '  if (!grid) return;\n';
   content += '  const favorites = JSON.parse(localStorage.getItem("favorites") || "[]");\n\n';
 
+  // NEU: Team-Vorauswahl per URL, z.B. https://.../?team=159756
+  content += '  let preselected = [];\n';
+  content += '  try {\n';
+  content += '    const params = new URLSearchParams(location.search);\n';
+  content += '    preselected = (params.get("team") || "").split(",").map(s => s.trim()).filter(Boolean);\n';
+  content += '    preselected.forEach(id => { if (!favorites.includes(id)) favorites.push(id); });\n';
+  content += '    if (preselected.length) localStorage.setItem("favorites", JSON.stringify(favorites));\n';
+  content += '  } catch (e) { console.error("Team-Vorauswahl fehlgeschlagen:", e); }\n\n';
+
   content += '  document.querySelectorAll(".team-card").forEach(card => {\n';
   content += '    const teamId = card.getAttribute("data-team-id");\n';
   content += '    if (favorites.includes(teamId)) { \n';
@@ -521,6 +526,14 @@ function genHTML() {
   content += '    }\n';
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
+
+  // NEU: Direkt zur vorselektierten Karte scrollen
+  content += '  if (preselected.length) {\n';
+  content += '    setTimeout(() => {\n';
+  content += '      const target = grid.querySelector(\'[data-team-id="\' + preselected[0] + \'"]\');\n';
+  content += '      if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });\n';
+  content += '    }, 500);\n';
+  content += '  }\n\n';
 
   content += '  function getFirstPositions() {\n';
   content += '    const positions = new Map();\n';
@@ -568,19 +581,16 @@ function genHTML() {
   content += '    const cardTop = cardRect.top;\n';
   content += '    const rowCards = allCards.filter(c => {\n';
   content += '      const rect = c.getBoundingClientRect();\n';
-  content += '      return Math.abs(rect.top - cardTop) < 10;\n';
+  content += '      return Math.abs(rect.top - cardTop) < 20;\n';
   content += '    });\n';
   content += '    return rowCards;\n';
   content += '  }\n\n';
 
-  // FIX: Synchronere Öffnung mit 30ms Verzögerung
   content += '  function syncRowExpansion(expandedCard) {\n';
   content += '    const rowCards = getRowCards(expandedCard);\n';
-  content += '    rowCards.forEach((card, index) => {\n';
+  content += '    rowCards.forEach(card => {\n';
   content += '      if (card !== expandedCard && !card.classList.contains("expanded")) {\n';
-  content += '        setTimeout(() => {\n';
-  content += '          card.classList.add("expanded");\n';
-  content += '        }, index * 30);\n';
+  content += '        card.classList.add("expanded");\n';
   content += '      }\n';
   content += '    });\n';
   content += '  }\n\n';
@@ -650,7 +660,7 @@ function genHTML() {
   content += '        card.scrollIntoView({ behavior: "smooth", block: "center" }); \n';
   content += '        resetRowExpansion();\n';
   content += '        card.classList.add("expanded");\n';
-  content += '        setTimeout(() => syncRowExpansion(card), 100);\n';
+  content += '        syncRowExpansion(card);\n';
   content += '      });\n';
   content += '      pc.appendChild(pill);\n';
   content += '    });\n';
@@ -695,7 +705,7 @@ function genHTML() {
   content += '      } else {\n';
   content += '        resetRowExpansion();\n';
   content += '        card.classList.add("expanded");\n';
-  content += '        setTimeout(() => syncRowExpansion(card), 50);\n';
+  content += '        syncRowExpansion(card);\n';
   content += '      }\n';
   content += '    });\n';
   content += '  });\n\n';
@@ -718,7 +728,7 @@ function genHTML() {
   content += '      card.querySelectorAll(".stat").forEach(s => s.classList.remove("active"));\n';
   content += '      stat.classList.add("active");\n';
   content += '      updateCardLinks(card, type);\n';
-  content += '      setTimeout(() => syncRowExpansion(card), 50);\n';
+  content += '      syncRowExpansion(card);\n';
   content += '    });\n';
   content += '  });\n\n';
 
@@ -1108,7 +1118,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit allen Fixes generiert.');
+  console.log('✅ index.html mit URL-Team-Vorauswahl generiert.');
 }
 
 genHTML();
