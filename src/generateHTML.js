@@ -1,4 +1,4 @@
-// complete generator script — mit URL-Team-Vorauswahl, Animationen & perfekter Sync
+// complete generator script — mit URL-Team-Vorauswahl (ohne Auto-Scroll), Animationen & perfekter Sync
 const fs = require('fs');
 const path = require('path');
 
@@ -526,14 +526,6 @@ function genHTML() {
   content += '    }\n';
   content += '  });\n';
   content += '  sortCards(); updateQuickAccess();\n\n';
-
-  // NEU: Direkt zur vorselektierten Karte scrollen
-  content += '  if (preselected.length) {\n';
-  content += '    setTimeout(() => {\n';
-  content += '      const target = grid.querySelector(\'[data-team-id="\' + preselected[0] + \'"]\');\n';
-  content += '      if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });\n';
-  content += '    }, 500);\n';
-  content += '  }\n\n';
 
   content += '  function getFirstPositions() {\n';
   content += '    const positions = new Map();\n';
@@ -1118,7 +1110,7 @@ function genHTML() {
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
-  console.log('✅ index.html mit URL-Team-Vorauswahl generiert.');
+  console.log('✅ index.html mit URL-Team-Vorauswahl (ohne Auto-Scroll) generiert.');
 }
 
 genHTML();
