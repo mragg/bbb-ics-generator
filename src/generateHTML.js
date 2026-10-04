@@ -58,12 +58,16 @@ function genHTML() {
 '<meta charset="UTF-8">\n' +
 '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n' +
 '<title>TV Neunkirchen Baskets – Kalender</title>\n' +
-'<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
-'<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-'<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">\n' +
-'<script src="https://unpkg.com/lucide@latest"><\/script>\n' +
-'<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>\n' +
+// Schriften und Bibliotheken kommen aus static/ (wird unten nach
+// generated/ kopiert) statt von Google Fonts, unpkg und jsDelivr: Die
+// Seite ist auf tvn-baskets.de eingebettet, und jede fremde Quelle
+// uebertraegt die IP-Adresse der Besucher an den jeweiligen Anbieter.
+'<script src="vendor/lucide-1.52.0.min.js"><\/script>\n' +
+'<script src="vendor/qrcode-1.0.0.min.js"><\/script>\n' +
 '<style>\n' +
+'@font-face { font-family: "Oswald"; font-style: normal; font-weight: 500 700; font-display: swap; src: url("fonts/oswald-latin.woff2") format("woff2"); }\n' +
+'@font-face { font-family: "Inter"; font-style: normal; font-weight: 300 700; font-display: swap; src: url("fonts/inter-latin.woff2") format("woff2"); }\n' +
+'@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("fonts/jetbrains-mono-latin.woff2") format("woff2"); }\n' +
 ':root {\n' +
 '  --color-primary: #E8A33D;\n' +
 '  --color-primary-hover: #C97F1E;\n' +
@@ -1106,10 +1110,33 @@ function genHTML() {
   
   content += '});\n';
   content += '<\/script>\n';
-  content += '<script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"><\/script>\n';
+  // Hoehe an die einbettende Seite melden (tvn-baskets.de/kalenderabo/).
+  // Ersetzt iframe-resizer von cdnjs; das Gegenstueck auf der Website
+  // nimmt nur Nachrichten dieses Typs von dieser Herkunft an. Die Hoehe
+  // ist keine schuetzenswerte Information, daher targetOrigin "*".
+  content += '<script>\n';
+  content += '(function(){\n';
+  content += '  if (window.parent === window) return;\n';
+  content += '  var last = 0;\n';
+  content += '  function send(){\n';
+  content += '    var b = document.body; if (!b) return;\n';
+  content += '    var h = Math.ceil(Math.max(b.scrollHeight, b.offsetHeight));\n';
+  content += '    if (Math.abs(h - last) < 2) return;\n';
+  content += '    last = h;\n';
+  content += '    window.parent.postMessage({ type: "tvn-ics-height", height: h }, "*");\n';
+  content += '  }\n';
+  content += '  if ("ResizeObserver" in window) { new ResizeObserver(send).observe(document.body); }\n';
+  content += '  else { setInterval(send, 500); }\n';
+  content += '  window.addEventListener("load", send);\n';
+  content += '  window.addEventListener("resize", send);\n';
+  content += '  send();\n';
+  content += '})();\n';
+  content += '<\/script>\n';
   content += '</body>\n</html>';
 
   fs.writeFileSync(path.resolve(__dirname, '../generated/index.html'), content, 'utf8');
+  // Selbst gehostete Schriften und Bibliotheken neben index.html legen.
+  fs.cpSync(path.resolve(__dirname, '../static'), path.resolve(__dirname, '../generated'), { recursive: true });
   console.log('✅ index.html mit URL-Team-Vorauswahl (ohne Auto-Scroll) generiert.');
 }
 
